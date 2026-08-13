@@ -37,7 +37,7 @@ body {
   flex-direction: column;
 }
 
-/* Sticky Navbar Header (Logo & Install Button) */
+/* Sticky Navbar Header */
 header {
   position: sticky;
   top: 0;
@@ -65,7 +65,6 @@ header {
 }
 
 .header-title {
-  /* color: var(--gold-light); */
   background: var(--gold-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -75,7 +74,7 @@ header {
   margin-top: 30px;
 }
 
-/* Tool Section Card (Title, Status, & Input Container) */
+/* Controls Card */
 .controls-card {
   background: var(--bg-card);
   padding: 32px;
@@ -89,7 +88,6 @@ header {
   margin: 0 auto 36px auto;
 }
 
-/* Internal Tool Header Styles */
 .tool-header {
   text-align: center;
   border-bottom: 1px solid var(--border-color);
@@ -183,13 +181,17 @@ input[type="file"]::file-selector-button:hover {
   cursor: pointer;
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn:disabled {
-  background-color: #333333;
-  color: #666666;
+  background-color: #333333 !important;
+  color: #666666 !important;
   cursor: not-allowed;
-  border: 1px solid #444444;
+  border: 1px solid #444444 !important;
 }
 
 .btn.primary {
@@ -204,28 +206,21 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
 }
 
-.btn.success {
-  background-color: #000000;
-  color: #ffffff;
-}
-
-.btn.success:hover {
-  background-color: #219653;
-}
-
-/* Apply Branding (Primary - Gold) */
+/* Primary Process Button */
 #processBtn {
-  background: linear-gradient(135deg, #d4af37 0%, #fcf6ba 50%, #aa771c 100%);
-  color: #0d0d0d;
+  background: linear-gradient(135deg, #d4af37 0%, #fcf6ba 50%, #aa771c 100%) !important;
+  color: #0d0d0d !important;
   border: none;
   font-weight: 700;
 }
 
-/* Download All (.ZIP) - Contrasting Deep Onyx Black */
-#downloadAllBtn {
-  background-color: #0d0d0d;
-  color: #fcf6ba;
-  border: 2px solid #d4af37;
+/* Download All (.ZIP) Button Fix */
+#downloadAllBtn,
+button#downloadAllBtn,
+a#downloadAllBtn {
+  background-color: #0d0d0d !important;
+  color: #fcf6ba !important;
+  border: 2px solid #d4af37 !important;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -234,14 +229,14 @@ input[type="file"]::file-selector-button:hover {
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
 #downloadAllBtn:hover {
-  background-color: #1a1a1a;
-  border-color: #fcf6ba;
-  color: #ffffff;
+  background-color: #1a1a1a !important;
+  border-color: #fcf6ba !important;
+  color: #ffffff !important;
   box-shadow: 0 6px 18px rgba(212, 175, 55, 0.3);
-  transform: translateY(-2px);
 }
 
 .preview-section {
@@ -297,40 +292,52 @@ input[type="file"]::file-selector-button:hover {
   margin-top: 8px;
 }
 
-.btn-preview, .btn-download {
+/* Card Button Overrides (Prevents Blue Hyperlink Fallback) */
+.btn-preview, 
+a.btn-preview, 
+.btn-download, 
+a.btn-download {
   flex: 1;
   text-align: center;
-  text-decoration: none;
+  text-decoration: none !important;
   font-size: 13px;
   font-weight: 600;
   padding: 8px 10px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
-.btn-preview {
-  background-color: var(--bg-input);
-  color: var(--text-light);
+.btn-preview,
+a.btn-preview,
+a.btn-preview:visited {
+  background-color: var(--bg-input) !important;
+  color: var(--text-light) !important;
   border: 1px solid var(--border-color);
 }
 
 .btn-preview:hover {
   border-color: var(--gold-primary);
-  color: var(--gold-light);
+  color: var(--gold-light) !important;
 }
 
-.btn-download {
-  background: var(--gold-gradient);
-  color: #000000;
+.btn-download,
+a.btn-download,
+a.btn-download:visited {
+  background: var(--gold-gradient) !important;
+  color: #000000 !important;
+  border: none;
 }
 
 .btn-download:hover {
   opacity: 0.9;
 }
 
-/* Modal Styles */
+/* Modal / Lightbox Styles */
 .modal {
   display: none;
   position: fixed;
@@ -396,13 +403,8 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
 }
 
-.nav-prev {
-  left: 20px;
-}
-
-.nav-next {
-  right: 20px;
-}
+.nav-prev { left: 20px; }
+.nav-next { right: 20px; }
 
 footer {
   margin-top: auto;
@@ -418,7 +420,6 @@ footer p {
   margin: 0;
 }
 
-/* Loading Indicator & Progress Bar */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -474,7 +475,7 @@ footer p {
 
 
 /* ==========================================================================
-   MOBILE-ONLY FIXES (< 768px)
+   MOBILE SPECIFIC OVERRIDES (< 768px)
    ========================================================================== */
 @media (max-width: 768px) {
   body {
@@ -501,7 +502,7 @@ footer p {
     font-size: 1.25rem;
   }
 
-  /* Controls Card Full Width */
+  /* Full Width Controls Container */
   .controls-card {
     width: 100%;
     padding: 20px 16px;
@@ -520,7 +521,7 @@ footer p {
     margin-bottom: 10px;
   }
 
-  /* Top-Level Main Action Buttons (Full Width) */
+  /* Main Action Buttons Layout Fix */
   .controls-card > .btn,
   .controls-card > #processBtn,
   .controls-card > #downloadAllBtn {
@@ -534,26 +535,7 @@ footer p {
     min-height: 46px;
   }
 
-  /* Responsive File Input Fix */
-  input[type="file"] {
-    padding: 8px 10px;
-    font-size: 13px;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  input[type="file"]::file-selector-button {
-    padding: 6px 10px;
-    font-size: 12px;
-    margin-right: 8px;
-    flex-shrink: 0;
-  }
-
-  /* Gallery Grid (2 columns on mobile) */
+  /* Clean 2-Column Grid Layout */
   .gallery-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -577,7 +559,7 @@ footer p {
     -webkit-user-drag: none;
   }
 
-  /* Action Buttons inside Cards (Side-by-Side Flex Fix) */
+  /* Equal-width Side-by-Side Card Buttons Fix */
   .card-actions {
     display: flex;
     flex-direction: row;
@@ -586,21 +568,23 @@ footer p {
   }
 
   .card-actions .btn-preview, 
-  .card-actions .btn-download {
-    flex: 1 1 0%;
-    min-width: 0;
-    width: auto;
-    padding: 8px 4px;
-    font-size: 11px;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    white-space: nowrap;
+  .card-actions .btn-download,
+  .card-actions a.btn-preview,
+  .card-actions a.btn-download {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
   }
 
-  /* Mobile Lightbox / Modal */
+  /* Lightbox Navigation */
   .modal {
     padding: 10px;
   }
