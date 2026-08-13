@@ -2,12 +2,12 @@
   --bg-primary: #121212;
   --bg-card: #1e1e1e;
   --bg-input: #2a2a2a;
-  
+
   --gold-primary: #d4af37;
   --gold-hover: #f1c40f;
   --gold-light: #f9e8a2;
   --gold-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-  
+
   --text-light: #f5f5f5;
   --text-muted: #a0a0a0;
   --border-color: #333333;
@@ -16,13 +16,14 @@
 * {
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-light);
   margin: 0;
-  padding: 0 20px;
+  padding: 0 16px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -30,19 +31,22 @@ body {
 
 .container {
   width: 100%;
-  max-width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* Sticky Navbar Header (Logo & Install Button) */
+/* ==========================================
+   HEADER & NAVBAR
+   ========================================== */
 header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--bg-primary);
+  background-color: rgba(18, 18, 18, 0.95);
+  backdrop-filter: blur(8px);
   width: 100%;
   padding: 16px 0;
   box-sizing: border-box;
@@ -52,52 +56,58 @@ header {
 .header-top {
   display: flex;
   align-items: center;
-  justify-content:center;
+  justify-content: center;
+  gap: 16px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .header-logo {
-  max-height: 75px;
+  max-height: 65px;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0px 2px 8px rgba(212, 175, 55, 0.2)); 
+  filter: drop-shadow(0px 2px 8px rgba(212, 175, 55, 0.2));
   flex-shrink: 0;
 }
 
 .header-title {
-  /* color: var(--gold-light); */
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
   background: var(--gold-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .main-content {
-  margin-top: 30px;
+  margin-top: 24px;
 }
 
-/* Tool Section Card (Title, Status, & Input Container) */
+/* ==========================================
+   CONTROLS CARD & TOOL HEADER
+   ========================================== */
 .controls-card {
   background: var(--bg-card);
-  padding: 32px;
+  padding: 28px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  width: 50%;
+  gap: 20px;
+  width: 100%;
+  max-width: 650px; /* Replaced rigid 50% for modern responsive scaling */
   margin: 0 auto 36px auto;
 }
 
-/* Internal Tool Header Styles */
 .tool-header {
   text-align: center;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 20px;
+  padding-bottom: 16px;
 }
 
 .tool-header h4 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   margin: 0 0 8px 0;
   color: var(--gold-light);
   font-weight: 700;
@@ -108,8 +118,10 @@ header {
   color: var(--text-muted);
   margin: 0 0 12px 0;
   font-size: 0.95rem;
+  line-height: 1.4;
 }
 
+/* Status Badges */
 .status-badge {
   display: inline-block;
   padding: 6px 16px;
@@ -117,6 +129,8 @@ header {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.5px;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .status-badge.loading {
@@ -137,6 +151,9 @@ header {
   border: 1px solid #dc3545;
 }
 
+/* ==========================================
+   INPUTS & BUTTONS
+   ========================================== */
 .input-group {
   display: flex;
   flex-direction: column;
@@ -146,6 +163,7 @@ header {
 .input-group label {
   color: var(--gold-light);
   font-size: 15px;
+  font-weight: 600;
 }
 
 input[type="file"] {
@@ -156,13 +174,14 @@ input[type="file"] {
   color: var(--text-light);
   cursor: pointer;
   width: 100%;
+  pointer-events: auto !important;
 }
 
 input[type="file"]::file-selector-button {
   background: var(--gold-primary);
   color: #121212;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
@@ -175,7 +194,11 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .btn {
-  padding: 14px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 12px 24px;
   border: none;
   border-radius: 6px;
   font-size: 16px;
@@ -183,6 +206,7 @@ input[type="file"]::file-selector-button:hover {
   cursor: pointer;
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .btn:disabled {
@@ -190,6 +214,8 @@ input[type="file"]::file-selector-button:hover {
   color: #666666;
   cursor: not-allowed;
   border: 1px solid #444444;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .btn.primary {
@@ -204,16 +230,6 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
 }
 
-.btn.success {
-  background-color: #000000;
-  color: #ffffff;
-}
-
-.btn.success:hover {
-  background-color: #219653;
-}
-
-/* Apply Branding (Primary - Gold) */
 #processBtn {
   background: linear-gradient(135deg, #d4af37 0%, #fcf6ba 50%, #aa771c 100%);
   color: #0d0d0d;
@@ -221,36 +237,73 @@ input[type="file"]::file-selector-button:hover {
   font-weight: 700;
 }
 
-/* Download All (.ZIP) - Contrasting Deep Onyx Black */
-#downloadAllBtn {
-  background-color: #0d0d0d;
-  color: #fcf6ba;
-  border: 2px solid #d4af37;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s ease;
+/* ==========================================
+   LOADING & PROGRESS BAR
+   ========================================== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-top: 8px;
 }
 
-#downloadAllBtn:hover {
-  background-color: #1a1a1a;
-  border-color: #fcf6ba;
-  color: #ffffff;
-  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.3);
-  transform: translateY(-2px);
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--gold-primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold-light);
+  text-align: center;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--gold-gradient);
+  transition: width 0.2s ease;
+}
+
+.progress-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ==========================================
+   PREVIEW & GALLERY GRID
+   ========================================== */
 .preview-section {
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .preview-section h2 {
   color: var(--gold-light);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 8px;
@@ -258,8 +311,8 @@ input[type="file"]::file-selector-button:hover {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
   margin-top: 20px;
 }
 
@@ -283,10 +336,10 @@ input[type="file"]::file-selector-button:hover {
 
 .card img {
   width: 100%;
-  height: 180px;
+  height: 160px;
   object-fit: cover;
   border-radius: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border: 1px solid #2a2a2a;
 }
 
@@ -294,26 +347,23 @@ input[type="file"]::file-selector-button:hover {
   display: flex;
   gap: 8px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: auto;
 }
 
-.btn-preview, .btn-download {
+.btn-preview {
   flex: 1;
   text-align: center;
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 10px;
+  padding: 10px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: none;
-}
-
-.btn-preview {
+  border: 1px solid var(--border-color);
   background-color: var(--bg-input);
   color: var(--text-light);
-  border: 1px solid var(--border-color);
+  min-height: 38px;
 }
 
 .btn-preview:hover {
@@ -321,16 +371,9 @@ input[type="file"]::file-selector-button:hover {
   color: var(--gold-light);
 }
 
-.btn-download {
-  background: var(--gold-gradient);
-  color: #000000;
-}
-
-.btn-download:hover {
-  opacity: 0.9;
-}
-
-/* Modal Styles */
+/* ==========================================
+   FULLSCREEN MODAL
+   ========================================== */
 .modal {
   display: none;
   position: fixed;
@@ -339,17 +382,19 @@ input[type="file"]::file-selector-button:hover {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(6px);
   justify-content: center;
   align-items: center;
+  padding: 16px;
 }
 
 .modal-content {
   margin: auto;
   display: block;
-  max-width: 90%;
-  max-height: 90vh;
+  max-width: 92%;
+  max-height: 85vh;
+  object-fit: contain;
   border-radius: 8px;
   border: 2px solid var(--gold-primary);
   box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
@@ -357,13 +402,15 @@ input[type="file"]::file-selector-button:hover {
 
 .modal-close {
   position: absolute;
-  top: 20px;
-  right: 35px;
+  top: 16px;
+  right: 24px;
   color: var(--gold-light);
-  font-size: 35px;
+  font-size: 36px;
   font-weight: bold;
   cursor: pointer;
   transition: color 0.2s ease;
+  line-height: 1;
+  z-index: 1002;
 }
 
 .modal-close:hover {
@@ -374,12 +421,12 @@ input[type="file"]::file-selector-button:hover {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(30, 30, 30, 0.7);
+  background: rgba(30, 30, 30, 0.85);
   color: var(--gold-light);
   border: 1px solid var(--gold-primary);
-  font-size: 24px;
-  width: 48px;
-  height: 48px;
+  font-size: 20px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -396,20 +443,18 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
 }
 
-.nav-prev {
-  left: 20px;
-}
+.nav-prev { left: 16px; }
+.nav-next { right: 16px; }
 
-.nav-next {
-  right: 20px;
-}
-
+/* ==========================================
+   FOOTER
+   ========================================== */
 footer {
   margin-top: auto;
   text-align: center;
   padding: 20px 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
   border-top: 1px solid var(--border-color);
   width: 100%;
 }
@@ -418,73 +463,67 @@ footer p {
   margin: 0;
 }
 
-/* Mobile Responsiveness */
+/* ==========================================
+   MOBILE RESPONSIVENESS (< 768px)
+   ========================================== */
 @media (max-width: 768px) {
+  body {
+    padding: 0 12px;
+  }
+
+  header {
+    padding: 12px 0;
+  }
+
+  .header-top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
   .header-logo {
-    max-height: 45px;
+    max-height: 50px;
+  }
+
+  .header-title {
+    font-size: 1.25rem;
   }
 
   .controls-card {
-    width: 100%;
-    padding: 20px;
+    padding: 20px 16px;
+    gap: 16px;
+    border-radius: 8px;
   }
 
-  .tool-header h1 {
-    font-size: 1.6rem;
+  .tool-header h4 {
+    font-size: 1.25rem;
   }
-}
 
-/* Loading Indicator & Progress Bar */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--bg-input);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  margin-top: 8px;
-}
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
 
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 4px solid var(--border-color);
-  border-top: 4px solid var(--gold-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
+  .card {
+    padding: 8px;
+  }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+  .card img {
+    height: 130px;
+  }
 
-.loading-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gold-light);
-}
+  /* Modal Mobile Navigation Tweaks */
+  .modal-close {
+    top: 12px;
+    right: 18px;
+    font-size: 32px;
+  }
 
-.progress-bar-bg {
-  width: 100%;
-  height: 8px;
-  background-color: var(--border-color);
-  border-radius: 4px;
-  overflow: hidden;
-}
+  .modal-nav {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
 
-.progress-bar-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--gold-gradient);
-  transition: width 0.2s ease;
+  .nav-prev { left: 8px; }
+  .nav-next { right: 8px; }
 }
-
-.progress-count {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
