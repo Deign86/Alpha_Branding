@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Property Photo Branding Tool</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- JSZip for batch zip download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Alpha Premier Realty Branding Tool</h1>
+      <div id="frameStatus" class="status-badge loading">Loading branding frame...</div>
+    </header>
+
+    <div class="controls-card">
+      <div class="input-group">
+        <label for="photosInput"><strong>Upload Property Photos:</strong></label>
+        <input type="file" id="photosInput" accept="image/*" multiple disabled>
+      </div>
+
+      <button id="processBtn" class="btn primary" disabled>Apply Branding</button>
+      <button id="downloadAllBtn" class="btn success" style="display: none;">Download All (.ZIP)</button>
+    </div>
+
+    <div class="preview-section">
+      <h2>Preview & Results</h2>
+      <div id="gallery" class="gallery-grid"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
