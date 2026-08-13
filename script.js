@@ -8,7 +8,7 @@ const frameStatus = document.getElementById('frameStatus');
 const FRAME_PATH = 'img/alpha_branding.png';
 
 // Target resolution
-const TARGET_WIDTH = 1000;
+const TARGET_WIDTH = 1200;
 const TARGET_HEIGHT = 1000;
 
 let loadedFrame = null;
@@ -71,16 +71,20 @@ function applyBranding(photoFile, frameImage) {
       canvas.width = TARGET_WIDTH;
       canvas.height = TARGET_HEIGHT;
 
-      // Fit and center photo inside 1000x1000
-      const scale = Math.max(TARGET_WIDTH / photo.width, TARGET_HEIGHT / photo.height);
-      const x = (TARGET_WIDTH / 2) - (photo.width / 2) * scale;
-      const y = (TARGET_HEIGHT / 2) - (photo.height / 2) * scale;
+      // 1. Fit and center property photo inside 1000x1000 (Cover)
+      const photoScale = Math.max(TARGET_WIDTH / photo.width, TARGET_HEIGHT / photo.height);
+      const px = (TARGET_WIDTH / 2) - (photo.width / 2) * photoScale;
+      const py = (TARGET_HEIGHT / 2) - (photo.height / 2) * photoScale;
+      ctx.drawImage(photo, px, py, photo.width * photoScale, photo.height * photoScale);
 
-      // 1. Draw property image
-      ctx.drawImage(photo, x, y, photo.width * scale, photo.height * scale);
+      // 2. Uniformly scale frame overlay (Preserves aspect ratio to prevent circular distortion)
+      const frameScale = Math.max(TARGET_WIDTH / frameImage.width, TARGET_HEIGHT / frameImage.height);
+      const fw = frameImage.width * frameScale;
+      const fh = frameImage.height * frameScale;
+      const fx = (TARGET_WIDTH - fw) / 2;
+      const fy = (TARGET_HEIGHT - fh) / 2;
 
-      // 2. Draw branding frame from assets folder
-      ctx.drawImage(frameImage, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+      ctx.drawImage(frameImage, fx, fy, fw, fh);
 
       resolve(canvas.toDataURL('image/jpeg', 0.92));
     };
