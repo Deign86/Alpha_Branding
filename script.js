@@ -6,6 +6,10 @@ const processBtn = document.getElementById('processBtn');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const frameStatus = document.getElementById('frameStatus');
 
+// Batch Rename & Sequential Numbering Elements
+const filenamePrefix = document.getElementById('filenamePrefix');
+const patternPreview = document.getElementById('patternPreview');
+
 // Loader Elements
 const loadingState = document.getElementById('loadingState');
 const loadingText = document.getElementById('loadingText');
@@ -32,10 +36,53 @@ let currentModalIndex = 0;
 let loadedFrameImg = null;
 
 // ==========================================
-// INITIALIZATION & FRAME PRELOADING (FIXED)
+// BATCH NAMING & SEQUENTIAL HELPER LOGIC
 // ==========================================
 
-// Run frame preload immediately if DOM is already loaded, otherwise attach listener
+/**
+ * Generates a clean sequential filename with zero-padding
+ */
+function generateFilename(prefix, index, total, extension = 'webp') {
+  const cleanPrefix = (prefix || 'AlphaPremier_Photo').trim().replace(/[/\\?%*:|"<>]/g, '');
+  const padDigits = total >= 100 ? 3 : 2; // Auto-switch to 001 if >= 100 items
+  const sequenceNumber = String(index + 1).padStart(padDigits, '0');
+  return `${cleanPrefix}_${sequenceNumber}.${extension}`;
+}
+
+// Live pattern preview listener & dynamic gallery update listener
+if (filenamePrefix) {
+  filenamePrefix.addEventListener('input', () => {
+    updateLivePreviewAndGalleryNames();
+  });
+}
+
+function updateLivePreviewAndGalleryNames() {
+  const prefixVal = filenamePrefix ? filenamePrefix.value : 'AlphaPremier_Photo';
+  const totalCount = processedImages.length > 0 ? processedImages.length : 10;
+  
+  // Update text sample in HTML
+  if (patternPreview) {
+    patternPreview.textContent = generateFilename(prefixVal, 0, totalCount, 'webp');
+  }
+
+  // Dynamically update download attributes on existing gallery cards if already processed
+  if (processedImages.length > 0) {
+    processedImages.forEach((img, idx) => {
+      const newName = generateFilename(prefixVal, idx, processedImages.length, 'webp');
+      img.name = newName;
+
+      const cardDownloadBtn = document.querySelector(`.card[data-id="${img.id}"] .btn-download`);
+      if (cardDownloadBtn) {
+        cardDownloadBtn.setAttribute('download', newName);
+      }
+    });
+  }
+}
+
+// ==========================================
+// INITIALIZATION & FRAME PRELOADING
+// ==========================================
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', preloadBrandingFrame);
 } else {
@@ -67,7 +114,6 @@ function preloadBrandingFrame() {
     console.error(`Failed to load branding frame image from: ${FRAME_SRC}. Verify the file exists in the img/ folder and matches case sensitivity.`);
   };
 
-  // Trigger image fetch
   img.src = FRAME_SRC;
 }
 
@@ -76,7 +122,6 @@ function preloadBrandingFrame() {
 // ==========================================
 
 if (photosInput) {
-  // Process photos when files are confirmed/selected
   photosInput.addEventListener('change', async (event) => {
     const files = Array.from(event.target.files);
 
@@ -86,7 +131,7 @@ if (photosInput) {
 
     if (!loadedFrameImg) {
       alert(`Branding frame is not loaded yet. Please verify that '${FRAME_SRC}' exists in your project folder.`);
-      photosInput.value = ''; // Reset input
+      photosInput.value = '';
       return;
     }
 
@@ -106,7 +151,7 @@ if (photosInput) {
       updateProgress(i + 1, total, `Converting to WebP (1200x1000) ${i + 1} of ${total}...`);
 
       try {
-        await processAndRenderPhoto(file);
+        await processAndRenderPhoto(file, i, total);
       } catch (err) {
         console.error(`Error processing ${file.name}:`, err);
       }
@@ -118,6 +163,9 @@ if (photosInput) {
     if (downloadAllBtn && processedImages.length > 0) {
       downloadAllBtn.style.display = 'inline-block';
     }
+
+    // Update live pattern sample after processing
+    updateLivePreviewAndGalleryNames();
   });
 }
 
@@ -125,7 +173,7 @@ if (photosInput) {
 // FILE PROCESSING & WEBP CONVERSION LOGIC
 // ==========================================
 
-function processAndRenderPhoto(file) {
+function processAndRenderPhoto(file, index, totalCount) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -158,13 +206,13 @@ function processAndRenderPhoto(file) {
         // Convert canvas output to WEBP format
         const brandedDataUrl = canvas.toDataURL('image/webp', WEBP_QUALITY);
 
-        // Replace existing file extension with .webp
-        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-        const webpFileName = `branded-${baseName}.webp`;
+        // Generate sequential filename based on input field value
+        const userPrefix = filenamePrefix ? filenamePrefix.value : 'AlphaPremier_Photo';
+        const webpFileName = generateFilename(userPrefix, index, totalCount, 'webp');
 
         // Store result item
         const imageItem = {
-          id: processedImages.length,
+          id: index,
           name: webpFileName,
           src: brandedDataUrl
         };
@@ -189,6 +237,7 @@ function createGalleryCard(item) {
   if (!gallery) return;
   const card = document.createElement('div');
   card.className = 'card';
+  card.setAttribute('data-id', item.id);
   card.innerHTML = `
     <img src="${item.src}" alt="${item.name}">
     <div class="card-actions">
@@ -202,6 +251,7 @@ function createGalleryCard(item) {
 // ==========================================
 // BATCH ZIP DOWNLOAD LOGIC
 // ==========================================
+
 if (downloadAllBtn) {
   downloadAllBtn.addEventListener('click', async () => {
     if (typeof JSZip === 'undefined') {
@@ -210,12 +260,18 @@ if (downloadAllBtn) {
     }
 
     const zip = new JSZip();
-    const folder = zip.folder('branded_property_photos');
+    const userPrefix = filenamePrefix ? filenamePrefix.value : 'AlphaPremier_Photo';
+    const cleanFolderName = (userPrefix || 'Branded_Photos').trim().replace(/[/\\?%*:|"<>]/g, '');
+    
+    const folder = zip.folder(cleanFolderName);
 
-    processedImages.forEach((img) => {
+    processedImages.forEach((img, idx) => {
+      // Re-evaluate filename to ensure current input prefix is respected
+      const currentFilename = generateFilename(userPrefix, idx, processedImages.length, 'webp');
+      
       // Strip base64 header for WebP
       const base64Data = img.src.replace(/^data:image\/[a-z]+;base64,/, '');
-      folder.file(img.name, base64Data, { base64: true });
+      folder.file(currentFilename, base64Data, { base64: true });
     });
 
     showLoader();
@@ -224,7 +280,7 @@ if (downloadAllBtn) {
     const content = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(content);
-    link.download = 'Branded_Property_Photos_WebP.zip';
+    link.download = `${cleanFolderName}_Export.zip`;
     link.click();
 
     hideLoader();

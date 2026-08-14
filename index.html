@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +27,7 @@
       </div>
     </header>
 
-    <!-- Main Tool Container (Title, Status, File Input, & Progress) -->
+    <!-- Main Tool Container (Title, Status, File Input, Naming Rule, & Progress) -->
     <main class="main-content">
       <div class="controls-card">
         <div class="tool-header">
@@ -38,6 +39,20 @@
         <div class="input-group">
           <label for="photosInput"><strong>Upload Property Photos:</strong></label>
           <input type="file" id="photosInput" accept="image/*" multiple disabled>
+        </div>
+
+        <!-- Bulk Rename & Sequential Numbering Rule -->
+        <div class="input-group">
+          <label for="filenamePrefix"><strong>Batch Filename / Property Prefix:</strong></label>
+          <div class="prefix-input-wrapper">
+            <input 
+              type="text" 
+              id="filenamePrefix" 
+              placeholder="e.g. Pasig_Tower_Unit101" 
+              value="AlphaPremier_Photo"
+            >
+            <span class="prefix-preview">Output Format Preview: <strong id="patternPreview">AlphaPremier_Photo_01.jpg</strong></span>
+          </div>
         </div>
 
         <!-- Loading Indicator & Progress Bar Section -->
@@ -63,7 +78,7 @@
 
     <!-- Footer -->
     <footer>
-      <p>&copy; 2026 Alpha Premier Group of Companies. | All rights reserved. | Developed By IT Department</p>
+      <p>&copy; 2026 Alpha Premier Group of Companies. | All Rights Reserved. | Developed By IT Department</p>
     </footer>
   </div>
 
@@ -76,7 +91,6 @@
   </div>
 
   <script src="script.js"></script>
-
 
 </body>
 </html>
