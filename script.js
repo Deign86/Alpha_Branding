@@ -100,7 +100,7 @@ function preloadBrandingFrame() {
   img.onload = () => {
     loadedFrameImg = img;
     if (frameStatus) {
-      frameStatus.textContent = 'Branding Frame Ready';
+      frameStatus.textContent = 'Branding Frame Ready!';
       frameStatus.className = 'ready';
     }
     if (photosInput) photosInput.disabled = false;
