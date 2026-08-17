@@ -282,4 +282,84 @@ public class UiAutomationTests
             tempDir.Delete(true);
         }
     }
+
+    [Fact]
+    public void DirtyEditsConfirmationModalAppearsAndCancelsInUI()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var (landscape, _, _) = CreateTestImages(tempDir.FullName);
+            var appPath = GetAppExecutablePath();
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(appPath, $"\"{landscape}\"");
+
+            try
+            {
+                var window = GetAppMainWindow(app, automation);
+                Assert.NotNull(window);
+
+                var applyBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton();
+                Assert.NotNull(applyBtn);
+                applyBtn.Invoke();
+
+                var statusCompleted = Retry.WhileFalse(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true,
+                    TimeSpan.FromSeconds(8));
+                Assert.True(statusCompleted.Success);
+
+                // Make an edit after branding
+                var prefixBox = window.FindFirstDescendant(cf => cf.ByAutomationId("PrefixTextBox"))?.AsTextBox();
+                Assert.NotNull(prefixBox);
+                prefixBox.Text = "ModifiedListing";
+                Thread.Sleep(200);
+
+                // Verify visual status hint reports unsaved edits
+                var hint = window.FindFirstDescendant(cf => cf.ByAutomationId("ApplyStatusHintTextBlock"));
+                Assert.NotNull(hint);
+                Assert.Equal("Unsaved edits in current session.", hint.Name);
+
+                // Click Apply Branding while dirty -> modal confirmation dialog must appear
+                applyBtn.Invoke();
+
+                var modal = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Window)),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(modal);
+                Assert.Contains("Start a new branding session?", modal.Name);
+
+                var message = modal.FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationMessageTextBlock"));
+                Assert.NotNull(message);
+                Assert.Contains("unsaved edits", message.Name, StringComparison.OrdinalIgnoreCase);
+
+                var cancelBtn = modal.FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationCancelButton"))?.AsButton();
+                Assert.NotNull(cancelBtn);
+
+                var discardBtn = modal.FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationDiscardButton"))?.AsButton();
+                Assert.NotNull(discardBtn);
+
+                var saveBtn = modal.FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationSaveButton"))?.AsButton();
+                Assert.NotNull(saveBtn);
+
+                // Invoke Cancel
+                cancelBtn.Invoke();
+                Thread.Sleep(300);
+
+                // Session remains intact
+                var cardName = window.FindFirstDescendant(cf => cf.ByAutomationId("ResultFileNameTextBlock"));
+                Assert.NotNull(cardName);
+                Assert.Equal("ModifiedListing_01.jpg", cardName.Name);
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
 }
+

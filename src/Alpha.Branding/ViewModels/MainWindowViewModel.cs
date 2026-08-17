@@ -1,6 +1,7 @@
 using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
@@ -11,13 +12,25 @@ namespace Alpha.Branding.ViewModels;
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly ImageProcessingService _processor;
+    private readonly ISessionConfirmationService _confirmationService;
     private string _prefix = FileNameGenerator.DefaultPrefix;
     private bool _isBusy;
+    private bool _isProcessing;
+    private bool _hasUnsavedEdits;
     private string _status = "Select property photos to begin.";
     private double _progress;
     private IReadOnlyList<string> _selectedFiles = [];
 
-    public MainWindowViewModel(ImageProcessingService processor) => _processor = processor;
+    public MainWindowViewModel(
+        ImageProcessingService processor,
+        ISessionConfirmationService? confirmationService = null)
+    {
+        _processor = processor;
+        _confirmationService = confirmationService ?? new DefaultSessionConfirmationService();
+        Results.CollectionChanged += OnResultsCollectionChanged;
+    }
+
+    public ISessionConfirmationService ConfirmationService => _confirmationService;
 
     public ObservableCollection<BrandedImage> Results { get; } = [];
 
@@ -26,14 +39,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         get => _prefix;
         set
         {
-            _prefix = value ?? string.Empty;
-            RenameResults();
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(PatternPreview));
+            var sanitized = value ?? string.Empty;
+            if (_prefix != sanitized)
+            {
+                _prefix = sanitized;
+                RenameResults();
+                if (Results.Count > 0 && !_isProcessing)
+                {
+                    HasUnsavedEdits = true;
+                }
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PatternPreview));
+                UpdateApplyStatus();
+            }
         }
     }
 
     public string PatternPreview => FileNameGenerator.Generate(Prefix, 0, Results.Count > 0 ? Results.Count : 10);
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -45,6 +68,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanApply));
                 OnPropertyChanged(nameof(CanExport));
+            }
+        }
+    }
+
+    public bool HasUnsavedEdits
+    {
+        get => _hasUnsavedEdits;
+        set
+        {
+            if (_hasUnsavedEdits != value)
+            {
+                _hasUnsavedEdits = value;
+                OnPropertyChanged();
+                UpdateApplyStatus();
             }
         }
     }
@@ -74,10 +111,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         get => _selectedFiles;
         set
         {
-            _selectedFiles = value;
+            _selectedFiles = value ?? [];
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectionSummary));
             OnPropertyChanged(nameof(CanApply));
+            UpdateApplyStatus();
         }
     }
 
@@ -85,7 +123,92 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool CanExport => !IsBusy && Results.Count > 0;
 
     public string SelectionSummary => SelectedFiles.Count == 0 ? "No photos selected" : $"{SelectedFiles.Count} photo(s) selected";
+
+    public string ApplyStatusHint
+    {
+        get
+        {
+            if (SelectedFiles.Count > 0 && Results.Count > 0)
+            {
+                if (HasUnsavedEdits)
+                {
+                    return "Unsaved edits in current session.";
+                }
+                return $"{SelectedFiles.Count} new photo(s) selected — applying branding will start a new session.";
+            }
+
+            return string.Empty;
+        }
+    }
+
+    public bool HasApplyWarning => HasUnsavedEdits && SelectedFiles.Count > 0;
+    public bool HasApplyHint => SelectedFiles.Count > 0 && Results.Count > 0;
+
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public void MarkDirty()
+    {
+        if (Results.Count > 0 && !_isProcessing)
+        {
+            HasUnsavedEdits = true;
+        }
+    }
+
+    public void DiscardEdits()
+    {
+        Results.Clear();
+        HasUnsavedEdits = false;
+        UpdateApplyStatus();
+        OnPropertyChanged(nameof(CanExport));
+    }
+
+    public async Task<bool> ApplyWorkflowAsync(string overlayPath, CancellationToken token = default)
+    {
+        if (IsBusy) return false;
+        if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one image first.");
+
+        if (HasUnsavedEdits)
+        {
+            var promptResult = _confirmationService.PromptUnsavedEdits(
+                "Start a new branding session?",
+                "You have unsaved edits in the current session. Applying branding to the newly selected photos will replace the current photos and discard those unsaved edits.");
+
+            switch (promptResult)
+            {
+                case SessionPromptResult.Cancel:
+                    Status = "New session canceled. Current session retained.";
+                    return false;
+
+                case SessionPromptResult.SaveAndContinue:
+                    var defaultFileName = $"{FileNameGenerator.FolderName(Prefix)}_Export.zip";
+                    var exportPath = _confirmationService.PromptSaveZip(defaultFileName);
+                    if (string.IsNullOrWhiteSpace(exportPath))
+                    {
+                        Status = "Save canceled. Current session retained.";
+                        return false;
+                    }
+
+                    try
+                    {
+                        await ExportZipAsync(exportPath);
+                        DiscardEdits();
+                    }
+                    catch (Exception ex)
+                    {
+                        Status = $"Export failed: {ex.Message}";
+                        return false;
+                    }
+                    break;
+
+                case SessionPromptResult.DiscardAndContinue:
+                    DiscardEdits();
+                    break;
+            }
+        }
+
+        await ApplyAsync(overlayPath, token);
+        return true;
+    }
 
     public async Task ApplyAsync(string overlayPath, CancellationToken token = default)
     {
@@ -93,7 +216,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one image first.");
 
         IsBusy = true;
+        _isProcessing = true;
         Results.Clear();
+        HasUnsavedEdits = false;
         Progress = 0;
         var failures = 0;
         try
@@ -135,6 +260,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             RenameResults();
+            HasUnsavedEdits = false;
             OnPropertyChanged(nameof(CanExport));
             Status = failures == 0
                 ? $"Completed {Results.Count} image(s)."
@@ -142,7 +268,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         finally
         {
+            _isProcessing = false;
             IsBusy = false;
+            UpdateApplyStatus();
         }
     }
 
@@ -155,10 +283,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Status = $"Saving {image.FileName}…";
             await File.WriteAllBytesAsync(path, image.ImageBytes);
             Status = "Image export complete.";
+            if (Results.Count == 1)
+            {
+                HasUnsavedEdits = false;
+            }
         }
         finally
         {
             IsBusy = false;
+            UpdateApplyStatus();
         }
     }
 
@@ -187,6 +320,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             File.Move(temporaryPath, path, true);
+            HasUnsavedEdits = false;
             Status = "ZIP export complete.";
         }
         finally
@@ -197,6 +331,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             IsBusy = false;
+            UpdateApplyStatus();
         }
     }
 
@@ -207,6 +342,45 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             var result = Results[i];
             result.FileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize);
         }
+    }
+
+    private void OnResultsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems != null)
+        {
+            foreach (BrandedImage item in e.OldItems)
+            {
+                item.PropertyChanged -= OnBrandedImagePropertyChanged;
+            }
+        }
+
+        if (e.NewItems != null)
+        {
+            foreach (BrandedImage item in e.NewItems)
+            {
+                item.PropertyChanged += OnBrandedImagePropertyChanged;
+            }
+        }
+
+        UpdateApplyStatus();
+        OnPropertyChanged(nameof(CanExport));
+    }
+
+    private void OnBrandedImagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!_isProcessing)
+        {
+            HasUnsavedEdits = true;
+        }
+    }
+
+    private void UpdateApplyStatus()
+    {
+        OnPropertyChanged(nameof(ApplyStatusHint));
+        OnPropertyChanged(nameof(HasApplyHint));
+        OnPropertyChanged(nameof(HasApplyWarning));
+        OnPropertyChanged(nameof(CanApply));
+        OnPropertyChanged(nameof(CanExport));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));

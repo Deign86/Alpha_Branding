@@ -158,22 +158,78 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Action Buttons -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Button Content="APPLY BRANDING"
-                                AutomationProperties.AutomationId="ApplyBrandingButton"
-                                ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
-                                Click="Apply_Click"
-                                IsEnabled="{Binding CanApply}"
-                                Style="{StaticResource PrimaryButton}"
-                                Margin="0,0,12,0"/>
+                    <!-- Action Buttons & Pre-apply Session Indicator -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                        <!-- Session notice / Unsaved edits warning indicator -->
+                        <Border x:Name="SessionNoticeBorder"
+                                AutomationProperties.AutomationId="SessionStatusIndicatorBorder"
+                                Visibility="{Binding HasApplyHint, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12,6"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Right">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
+                                            <Setter Property="Background" Value="#2D1A10"/>
+                                            <Setter Property="BorderBrush" Value="#E07A2B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{StaticResource Gold}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
+                                                    <Setter Property="Fill" Value="#F59E0B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock x:Name="ApplyStatusHintTextBlock"
+                                           Text="{Binding ApplyStatusHint}"
+                                           AutomationProperties.AutomationId="ApplyStatusHintTextBlock"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="#FBBF24"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
 
-                        <Button Content="EXPORT ZIP"
-                                AutomationProperties.AutomationId="ExportZipButton"
-                                ToolTip="Package all processed branded images into a single ZIP archive (Ctrl+E)"
-                                Click="Export_Click"
-                                IsEnabled="{Binding CanExport}"
-                                Style="{StaticResource SecondaryButton}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="APPLY BRANDING"
+                                    AutomationProperties.AutomationId="ApplyBrandingButton"
+                                    ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
+                                    Click="Apply_Click"
+                                    IsEnabled="{Binding CanApply}"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Margin="0,0,12,0"/>
+
+                            <Button Content="EXPORT ZIP"
+                                    AutomationProperties.AutomationId="ExportZipButton"
+                                    ToolTip="Package all processed branded images into a single ZIP archive (Ctrl+E)"
+                                    Click="Export_Click"
+                                    IsEnabled="{Binding CanExport}"
+                                    Style="{StaticResource SecondaryButton}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
 

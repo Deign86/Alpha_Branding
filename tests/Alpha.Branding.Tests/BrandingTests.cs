@@ -58,6 +58,8 @@ public class UiInitializationTests
             Assert.NotNull(window);
             var preview = new PreviewWindow(new List<BrandedImage>(), 0);
             Assert.NotNull(preview);
+            var confirmation = new SessionConfirmationDialog("Test Title", "Test Message");
+            Assert.NotNull(confirmation);
         });
         thread.SetApartmentState(System.Threading.ApartmentState.STA);
         thread.Start();
@@ -584,3 +586,402 @@ public class AntiSlopAndResilienceTests
         Assert.Null(record);
     }
 }
+
+public sealed class TestSessionConfirmationService : ISessionConfirmationService
+{
+    public bool PromptCalled { get; private set; }
+    public string? LastPromptTitle { get; private set; }
+    public string? LastPromptMessage { get; private set; }
+    public SessionPromptResult DesiredPromptResult { get; set; } = SessionPromptResult.Cancel;
+    public string? DesiredSaveZipPath { get; set; }
+    public bool PromptSaveZipCalled { get; private set; }
+
+    public SessionPromptResult PromptUnsavedEdits(string title, string message)
+    {
+        PromptCalled = true;
+        LastPromptTitle = title;
+        LastPromptMessage = message;
+        return DesiredPromptResult;
+    }
+
+    public string? PromptSaveZip(string defaultFileName)
+    {
+        PromptSaveZipCalled = true;
+        return DesiredSaveZipPath;
+    }
+}
+
+public class SessionWorkflowSafetyTests
+{
+    private static async Task<(string Photo1, string Photo2, string Overlay)> CreateSampleImagesAsync()
+    {
+        var p1 = Path.GetTempFileName() + ".png";
+        var p2 = Path.GetTempFileName() + ".png";
+        var overlay = Path.GetTempFileName() + ".png";
+
+        using (var img1 = new Image<Rgba32>(1200, 1000, new Rgba32(255, 0, 0, 255)))
+            await img1.SaveAsPngAsync(p1);
+
+        using (var img2 = new Image<Rgba32>(1200, 1000, new Rgba32(0, 255, 0, 255)))
+            await img2.SaveAsPngAsync(p2);
+
+        using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 255, 128)))
+            await frame.SaveAsPngAsync(overlay);
+
+        return (p1, p2, overlay);
+    }
+
+    [Fact]
+    public async Task NewSelectionWithoutDirtyEditsStartsBrandingDirectly()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService();
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "Initial"
+            };
+
+            // Process first batch
+            var appliedInitial = await vm.ApplyWorkflowAsync(overlay);
+            Assert.True(appliedInitial);
+            Assert.False(promptService.PromptCalled);
+            Assert.Single(vm.Results);
+            Assert.Equal("Initial_01.jpg", vm.Results[0].FileName);
+            Assert.False(vm.HasUnsavedEdits);
+
+            // Select new photos without editing existing results
+            vm.SelectedFiles = new[] { p2 };
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.Equal("1 new photo(s) selected — applying branding will start a new session.", vm.ApplyStatusHint);
+            Assert.False(vm.HasApplyWarning);
+
+            // Apply branding to new selection -> starts directly without modal confirmation
+            var appliedSecond = await vm.ApplyWorkflowAsync(overlay);
+            Assert.True(appliedSecond);
+            Assert.False(promptService.PromptCalled, "Modal prompt should not appear when there are no dirty edits.");
+            Assert.Single(vm.Results);
+            Assert.False(vm.HasUnsavedEdits);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task NewSelectionWithDirtyEditsPromptsConfirmation()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.Cancel
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "BatchA"
+            };
+
+            await vm.ApplyWorkflowAsync(overlay);
+            Assert.False(vm.HasUnsavedEdits);
+
+            // User edits the prefix after processing -> marks session dirty
+            vm.Prefix = "CustomRenamedBatch";
+            Assert.True(vm.HasUnsavedEdits);
+            Assert.Equal("CustomRenamedBatch_01.jpg", vm.Results[0].FileName);
+
+            // User selects new photos
+            vm.SelectedFiles = new[] { p2 };
+            Assert.Equal("Unsaved edits in current session.", vm.ApplyStatusHint);
+            Assert.True(vm.HasApplyWarning);
+
+            // Apply branding with dirty edits
+            var applied = await vm.ApplyWorkflowAsync(overlay);
+            Assert.False(applied);
+            Assert.True(promptService.PromptCalled);
+            Assert.Equal("Start a new branding session?", promptService.LastPromptTitle);
+            Assert.Contains("unsaved edits", promptService.LastPromptMessage, StringComparison.OrdinalIgnoreCase);
+
+            // Session state must remain untouched on cancel
+            Assert.Single(vm.Results);
+            Assert.Equal("CustomRenamedBatch_01.jpg", vm.Results[0].FileName);
+            Assert.True(vm.HasUnsavedEdits);
+            Assert.Contains("canceled", vm.Status, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task DiscardEditsAndContinueClearsOldSessionAndStartsNewSession()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.DiscardAndContinue
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "Batch1"
+            };
+
+            await vm.ApplyWorkflowAsync(overlay);
+            vm.Prefix = "DirtyPrefix";
+            Assert.True(vm.HasUnsavedEdits);
+
+            // New selection
+            vm.SelectedFiles = new[] { p2 };
+
+            var applied = await vm.ApplyWorkflowAsync(overlay);
+            Assert.True(applied);
+            Assert.True(promptService.PromptCalled);
+
+            // Old edits cleared, new session active and clean
+            Assert.Single(vm.Results);
+            Assert.Equal("DirtyPrefix_01.jpg", vm.Results[0].FileName);
+            Assert.False(vm.HasUnsavedEdits);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task SaveAndContinueExportsZipThenBeginsNewSession()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        var tempZip = Path.GetTempFileName() + ".zip";
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.SaveAndContinue,
+                DesiredSaveZipPath = tempZip
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "ArchivedProperty"
+            };
+
+            await vm.ApplyWorkflowAsync(overlay);
+            vm.Prefix = "EditedProperty";
+            Assert.True(vm.HasUnsavedEdits);
+
+            // Select new photos
+            vm.SelectedFiles = new[] { p2 };
+
+            var applied = await vm.ApplyWorkflowAsync(overlay);
+            Assert.True(applied);
+            Assert.True(promptService.PromptCalled);
+            Assert.True(promptService.PromptSaveZipCalled);
+
+            // Zip file was generated successfully
+            Assert.True(File.Exists(tempZip));
+            using (var zip = ZipFile.OpenRead(tempZip))
+            {
+                Assert.Single(zip.Entries);
+                Assert.Equal("EditedProperty/EditedProperty_01.jpg", zip.Entries[0].FullName);
+            }
+
+            // New session active and clean
+            Assert.Single(vm.Results);
+            Assert.False(vm.HasUnsavedEdits);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+            if (File.Exists(tempZip)) File.Delete(tempZip);
+        }
+    }
+
+    [Fact]
+    public async Task SaveAndContinueAbortsWhenUserCancelsSaveDialog()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.SaveAndContinue,
+                DesiredSaveZipPath = null // User canceled file picker
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "SafeBatch"
+            };
+
+            await vm.ApplyWorkflowAsync(overlay);
+            vm.Prefix = "UnsavedModification";
+            Assert.True(vm.HasUnsavedEdits);
+
+            vm.SelectedFiles = new[] { p2 };
+
+            var applied = await vm.ApplyWorkflowAsync(overlay);
+            Assert.False(applied);
+            Assert.True(promptService.PromptCalled);
+            Assert.True(promptService.PromptSaveZipCalled);
+
+            // Original session retained
+            Assert.Single(vm.Results);
+            Assert.Equal("UnsavedModification_01.jpg", vm.Results[0].FileName);
+            Assert.True(vm.HasUnsavedEdits);
+            Assert.Contains("Save canceled", vm.Status);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task DirtyStateLifecycleTransitions()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        var tempZip = Path.GetTempFileName() + ".zip";
+        var tempSingle = Path.GetTempFileName() + ".jpg";
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService());
+
+            // 1. Initial empty state
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.Empty(vm.ApplyStatusHint);
+            Assert.False(vm.HasApplyWarning);
+            Assert.False(vm.HasApplyHint);
+
+            // 2. Setting selected files does not mark dirty
+            vm.SelectedFiles = new[] { p1 };
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.False(vm.HasApplyHint);
+
+            // 3. Changing prefix with empty results does not mark dirty
+            vm.Prefix = "EmptyPrefix";
+            Assert.False(vm.HasUnsavedEdits);
+
+            // 4. Processing initial batch
+            await vm.ApplyAsync(overlay);
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.Single(vm.Results);
+
+            // 5. Mutating prefix with active results marks dirty
+            vm.Prefix = "MutatedPrefix";
+            Assert.True(vm.HasUnsavedEdits);
+            Assert.Equal("MutatedPrefix_01.jpg", vm.Results[0].FileName);
+
+            // 6. Selecting new files while dirty activates hint and warning
+            vm.SelectedFiles = new[] { p2 };
+            Assert.True(vm.HasApplyHint);
+            Assert.True(vm.HasApplyWarning);
+            Assert.Equal("Unsaved edits in current session.", vm.ApplyStatusHint);
+
+            // 7. Exporting ZIP resets dirty state
+            await vm.ExportZipAsync(tempZip);
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.True(vm.HasApplyHint);
+            Assert.False(vm.HasApplyWarning);
+            Assert.Equal("1 new photo(s) selected — applying branding will start a new session.", vm.ApplyStatusHint);
+
+            // 8. Individual BrandedImage mutation marks dirty
+            vm.Results[0].FileName = "IndividuallyEdited_01.jpg";
+            Assert.True(vm.HasUnsavedEdits);
+
+            // 9. Single image save (single-item session) resets dirty state
+            await vm.SaveImageAsync(vm.Results[0], tempSingle);
+            Assert.False(vm.HasUnsavedEdits);
+
+            // 10. Explicit MarkDirty and DiscardEdits
+            vm.MarkDirty();
+            Assert.True(vm.HasUnsavedEdits);
+            vm.DiscardEdits();
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.Empty(vm.Results);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+            if (File.Exists(tempZip)) File.Delete(tempZip);
+            if (File.Exists(tempSingle)) File.Delete(tempSingle);
+        }
+    }
+
+    [Fact]
+    public async Task SaveAndContinueFailsWhenPathIsInvalid_RetainsCurrentSession()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.SaveAndContinue,
+                DesiredSaveZipPath = "Z:\\NonExistentDirectory\\invalid.zip"
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "ImportantListing"
+            };
+
+            await vm.ApplyWorkflowAsync(overlay);
+            vm.Prefix = "ModifiedPrefix";
+            Assert.True(vm.HasUnsavedEdits);
+
+            vm.SelectedFiles = new[] { p2 };
+
+            var applied = await vm.ApplyWorkflowAsync(overlay);
+            Assert.False(applied);
+            Assert.True(promptService.PromptCalled);
+            Assert.True(vm.HasUnsavedEdits);
+            Assert.Single(vm.Results);
+            Assert.Equal("ModifiedPrefix_01.jpg", vm.Results[0].FileName);
+            Assert.Contains("Export failed", vm.Status);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task ApplyWorkflowThrowsOnEmptySelection()
+    {
+        var (_, _, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => vm.ApplyWorkflowAsync(overlay));
+        }
+        finally
+        {
+            File.Delete(overlay);
+        }
+    }
+}
+
+

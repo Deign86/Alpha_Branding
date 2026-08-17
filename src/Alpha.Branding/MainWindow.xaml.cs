@@ -9,16 +9,67 @@ namespace Alpha.Branding;
 
 public partial class MainWindow : Window
 {
-    private readonly MainWindowViewModel _viewModel = new(new ImageProcessingService());
+    private readonly MainWindowViewModel _viewModel;
     public MainWindowViewModel ViewModel => _viewModel;
     private readonly string _overlayPath = Path.Combine(AppContext.BaseDirectory, "Assets", "alpha_branding.png");
 
-    public MainWindow()
+    public MainWindow() : this(new MainWindowViewModel(new ImageProcessingService()))
     {
+    }
+
+    public MainWindow(MainWindowViewModel viewModel)
+    {
+        _viewModel = viewModel;
         InitializeComponent();
         WindowThemeHelper.EnableDarkTitleBar(this);
         DataContext = _viewModel;
         Loaded += MainWindow_Loaded;
+    }
+
+    protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        if (_viewModel.HasUnsavedEdits)
+        {
+            e.Cancel = true;
+            var result = _viewModel.ConfirmationService.PromptUnsavedEdits(
+                "Unsaved edits in current session",
+                "You have unsaved edits in the current session. Do you want to save them before exiting?");
+
+            if (result == SessionPromptResult.Cancel)
+            {
+                return;
+            }
+
+            if (result == SessionPromptResult.DiscardAndContinue)
+            {
+                _viewModel.DiscardEdits();
+                Close();
+                return;
+            }
+
+            if (result == SessionPromptResult.SaveAndContinue)
+            {
+                var defaultName = $"{FileNameGenerator.FolderName(_viewModel.Prefix)}_Export.zip";
+                var savePath = _viewModel.ConfirmationService.PromptSaveZip(defaultName);
+                if (!string.IsNullOrEmpty(savePath))
+                {
+                    try
+                    {
+                        await _viewModel.ExportZipAsync(savePath);
+                        _viewModel.DiscardEdits();
+                        Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to save: {ex.Message}", "Save failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+        else
+        {
+            base.OnClosing(e);
+        }
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -54,7 +105,7 @@ public partial class MainWindow : Window
 
     private async void Apply_Click(object sender, RoutedEventArgs e)
     {
-        try { await _viewModel.ApplyAsync(_overlayPath); }
+        try { await _viewModel.ApplyWorkflowAsync(_overlayPath); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Branding failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
