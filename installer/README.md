@@ -6,6 +6,13 @@ Build the self-contained per-user Windows installer from any directory:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\Build-Installer.ps1 -Version 1.0.0.0
 ```
 
-The exact output is `artifacts/Alpha.Branding.Setup.exe`. It is a native self-extracting C# bootstrapper containing the complete self-contained `win-x64` publish output. It installs per-user under `%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio`, requires no administrator access, certificates, or MSIX, and creates a Start Menu shortcut plus an Apps & Features uninstall entry in HKCU.
+The exact output is `artifacts/Alpha.Branding.Setup.exe`. It is a native WPF self-extracting bootstrapper (`WinExe`) containing the complete self-contained `win-x64` publish output.
 
-Uninstall from Apps & Features, or run the installed `Alpha.Branding.Setup.exe --uninstall`. Uninstall refuses while the application is running, then removes the shortcut, registry entry, and installed files after the setup process exits.
+Features:
+- Native branded WPF graphical setup wizard (no command prompt window).
+- Installs per-user under `%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio`.
+- Requires no administrator access, certificates, or MSIX.
+- Real-time progress bar, status updates, and post-install application launch checkbox.
+- Creates a Start Menu shortcut and Apps & Features uninstall entry in HKCU.
+- Graphical uninstaller UI when run with `--uninstall`.
+- Unattended/silent installation and uninstallation via `--silent` or `/S`.
