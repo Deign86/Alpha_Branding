@@ -22,5 +22,5 @@ Scope: Fork ownership, inspect and migrate Alpha_Branding to validated native WP
 - [x] G6: Repository has no Tauri, Electron, WebView2, or webview-based application UI or dependency path.
   EVIDENCE: `git grep -n -i -E 'Tauri|Electron|WebView2|webview|React|Vite|Next\\.js|TypeScript|Node\\.js'` excluding planning docs returned no matches; application UI is WPF/XAML only.
 
-- [ ] G7: Intended changes are committed on `chore/native-windows-app-and-guardrails`, pushed to the authenticated fork, and a PR is open against its default branch.
-  EVIDENCE: pending release operations.
+- [x] G7: Intended changes are committed on `chore/native-windows-app-and-guardrails`, pushed to the authenticated fork, and a PR is open against its default branch.
+  EVIDENCE: commit `106b13a7ab1464a5ef965c955b480fc8c20eb67d` pushed successfully; branch tracks `origin/chore/native-windows-app-and-guardrails`; PR opened at `https://github.com/Deign86/Alpha_Branding/pull/1` against `main`.
