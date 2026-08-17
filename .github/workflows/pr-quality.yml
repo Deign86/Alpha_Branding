@@ -29,8 +29,12 @@ jobs:
       - name: Native application dependency scan
         shell: pwsh
         run: |
-          $matches = git grep -n -i -E 'Tauri|Electron|WebView2|webview|React|Vite|Next\.js|TypeScript|Node\.js' -- src tests || $null
-          if ($matches) { Write-Error $matches; exit 1 }
+          $forbidden = git grep -n -i -E 'Tauri|Electron|WebView2|webview|React|Vite|Next\.js|TypeScript|Node\.js' -- src tests
+          if ($LASTEXITCODE -eq 0) {
+            Write-Error "Forbidden web/wrapper framework references found:`n$forbidden"
+            exit 1
+          }
+          exit 0
       - name: Anti-slop review
         uses: peakoss/anti-slop@v0
         with:
