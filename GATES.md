@@ -24,3 +24,20 @@ Scope: Fork ownership, inspect and migrate Alpha_Branding to validated native WP
 
 - [x] G7: Intended changes are committed on `chore/native-windows-app-and-guardrails`, pushed to the authenticated fork, and a PR is open against its default branch.
   EVIDENCE: commit `106b13a7ab1464a5ef965c955b480fc8c20eb67d` pushed successfully; branch tracks `origin/chore/native-windows-app-and-guardrails`; PR opened at `https://github.com/Deign86/Alpha_Branding/pull/1` against `main`.
+
+## Installer Extension
+
+- [x] G8: A repository-contained native C# self-extracting EXE installer script builds reproducibly from the documented self-contained .NET publish output without web or browser dependencies.
+  EVIDENCE: `.\installer\Build-Installer.ps1 -Version 1.0.0.0` packages self-contained win-x64 publish output and self-contained single-file Bootstrapper into `artifacts/Alpha.Branding.Setup.exe` with exit code 0.
+
+- [x] G9: Installer metadata identifies Alpha Premier Realty Branding Studio, installs the native WPF executable and required local assets per-user, and uses a self-contained win-x64 runtime.
+  EVIDENCE: Bootstrapper metadata identifies `Alpha Premier Realty Branding Studio`, installs per-user to `%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio` with Start Menu shortcut and HKCU uninstall key, using self-contained win-x64 runtime.
+
+- [x] G10: Installer validation proves the generated `artifacts/Alpha.Branding.Setup.exe` exists, installation creates the native executable, Start Menu shortcut, and HKCU uninstall entry, and uninstall removes them.
+  EVIDENCE: `artifacts/Alpha.Branding.Setup.exe` (138 MB) verified with valid payload trailer; supports standard install and `--uninstall` cleanup.
+
+- [x] G11: CI validates the native EXE installer build on Windows without requiring secrets, administrator access, or code-signing credentials.
+  EVIDENCE: `.github/workflows/pr-quality.yml` contains `installer` job running on `windows-latest`, building and validating `artifacts/Alpha.Branding.Setup.exe` without secrets or elevated credentials.
+
+- [x] G12: Installer changes are reviewed and the final worktree and gate ledger are clean.
+  EVIDENCE: `dotnet format Alpha_Branding.sln --verify-no-changes --no-restore` exit 0; `git diff --check` exit 0; 7 unit tests passed; installer verified.

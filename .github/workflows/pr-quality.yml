@@ -44,3 +44,25 @@ jobs:
           min-account-age: 0
           min-profile-completeness: 0
           min-global-merge-ratio: 0
+
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - name: Build EXE installer
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\Build-Installer.ps1 -Version 1.0.0.0
+      - name: Validate EXE installer artifact
+        shell: powershell
+        run: |
+          $path = Join-Path $env:GITHUB_WORKSPACE 'artifacts\Alpha.Branding.Setup.exe'
+          if (-not (Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -le 0) { throw 'EXE installer artifact is missing or empty.' }
+      - name: Upload EXE installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alpha.Branding-Setup
+          path: artifacts/Alpha.Branding.Setup.exe
+          if-no-files-found: error

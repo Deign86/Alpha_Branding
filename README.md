@@ -16,4 +16,16 @@ dotnet restore Alpha_Branding.sln -r win-x64
 dotnet publish src/Alpha.Branding/Alpha.Branding.csproj -c Release -r win-x64 --self-contained false
 ```
 
+## Installer
+
+Build the self-contained, per-user Windows installer from any directory:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\Build-Installer.ps1 -Version 1.0.0.0
+```
+
+The exact output is `artifacts/Alpha.Branding.Setup.exe`. It installs the native WPF application per-user under `%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio`, requires no administrator access, certificates, or MSIX, and creates a Start Menu shortcut and HKCU Apps & Features uninstall entry. Uninstall from Apps & Features or run the installed `Alpha.Branding.Setup.exe --uninstall`; a running application is refused and the setup then removes its files after exit.
+
+See [installer/README.md](installer/README.md) for installer details.
+
 ImageSharp is used only for local composition and WebP encoding because WPF/WIC does not provide a supported built-in WebP encoder. ZIP creation uses `System.IO.Compression`.
