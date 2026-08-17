@@ -275,8 +275,8 @@ try {
     Start-Sleep -Seconds 1
     Get-Process "Alpha.Branding" -ErrorAction SilentlyContinue | Stop-Process -Force
 
-    # SCENARIO 8: Lone Portrait Centering
-    Write-Host "`n--- Scenario 8: Lone Portrait Centering ---" -ForegroundColor Yellow
+    # SCENARIO 8: Single Portrait Duplicate Side-by-Side (Never Lone)
+    Write-Host "`n--- Scenario 8: Single Portrait Duplicate Side-by-Side ---" -ForegroundColor Yellow
     $client.CallTool("windows_launch", @{ app = $appPath; args = @($lonePortraitPath) }) | Out-Null
     Start-Sleep -Seconds 1
     $h5 = $client.GetMainWindowHandle()
@@ -284,7 +284,7 @@ try {
     $snap5 = $client.CallTool("windows_snapshot", @{ handle = $h5 })
     $tree5 = $snap5.result.content[0].text
     $has1LoneSelected = $tree5 -match "1 photo\(s\) selected"
-    Record-Test "Load single lone portrait photo" $has1LoneSelected "Selection summary shows 1 photo selected"
+    Record-Test "Load single portrait photo" $has1LoneSelected "Selection summary shows 1 photo selected"
 
     if ($tree5 -match 'button "APPLY BRANDING".*?\[ref=(.*?)\]') {
         $applyRef5 = $matches[1].Trim()
@@ -293,11 +293,37 @@ try {
         $snap5Post = $client.CallTool("windows_snapshot", @{ handle = $h5 })
         $tree5Post = $snap5Post.result.content[0].text
         $has1LoneResult = $tree5Post -match "Completed 1 image\(s\)\."
-        Record-Test "Lone portrait branding workflow" $has1LoneResult "Lone portrait processed cleanly as 1 centered branded landscape"
+        Record-Test "Single portrait side-by-side branding workflow" $has1LoneResult "Single portrait processed cleanly side-by-side (never lone)"
     }
 
     # Clean close
     $client.CallTool("windows_close", @{ handle = $h5 }) | Out-Null
+    Start-Sleep -Seconds 1
+    Get-Process "Alpha.Branding" -ErrorAction SilentlyContinue | Stop-Process -Force
+
+    # SCENARIO 9: Portrait + Landscape Side-by-Side Pairing
+    Write-Host "`n--- Scenario 9: Portrait + Landscape Side-by-Side Pairing ---" -ForegroundColor Yellow
+    $client.CallTool("windows_launch", @{ app = $appPath; args = @($portrait1Path, $landscapePath) }) | Out-Null
+    Start-Sleep -Seconds 1
+    $h6 = $client.GetMainWindowHandle()
+
+    $snap6 = $client.CallTool("windows_snapshot", @{ handle = $h6 })
+    $tree6 = $snap6.result.content[0].text
+    $has2MixedSelected = $tree6 -match "2 photo\(s\) selected"
+    Record-Test "Load 1 portrait and 1 landscape photo" $has2MixedSelected "Selection summary displays 2 photo(s) selected"
+
+    if ($tree6 -match 'button "APPLY BRANDING".*?\[ref=(.*?)\]') {
+        $applyRef6 = $matches[1].Trim()
+        $client.CallTool("windows_click", @{ ref = $applyRef6 }) | Out-Null
+        Start-Sleep -Seconds 2
+        $snap6Post = $client.CallTool("windows_snapshot", @{ handle = $h6 })
+        $tree6Post = $snap6Post.result.content[0].text
+        $has1MixedPairResult = $tree6Post -match "Completed 1 image\(s\)\."
+        Record-Test "Portrait and Landscape side-by-side pairing" $has1MixedPairResult "Portrait matched with landscape side-by-side into 1 composite output"
+    }
+
+    # Clean close
+    $client.CallTool("windows_close", @{ handle = $h6 }) | Out-Null
     Start-Sleep -Seconds 1
     Get-Process "Alpha.Branding" -ErrorAction SilentlyContinue | Stop-Process -Force
 

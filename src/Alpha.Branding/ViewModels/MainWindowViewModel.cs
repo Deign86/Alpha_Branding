@@ -108,7 +108,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 var item = plan[i];
                 var itemDescription = item switch
                 {
-                    ImageBatchItem.PortraitPair pair => $"Pair: {Path.GetFileName(pair.LeftFilePath)} + {Path.GetFileName(pair.RightFilePath)}",
+                    ImageBatchItem.PortraitPair pair => pair.LeftFilePath == pair.RightFilePath
+                        ? $"Side-by-side: {Path.GetFileName(pair.LeftFilePath)}"
+                        : $"Pair: {Path.GetFileName(pair.LeftFilePath)} + {Path.GetFileName(pair.RightFilePath)}",
                     ImageBatchItem.Landscape landscape => Path.GetFileName(landscape.FilePath),
                     ImageBatchItem.LonePortrait lone => Path.GetFileName(lone.FilePath),
                     _ => string.Empty

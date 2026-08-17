@@ -271,16 +271,37 @@ public class ImageProcessingTests
             Assert.IsType<ImageBatchItem.PortraitPair>(plan4P[0]);
             Assert.IsType<ImageBatchItem.PortraitPair>(plan4P[1]);
 
-            // Case 3: Mixed: L1, P1, L2, P2, P3
+            // Case 3: Mixed: L1, P1, L2, P2, P3 -> P1+P2 pair, P3 matches with L2 side-by-side, L1 remains single
             var planMixed = await ImageProcessingService.PlanBatchAsync(new[] { l1, p1, l2, p2, p3 });
-            Assert.Equal(4, planMixed.Count);
+            Assert.Equal(3, planMixed.Count);
             Assert.IsType<ImageBatchItem.Landscape>(planMixed[0]);
-            var mixedPair = Assert.IsType<ImageBatchItem.PortraitPair>(planMixed[1]);
-            Assert.Equal(p1, mixedPair.LeftFilePath);
-            Assert.Equal(p2, mixedPair.RightFilePath);
-            Assert.IsType<ImageBatchItem.Landscape>(planMixed[2]);
-            var lone = Assert.IsType<ImageBatchItem.LonePortrait>(planMixed[3]);
-            Assert.Equal(p3, lone.FilePath);
+            var mixedPair1 = Assert.IsType<ImageBatchItem.PortraitPair>(planMixed[1]);
+            Assert.Equal(p1, mixedPair1.LeftFilePath);
+            Assert.Equal(p2, mixedPair1.RightFilePath);
+            var mixedPair2 = Assert.IsType<ImageBatchItem.PortraitPair>(planMixed[2]);
+            Assert.Equal(p3, mixedPair2.LeftFilePath);
+            Assert.Equal(l2, mixedPair2.RightFilePath);
+
+            // Case 4: 1 portrait + 1 landscape -> 1 pair side-by-side (never lone)
+            var plan1P1L = await ImageProcessingService.PlanBatchAsync(new[] { p1, l1 });
+            Assert.Single(plan1P1L);
+            var pair1P1L = Assert.IsType<ImageBatchItem.PortraitPair>(plan1P1L[0]);
+            Assert.Equal(p1, pair1P1L.LeftFilePath);
+            Assert.Equal(l1, pair1P1L.RightFilePath);
+
+            // Case 5: 1 landscape + 1 portrait -> 1 pair side-by-side (never lone)
+            var plan1L1P = await ImageProcessingService.PlanBatchAsync(new[] { l1, p1 });
+            Assert.Single(plan1L1P);
+            var pair1L1P = Assert.IsType<ImageBatchItem.PortraitPair>(plan1L1P[0]);
+            Assert.Equal(p1, pair1L1P.LeftFilePath);
+            Assert.Equal(l1, pair1L1P.RightFilePath);
+
+            // Case 6: Single lone portrait (no landscape in batch) -> duplicate side-by-side (never lone)
+            var plan1P = await ImageProcessingService.PlanBatchAsync(new[] { p1 });
+            Assert.Single(plan1P);
+            var pair1P = Assert.IsType<ImageBatchItem.PortraitPair>(plan1P[0]);
+            Assert.Equal(p1, pair1P.LeftFilePath);
+            Assert.Equal(p1, pair1P.RightFilePath);
         }
         finally
         {
@@ -412,6 +433,54 @@ public class ImageProcessingTests
         {
             File.Delete(p1);
             File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task ViewModelApplyPairsPortraitWithLandscapeWhenOddPortraitExists()
+    {
+        var p1 = Path.GetTempFileName();
+        var l1 = Path.GetTempFileName();
+        var overlay = Path.GetTempFileName();
+
+        try
+        {
+            using (var portrait = new Image<Rgba32>(600, 1000, new Rgba32(255, 0, 0, 255)))
+                await portrait.SaveAsPngAsync(p1);
+            using (var landscape = new Image<Rgba32>(1200, 1000, new Rgba32(0, 255, 0, 255)))
+                await landscape.SaveAsPngAsync(l1);
+            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+                await frame.SaveAsPngAsync(overlay);
+
+            var vm = new MainWindowViewModel(new ImageProcessingService())
+            {
+                SelectedFiles = new[] { p1, l1 },
+                Prefix = "Listing"
+            };
+
+            await vm.ApplyAsync(overlay);
+
+            // 1 portrait + 1 landscape should be paired side-by-side into 1 output
+            Assert.Single(vm.Results);
+            Assert.Equal("Listing_01.jpg", vm.Results[0].FileName);
+
+            using var decoded = Image.Load<Rgba32>(vm.Results[0].ImageBytes);
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+
+            // Left side pixel (x=200, y=500) contains red portrait
+            var leftPixel = decoded[200, 500];
+            Assert.True(leftPixel.R > 200);
+
+            // Right side pixel (x=900, y=500) contains green landscape
+            var rightPixel = decoded[900, 500];
+            Assert.True(rightPixel.G > 200);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(l1);
             File.Delete(overlay);
         }
     }

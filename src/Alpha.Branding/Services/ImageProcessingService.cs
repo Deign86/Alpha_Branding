@@ -46,7 +46,7 @@ public sealed class ImageProcessingService
     {
         if (filePaths.Count == 0) return Array.Empty<ImageBatchItem>();
 
-        var orientations = new (string Path, bool IsPortrait)[filePaths.Count];
+        var orientations = new (string Path, bool IsPortrait, int Index)[filePaths.Count];
         for (var i = 0; i < filePaths.Count; i++)
         {
             var path = filePaths[i];
@@ -59,49 +59,54 @@ public sealed class ImageProcessingService
             {
                 // Fallback to landscape if orientation check fails
             }
-            orientations[i] = (path, isPortrait);
+            orientations[i] = (path, isPortrait, i);
         }
 
-        var items = new List<ImageBatchItem>();
-        var consumed = new bool[filePaths.Count];
+        var portraitList = orientations.Where(o => o.IsPortrait).ToList();
+        var landscapeList = orientations.Where(o => !o.IsPortrait).ToList();
 
-        for (var i = 0; i < filePaths.Count; i++)
+        var plannedItems = new List<(int Order, ImageBatchItem Item)>();
+
+        // 1. Pair up portraits with each other
+        var pIdx = 0;
+        while (pIdx + 1 < portraitList.Count)
         {
-            if (consumed[i]) continue;
+            var pLeft = portraitList[pIdx];
+            var pRight = portraitList[pIdx + 1];
+            plannedItems.Add((pLeft.Index, new ImageBatchItem.PortraitPair(pLeft.Path, pRight.Path)));
+            pIdx += 2;
+        }
 
-            var (path, isPortrait) = orientations[i];
-            if (!isPortrait)
+        // 2. If an odd portrait remains, match it with a landscape photo so it is never lone
+        if (pIdx < portraitList.Count)
+        {
+            var leftoverPortrait = portraitList[pIdx];
+            if (landscapeList.Count > 0)
             {
-                items.Add(new ImageBatchItem.Landscape(path));
-                consumed[i] = true;
+                // Pair with the closest or last landscape photo
+                var matchedLandscape = landscapeList[^1];
+                landscapeList.RemoveAt(landscapeList.Count - 1);
+                var minOrder = Math.Min(leftoverPortrait.Index, matchedLandscape.Index);
+                plannedItems.Add((minOrder, new ImageBatchItem.PortraitPair(leftoverPortrait.Path, matchedLandscape.Path)));
             }
             else
             {
-                var pairIndex = -1;
-                for (var j = i + 1; j < filePaths.Count; j++)
-                {
-                    if (!consumed[j] && orientations[j].IsPortrait)
-                    {
-                        pairIndex = j;
-                        break;
-                    }
-                }
-
-                if (pairIndex != -1)
-                {
-                    items.Add(new ImageBatchItem.PortraitPair(path, orientations[pairIndex].Path));
-                    consumed[i] = true;
-                    consumed[pairIndex] = true;
-                }
-                else
-                {
-                    items.Add(new ImageBatchItem.LonePortrait(path));
-                    consumed[i] = true;
-                }
+                // No landscape photo exists; duplicate side-by-side so it is never lone
+                plannedItems.Add((leftoverPortrait.Index, new ImageBatchItem.PortraitPair(leftoverPortrait.Path, leftoverPortrait.Path)));
             }
         }
 
-        return items;
+        // 3. Add remaining landscape photos as single landscape items
+        foreach (var landscape in landscapeList)
+        {
+            plannedItems.Add((landscape.Index, new ImageBatchItem.Landscape(landscape.Path)));
+        }
+
+        // 4. Return items sorted by original input file order
+        return plannedItems
+            .OrderBy(p => p.Order)
+            .Select(p => p.Item)
+            .ToArray();
     }
 
     public async Task<BrandedImage> ProcessAsync(string inputPath, string overlayPath, string? prefix, int index, int total, CancellationToken cancellationToken = default)
@@ -118,7 +123,7 @@ public sealed class ImageProcessingService
 
         if (isPortrait)
         {
-            return await ProcessLonePortraitAsync(inputPath, overlayPath, prefix, index, total, cancellationToken);
+            return await ProcessPortraitPairAsync(inputPath, inputPath, overlayPath, prefix, index, total, cancellationToken);
         }
 
         return await ProcessLandscapeAsync(inputPath, overlayPath, prefix, index, total, cancellationToken);
