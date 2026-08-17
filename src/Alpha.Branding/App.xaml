@@ -1,0 +1,8 @@
+<Application x:Class="Alpha.Branding.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <SolidColorBrush x:Key="Gold" Color="#D4AF37"/>
+        <SolidColorBrush x:Key="Charcoal" Color="#202124"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <local:InverseBooleanConverter x:Key="InverseBooleanConverter" xmlns:local="clr-namespace:Alpha.Branding"/>
+    </Application.Resources>
+</Application>

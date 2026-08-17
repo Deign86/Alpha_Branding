@@ -1,0 +1,46 @@
+name: PR quality
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      - name: Restore
+        run: dotnet restore Alpha_Branding.sln
+      - name: Build
+        run: dotnet build Alpha_Branding.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test Alpha_Branding.sln --configuration Release --no-build
+      - name: Format check
+        run: dotnet format Alpha_Branding.sln --verify-no-changes --no-restore
+      - name: Publish
+        run: dotnet publish src/Alpha.Branding/Alpha.Branding.csproj --configuration Release --runtime win-x64 --self-contained false --output artifacts/publish
+      - name: Package vulnerability audit
+        run: dotnet list Alpha_Branding.sln package --vulnerable --include-transitive
+      - name: Native application dependency scan
+        shell: pwsh
+        run: |
+          $matches = git grep -n -i -E 'Tauri|Electron|WebView2|webview|React|Vite|Next\.js' -- ':!README.md' ':!PLAN.md' ':!GATES.md' || $null
+          if ($matches) { Write-Error $matches; exit 1 }
+      - name: Anti-slop review
+        uses: peakoss/anti-slop@v0
+        with:
+          github-token: ${{ github.token }}
+          require-description: true
+          require-conventional-title: true
+          require-pr-template: true
+          blocked-paths: ""
+          close-pr: false
+          lock-pr: false
+          min-account-age: 0
+          min-profile-completeness: 0
+          min-global-merge-ratio: 0
