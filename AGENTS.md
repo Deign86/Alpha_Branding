@@ -34,3 +34,8 @@ Do not add unrequested factories, wrappers, configuration layers, or scaffolding
 - For behavior changes, add proportionate tests; if a GUI-only behavior cannot be automated, record the exact manual limitation.
 - Complete the requested implementation, validation, diff review, commit, push, and PR handoff rather than claiming partial setup.
 - Report actual commands and results, including warnings, package advisories, environment limitations, and residual risks.
+
+## Taste Skill
+
+- Project-wide UI and visual-design work must follow `.agents/skills/design-taste-frontend/SKILL.md` and `.agents/skills/redesign-existing-projects/SKILL.md`.
+- Keep the upstream skill instructions unchanged; translate their guidance into native WPF/XAML patterns for this repository.
