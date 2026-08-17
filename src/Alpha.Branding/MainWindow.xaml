@@ -11,7 +11,8 @@
         FontFamily="Segoe UI, Poppins, sans-serif"
         AllowDrop="True"
         DragOver="Window_DragOver"
-        Drop="Window_Drop">
+        Drop="Window_Drop"
+        KeyDown="Window_KeyDown">
 
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -89,6 +90,7 @@
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding SelectionSummary}"
+                                   AutomationProperties.AutomationId="SelectionSummaryTextBlock"
                                    Foreground="{StaticResource GoldLight}"
                                    FontSize="12"
                                    FontWeight="Bold"
@@ -117,6 +119,8 @@
                     <!-- File Selection & Prefix Input -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="SELECT PHOTOS"
+                                AutomationProperties.AutomationId="SelectPhotosButton"
+                                ToolTip="Select property photographs to brand (Ctrl+O)"
                                 Click="SelectPhotos_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource PrimaryButton}"
@@ -130,6 +134,8 @@
                                        Margin="0,0,0,5"/>
                             <StackPanel Orientation="Horizontal">
                                 <TextBox Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.AutomationId="PrefixTextBox"
+                                         ToolTip="Custom filename prefix for output assets. Special characters are automatically sanitized."
                                          Width="230"
                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"/>
                                 <Border Background="{StaticResource GoldSubtle}"
@@ -141,25 +147,89 @@
                                         VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Preview: " Foreground="{StaticResource TextMuted}" FontSize="12"/>
-                                        <TextBlock Text="{Binding PatternPreview}" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding PatternPreview}"
+                                                   AutomationProperties.AutomationId="PatternPreviewTextBlock"
+                                                   Foreground="{StaticResource GoldLight}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Action Buttons -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Button Content="APPLY BRANDING"
-                                Click="Apply_Click"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                                Style="{StaticResource PrimaryButton}"
-                                Margin="0,0,12,0"/>
+                    <!-- Action Buttons & Pre-apply Session Indicator -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                        <!-- Session notice / Unsaved edits warning indicator -->
+                        <Border x:Name="SessionNoticeBorder"
+                                AutomationProperties.AutomationId="SessionStatusIndicatorBorder"
+                                Visibility="{Binding HasApplyHint, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12,6"
+                                Margin="0,0,0,10"
+                                HorizontalAlignment="Right">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
+                                            <Setter Property="Background" Value="#2D1A10"/>
+                                            <Setter Property="BorderBrush" Value="#E07A2B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{StaticResource Gold}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
+                                                    <Setter Property="Fill" Value="#F59E0B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock x:Name="ApplyStatusHintTextBlock"
+                                           Text="{Binding ApplyStatusHint}"
+                                           AutomationProperties.AutomationId="ApplyStatusHintTextBlock"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="#FBBF24"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
 
-                        <Button Content="EXPORT ZIP"
-                                Click="Export_Click"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                                Style="{StaticResource SecondaryButton}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="APPLY BRANDING"
+                                    AutomationProperties.AutomationId="ApplyBrandingButton"
+                                    ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
+                                    Click="Apply_Click"
+                                    IsEnabled="{Binding CanApply}"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Margin="0,0,12,0"/>
+
+                            <Button Content="EXPORT ZIP"
+                                    AutomationProperties.AutomationId="ExportZipButton"
+                                    ToolTip="Package all processed branded images into a single ZIP archive (Ctrl+E)"
+                                    Click="Export_Click"
+                                    IsEnabled="{Binding CanExport}"
+                                    Style="{StaticResource SecondaryButton}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
 
@@ -174,10 +244,15 @@
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="STATUS: " Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold" Margin="0,0,6,0"/>
-                        <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimary}" FontSize="12" FontWeight="Medium"/>
+                        <TextBlock Text="{Binding Status}"
+                                   AutomationProperties.AutomationId="StatusTextBlock"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="12"
+                                   FontWeight="Medium"/>
                     </StackPanel>
 
                     <ProgressBar Grid.Column="1"
+                                 AutomationProperties.AutomationId="ProgressBar"
                                  Value="{Binding Progress, Mode=OneWay}"
                                  Height="8"
                                  VerticalAlignment="Center"/>
@@ -216,6 +291,8 @@
                                LineHeight="21"
                                Margin="0,0,0,26"/>
                     <Button Content="SELECT PHOTOS TO BEGIN"
+                            AutomationProperties.AutomationId="EmptyStateSelectButton"
+                            ToolTip="Choose photos from your computer to start (Ctrl+O)"
                             Click="SelectPhotos_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                             Style="{StaticResource PrimaryButton}"
@@ -225,10 +302,12 @@
             </Border>
 
             <!-- Results Grid Display -->
-            <ScrollViewer Visibility="{Binding Results.Count, Converter={StaticResource CountToVisibilityConverter}}"
+            <ScrollViewer AutomationProperties.AutomationId="ResultsScrollViewer"
+                          Visibility="{Binding Results.Count, Converter={StaticResource CountToVisibilityConverter}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Results}">
+                <ItemsControl ItemsSource="{Binding Results}"
+                              AutomationProperties.AutomationId="ResultsItemsControl">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel/>
@@ -242,7 +321,8 @@
                                     BorderBrush="{StaticResource BorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="12"
-                                    Padding="10">
+                                    Padding="10"
+                                    AutomationProperties.Name="{Binding FileName}">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
@@ -267,6 +347,7 @@
                                     <!-- Filename and Details -->
                                     <Grid Margin="0,10,0,10">
                                         <TextBlock Text="{Binding FileName}"
+                                                   AutomationProperties.AutomationId="ResultFileNameTextBlock"
                                                    Foreground="{StaticResource GoldLight}"
                                                    FontWeight="Bold"
                                                    FontSize="12"
@@ -283,6 +364,8 @@
 
                                         <Button Grid.Column="0"
                                                 Content="PREVIEW"
+                                                AutomationProperties.AutomationId="PreviewButton"
+                                                ToolTip="Open full-resolution preview and inspector"
                                                 Click="Preview_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallActionButton}"
@@ -290,6 +373,8 @@
 
                                         <Button Grid.Column="1"
                                                 Content="SAVE"
+                                                AutomationProperties.AutomationId="SaveButton"
+                                                ToolTip="Save single high-resolution branded photo"
                                                 Click="Save_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallGoldButton}"/>

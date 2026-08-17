@@ -86,6 +86,10 @@
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldLight}"/>
+                                <Setter TargetName="border" Property="Background" Value="#252730"/>
+                            </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#121316"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
@@ -129,6 +133,10 @@
                                 <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
                                 <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource GoldGradientHover}"/>
+                            </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldDark}"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
@@ -138,6 +146,31 @@
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Signature ToolTip Style -->
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter Content="{TemplateBinding Content}"/>
+                        </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>

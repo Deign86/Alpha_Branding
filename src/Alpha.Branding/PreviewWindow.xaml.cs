@@ -23,6 +23,7 @@ public partial class PreviewWindow : System.Windows.Window, INotifyPropertyChang
 
     public BrandedImage? Current => _results.Count == 0 ? null : _results[_selectedIndex];
     public string PositionText => _results.Count == 0 ? "0 of 0" : $"{_selectedIndex + 1} of {_results.Count}";
+    public bool HasMultiplePhotos => _results.Count > 1;
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void Previous_Click(object sender, System.Windows.RoutedEventArgs e) => Move(-1);

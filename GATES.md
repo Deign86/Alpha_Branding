@@ -41,3 +41,37 @@ Scope: Fork ownership, inspect and migrate Alpha_Branding to validated native WP
 
 - [x] G12: Installer changes are reviewed and the final worktree and gate ledger are clean.
   EVIDENCE: `dotnet format Alpha_Branding.sln --verify-no-changes --no-restore` exit 0; `git diff --check` exit 0; 7 unit tests passed; installer verified.
+
+## Anti-Slop, Ponytail & Unlazy Audit Extension
+
+- [x] G13: Anti-slop audit rejects low-evidence patterns, type bluffing, unsafe directory crash logging, and cancellation swallowing.
+  EVIDENCE: `ImageProcessingService` propagates `OperationCanceledException` across catch filters; `App.xaml.cs` crash logging writes to `%LOCALAPPDATA%` with `%TEMP%` fallback; `InstallerService` replaces `!` type assertions with explicit null checks.
+
+- [x] G14: Ponytail audit eliminates redundant double-encoding and unneeded allocations.
+  EVIDENCE: `CreateBrandedImageAsync` and `CreatePreview` construct `BitmapImage` directly from encoded JPEG byte array, eliminating the redundant 1200x1000 PNG re-encoding pipeline.
+
+- [x] G15: Unlazy test suite and validation coverage expands to 28 passing tests with 0 failures and 0 warnings.
+  CHECK: `dotnet test Alpha_Branding.sln --configuration Release`
+  EXPECT: `Passed! - Failed: 0, Passed: 28`
+  EVIDENCE: 28 tests passed in 17s covering filename sanitation, window instantiation, property change notification, portrait pair detection and compositing, ZIP scoped safety, UI automation workflows, cancellation token propagation, JPEG-based preview creation, and resilient crash logging.
+
+- [x] G16: Full Release build, code formatting, and standalone EXE installer build pass cleanly.
+  EVIDENCE: `dotnet format --verify-no-changes` exit 0; `dotnet build --configuration Release` exit 0 (0 warnings, 0 errors); `Build-Installer.ps1 -Version 1.0.0.0` generated `artifacts/Alpha.Branding.Setup.exe` (143,852,969 bytes) with valid payload trailer.
+
+## Safe Photo Selection & Branding Workflow Extension
+
+- [x] G17: Reliable dirty-state tracking explicitly captures session modifications (prefix adjustments, individual item changes) and resets upon successful save/export or explicit discard.
+  EVIDENCE: `MainWindowViewModel` provides `HasUnsavedEdits` with automated dirty tracking across collection changes and item mutations; tests in `SessionWorkflowSafetyTests` verify transitions across all lifecycles.
+
+- [x] G18: Apply Branding flow protects active sessions with unsaved edits via a non-technical confirmation modal offering Cancel, Discard & Continue, and Save & Continue.
+  CHECK: `dotnet test Alpha_Branding.sln --configuration Release`
+  EXPECT: `Passed! - Failed: 0, Passed: 37`
+  EVIDENCE: 37 automated tests passed in 48s, verifying direct execution on clean sessions, modal invocation on dirty sessions, cancel retention, discard execution, save-and-continue export, export error recovery, and FlaUI UI automation.
+
+- [x] G19: Visual status hint dynamically displays new selection count and amber warning on unsaved edits before applying.
+  EVIDENCE: `MainWindow.xaml` binds `ApplyStatusHint`, `HasApplyWarning`, and `HasApplyHint` to responsive, accessible XAML elements verified by UI automation.
+
+- [x] G20: Standalone installer build and formatting validation pass with 0 warnings.
+  EVIDENCE: `dotnet format --verify-no-changes` exit 0; `Build-Installer.ps1 -Version 1.0.0.0` generated `artifacts/Alpha.Branding.Setup.exe` (144,156,527 bytes).
+
+
