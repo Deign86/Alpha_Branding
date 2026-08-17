@@ -1,8 +1,9 @@
 using Alpha.Branding.Models;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.IO;
 using System.Windows.Media.Imaging;
 
 namespace Alpha.Branding.Services;
@@ -23,11 +24,11 @@ public sealed class ImageProcessingService
         photo.Mutate(context => context.DrawImage(frame, new Point(0, 0), 1f));
 
         await using var output = new MemoryStream();
-        await photo.SaveAsWebpAsync(output, new WebpEncoder { Quality = 80 }, cancellationToken);
+        await photo.SaveAsJpegAsync(output, new JpegEncoder { Quality = 90 }, cancellationToken);
         return new BrandedImage
         {
             FileName = FileNameGenerator.Generate(prefix, index, total),
-            WebpBytes = output.ToArray(),
+            ImageBytes = output.ToArray(),
             Preview = CreatePreview(photo),
             SequenceIndex = index,
             BatchSize = total

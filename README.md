@@ -9,10 +9,10 @@ Alpha Premier Realty Branding Studio is a native Windows desktop application for
 - Native multi-file image selection.
 - Applies the local Alpha branding frame to each selected photo.
 - Preserves the original fixed output contract: images are stretched to `1200x1000`.
-- Encodes output as WebP at quality 80.
+- Encodes output as high-quality JPG.
 - Generates safe sequential filenames with Windows/ZIP-safe prefix handling.
 - Provides live output previews and previous/next full-size preview navigation.
-- Saves individual branded WebP files through native Save dialogs.
+- Saves individual branded JPG files through native Save dialogs.
 - Exports all processed images to a ZIP archive.
 - Processes files locally; there is no server, cloud upload, database, account, or persistence layer.
 
@@ -21,7 +21,7 @@ Alpha Premier Realty Branding Studio is a native Windows desktop application for
 - C#
 - .NET 8
 - WPF and XAML
-- `SixLabors.ImageSharp` for local image composition and WebP encoding
+- `SixLabors.ImageSharp` for local image composition and JPEG encoding
 - `System.IO.Compression` for ZIP export
 - xUnit for focused filename, image-processing, overlay, and ZIP tests
 

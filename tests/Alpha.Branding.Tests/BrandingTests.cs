@@ -3,8 +3,9 @@ using Alpha.Branding.Services;
 using Alpha.Branding.ViewModels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
+using System.IO;
 using System.IO.Compression;
 
 namespace Alpha.Branding.Tests;
@@ -14,8 +15,8 @@ public class FileNameGeneratorTests
     [Fact]
     public void SanitizesControlsSeparatorsAndTrailingPunctuation()
     {
-        Assert.Equal("Listing_01.webp", FileNameGenerator.Generate(" Listing:/\0. ", 0, 10));
-        Assert.Equal("Home_100.webp", FileNameGenerator.Generate("Home", 99, 100));
+        Assert.Equal("Listing_01.jpg", FileNameGenerator.Generate(" Listing:/\0. ", 0, 10));
+        Assert.Equal("Home_100.jpg", FileNameGenerator.Generate("Home", 99, 100));
     }
 
     [Theory]
@@ -28,17 +29,17 @@ public class FileNameGeneratorTests
     [Fact]
     public void CapsLongPrefixAndSanitizesExtension()
     {
-        var name = FileNameGenerator.Generate(new string('x', 500), 0, 1, ".WEBP!");
+        var name = FileNameGenerator.Generate(new string('x', 500), 0, 1, ".JPG!");
 
         Assert.Equal(120, name.Length);
-        Assert.EndsWith("_01.webp", name);
+        Assert.EndsWith("_01.jpg", name);
     }
 }
 
 public class ImageProcessingTests
 {
     [Fact]
-    public async Task ProcessingProducesExactWebpDimensionsAndCompositesOverlay()
+    public async Task ProcessingProducesExactJpegDimensionsAndCompositesOverlay()
     {
         var input = Path.GetTempFileName();
         var overlay = Path.GetTempFileName();
@@ -50,12 +51,12 @@ public class ImageProcessingTests
                 await frame.SaveAsPngAsync(overlay);
 
             var result = await new ImageProcessingService().ProcessAsync(input, overlay, "Test", 0, 1);
-            using var decoded = Image.Load<Rgba32>(result.WebpBytes);
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
             var centerPixel = decoded[600, 500];
 
             Assert.Equal(1200, decoded.Width);
             Assert.Equal(1000, decoded.Height);
-            Assert.Equal(WebpFormat.Instance, Image.DetectFormat(result.WebpBytes));
+            Assert.Equal(JpegFormat.Instance, Image.DetectFormat(result.ImageBytes));
             Assert.True(centerPixel.B > centerPixel.R, "The opaque blue overlay should be visible in the composed output.");
         }
         finally
@@ -79,7 +80,7 @@ public class ZipSafetyTests
             vm.Results.Add(new BrandedImage
             {
                 FileName = FileNameGenerator.Generate("../unsafe", 0, 1),
-                WebpBytes = bytes,
+                ImageBytes = bytes,
                 Preview = new System.Windows.Media.Imaging.BitmapImage()
             });
             vm.Prefix = "../unsafe";

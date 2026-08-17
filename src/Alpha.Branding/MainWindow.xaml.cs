@@ -2,6 +2,7 @@ using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using Alpha.Branding.ViewModels;
 using Microsoft.Win32;
+using System.IO;
 using System.Windows;
 
 namespace Alpha.Branding;
@@ -44,7 +45,7 @@ public partial class MainWindow : Window
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: BrandedImage image }) return;
-        var dialog = new SaveFileDialog { FileName = image.FileName, Filter = "WebP image|*.webp" };
+        var dialog = new SaveFileDialog { FileName = image.FileName, Filter = "JPEG image|*.jpg;*.jpeg|All files|*.*" };
         if (dialog.ShowDialog() == true)
         {
             try { await _viewModel.SaveImageAsync(image, dialog.FileName); }
