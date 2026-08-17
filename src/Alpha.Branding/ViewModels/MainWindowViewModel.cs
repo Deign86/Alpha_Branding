@@ -34,9 +34,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public string PatternPreview => FileNameGenerator.Generate(Prefix, 0, Results.Count > 0 ? Results.Count : 10);
-    public bool IsBusy { get => _isBusy; private set { _isBusy = value; OnPropertyChanged(); } }
-    public string Status { get => _status; private set { _status = value; OnPropertyChanged(); } }
-    public double Progress { get => _progress; private set { _progress = value; OnPropertyChanged(); } }
+    public bool IsBusy
+    {
+        get => _isBusy;
+        private set
+        {
+            if (_isBusy != value)
+            {
+                _isBusy = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CanApply));
+                OnPropertyChanged(nameof(CanExport));
+            }
+        }
+    }
+
+    public string Status
+    {
+        get => _status;
+        private set
+        {
+            _status = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public double Progress
+    {
+        get => _progress;
+        private set
+        {
+            _progress = value;
+            OnPropertyChanged();
+        }
+    }
 
     public IReadOnlyList<string> SelectedFiles
     {
@@ -46,8 +77,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _selectedFiles = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectionSummary));
+            OnPropertyChanged(nameof(CanApply));
         }
     }
+
+    public bool CanApply => !IsBusy && SelectedFiles.Count > 0;
+    public bool CanExport => !IsBusy && Results.Count > 0;
 
     public string SelectionSummary => SelectedFiles.Count == 0 ? "No photos selected" : $"{SelectedFiles.Count} photo(s) selected";
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -98,6 +133,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
 
             RenameResults();
+            OnPropertyChanged(nameof(CanExport));
             Status = failures == 0
                 ? $"Completed {Results.Count} image(s)."
                 : $"Completed {Results.Count} image(s); skipped {failures}.";

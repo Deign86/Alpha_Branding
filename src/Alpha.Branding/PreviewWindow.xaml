@@ -107,6 +107,8 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Content="◀  PREVIOUS"
                             AutomationProperties.AutomationId="PreviewPreviousButton"
+                            ToolTip="View previous photo (Left Arrow)"
+                            IsEnabled="{Binding HasMultiplePhotos}"
                             Click="Previous_Click"
                             Style="{StaticResource SecondaryButton}"
                             Padding="18,9"
@@ -114,6 +116,8 @@
 
                     <Button Content="NEXT  ▶"
                             AutomationProperties.AutomationId="PreviewNextButton"
+                            ToolTip="View next photo (Right Arrow)"
+                            IsEnabled="{Binding HasMultiplePhotos}"
                             Click="Next_Click"
                             Style="{StaticResource PrimaryButton}"
                             Padding="22,9"/>

@@ -120,6 +120,64 @@ public class UiInitializationTests
         thread.Start();
         thread.Join();
     }
+
+    [Fact]
+    public void MainWindowViewModelCanApplyAndCanExportStateTransitions()
+    {
+        var vm = new MainWindowViewModel(new ImageProcessingService());
+        Assert.False(vm.CanApply);
+        Assert.False(vm.CanExport);
+
+        vm.SelectedFiles = new[] { "photo1.jpg" };
+        Assert.True(vm.CanApply);
+        Assert.False(vm.CanExport);
+
+        vm.Results.Add(new BrandedImage
+        {
+            FileName = "Test_01.jpg",
+            ImageBytes = Array.Empty<byte>(),
+            Preview = new System.Windows.Media.Imaging.BitmapImage(),
+            SequenceIndex = 0,
+            BatchSize = 1
+        });
+        Assert.True(vm.CanExport);
+    }
+
+    [Fact]
+    public void PreviewWindowHasMultiplePhotosReflectsResultsCount()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            if (System.Windows.Application.Current == null)
+                _ = new App();
+
+            var item1 = new BrandedImage
+            {
+                FileName = "Test_01.jpg",
+                ImageBytes = Array.Empty<byte>(),
+                Preview = new System.Windows.Media.Imaging.BitmapImage(),
+                SequenceIndex = 0,
+                BatchSize = 1
+            };
+            var item2 = new BrandedImage
+            {
+                FileName = "Test_02.jpg",
+                ImageBytes = Array.Empty<byte>(),
+                Preview = new System.Windows.Media.Imaging.BitmapImage(),
+                SequenceIndex = 1,
+                BatchSize = 2
+            };
+
+            var singlePreview = new PreviewWindow(new[] { item1 }, 0);
+            Assert.False(singlePreview.HasMultiplePhotos);
+
+            var multiPreview = new PreviewWindow(new[] { item1, item2 }, 0);
+            Assert.True(multiPreview.HasMultiplePhotos);
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
 }
 
 

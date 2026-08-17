@@ -11,7 +11,8 @@
         FontFamily="Segoe UI, Poppins, sans-serif"
         AllowDrop="True"
         DragOver="Window_DragOver"
-        Drop="Window_Drop">
+        Drop="Window_Drop"
+        KeyDown="Window_KeyDown">
 
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -119,6 +120,7 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="SELECT PHOTOS"
                                 AutomationProperties.AutomationId="SelectPhotosButton"
+                                ToolTip="Select property photographs to brand (Ctrl+O)"
                                 Click="SelectPhotos_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource PrimaryButton}"
@@ -133,6 +135,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBox Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
                                          AutomationProperties.AutomationId="PrefixTextBox"
+                                         ToolTip="Custom filename prefix for output assets. Special characters are automatically sanitized."
                                          Width="230"
                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"/>
                                 <Border Background="{StaticResource GoldSubtle}"
@@ -159,15 +162,17 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
                         <Button Content="APPLY BRANDING"
                                 AutomationProperties.AutomationId="ApplyBrandingButton"
+                                ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
                                 Click="Apply_Click"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                IsEnabled="{Binding CanApply}"
                                 Style="{StaticResource PrimaryButton}"
                                 Margin="0,0,12,0"/>
 
                         <Button Content="EXPORT ZIP"
                                 AutomationProperties.AutomationId="ExportZipButton"
+                                ToolTip="Package all processed branded images into a single ZIP archive (Ctrl+E)"
                                 Click="Export_Click"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                IsEnabled="{Binding CanExport}"
                                 Style="{StaticResource SecondaryButton}"/>
                     </StackPanel>
                 </Grid>
@@ -231,6 +236,7 @@
                                Margin="0,0,0,26"/>
                     <Button Content="SELECT PHOTOS TO BEGIN"
                             AutomationProperties.AutomationId="EmptyStateSelectButton"
+                            ToolTip="Choose photos from your computer to start (Ctrl+O)"
                             Click="SelectPhotos_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                             Style="{StaticResource PrimaryButton}"
@@ -259,7 +265,8 @@
                                     BorderBrush="{StaticResource BorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="12"
-                                    Padding="10">
+                                    Padding="10"
+                                    AutomationProperties.Name="{Binding FileName}">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
@@ -302,6 +309,7 @@
                                         <Button Grid.Column="0"
                                                 Content="PREVIEW"
                                                 AutomationProperties.AutomationId="PreviewButton"
+                                                ToolTip="Open full-resolution preview and inspector"
                                                 Click="Preview_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallActionButton}"
@@ -310,6 +318,7 @@
                                         <Button Grid.Column="1"
                                                 Content="SAVE"
                                                 AutomationProperties.AutomationId="SaveButton"
+                                                ToolTip="Save single high-resolution branded photo"
                                                 Click="Save_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallGoldButton}"/>

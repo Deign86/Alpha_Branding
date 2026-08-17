@@ -112,5 +112,32 @@ public partial class MainWindow : Window
             LoadFiles(files);
         }
     }
+
+    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+
+        if (e.KeyboardDevice.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.O)
+        {
+            SelectPhotos_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+        }
+        else if ((e.KeyboardDevice.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.B) || e.Key == System.Windows.Input.Key.F5)
+        {
+            if (_viewModel.CanApply)
+            {
+                Apply_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+        else if (e.KeyboardDevice.Modifiers == System.Windows.Input.ModifierKeys.Control && (e.Key == System.Windows.Input.Key.E || e.Key == System.Windows.Input.Key.S))
+        {
+            if (_viewModel.CanExport)
+            {
+                Export_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+    }
 }
 
