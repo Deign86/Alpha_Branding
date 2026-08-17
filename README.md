@@ -87,7 +87,7 @@ The installer build works from any current directory when given its script path:
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File .\installer\Build-Installer.ps1 `
-  -Version 1.0.0.0
+  -Version 1.2.0.0
 ```
 
 Output:
