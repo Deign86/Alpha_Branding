@@ -63,13 +63,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var failures = 0;
         try
         {
-            for (var i = 0; i < SelectedFiles.Count; i++)
+            Status = "Analyzing photo orientations…";
+            var plan = await ImageProcessingService.PlanBatchAsync(SelectedFiles, token);
+            var total = plan.Count;
+
+            for (var i = 0; i < total; i++)
             {
                 token.ThrowIfCancellationRequested();
-                Status = $"Processing {i + 1} of {SelectedFiles.Count}…";
+                var item = plan[i];
+                var itemDescription = item switch
+                {
+                    ImageBatchItem.PortraitPair pair => $"Pair: {Path.GetFileName(pair.LeftFilePath)} + {Path.GetFileName(pair.RightFilePath)}",
+                    ImageBatchItem.Landscape landscape => Path.GetFileName(landscape.FilePath),
+                    ImageBatchItem.LonePortrait lone => Path.GetFileName(lone.FilePath),
+                    _ => string.Empty
+                };
+
+                Status = $"Processing {i + 1} of {total} ({itemDescription})…";
                 try
                 {
-                    Results.Add(await _processor.ProcessAsync(SelectedFiles[i], overlayPath, Prefix, i, SelectedFiles.Count, token));
+                    Results.Add(await _processor.ProcessBatchItemAsync(item, overlayPath, Prefix, i, total, token));
                 }
                 catch (OperationCanceledException)
                 {
@@ -78,10 +91,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 catch (Exception ex)
                 {
                     failures++;
-                    Status = $"Skipped {Path.GetFileName(SelectedFiles[i])}: {ex.Message}";
+                    Status = $"Skipped {itemDescription}: {ex.Message}";
                 }
 
-                Progress = (i + 1d) / SelectedFiles.Count * 100;
+                Progress = (i + 1d) / total * 100;
             }
 
             RenameResults();

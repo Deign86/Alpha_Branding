@@ -85,6 +85,211 @@ public class ImageProcessingTests
             File.Delete(overlay);
         }
     }
+
+    [Fact]
+    public async Task DetectsPortraitAndLandscapeCorrectly()
+    {
+        var portraitFile = Path.GetTempFileName();
+        var landscapeFile = Path.GetTempFileName();
+        try
+        {
+            using (var portrait = new Image<Rgba32>(1000, 1500))
+                await portrait.SaveAsPngAsync(portraitFile);
+            using (var landscape = new Image<Rgba32>(1500, 1000))
+                await landscape.SaveAsPngAsync(landscapeFile);
+
+            Assert.True(await ImageProcessingService.IsPortraitAsync(portraitFile));
+            Assert.False(await ImageProcessingService.IsPortraitAsync(landscapeFile));
+        }
+        finally
+        {
+            File.Delete(portraitFile);
+            File.Delete(landscapeFile);
+        }
+    }
+
+    [Fact]
+    public async Task PlanBatchPairsPortraitImagesAndKeepsLandscapeSingle()
+    {
+        var p1 = Path.GetTempFileName();
+        var p2 = Path.GetTempFileName();
+        var p3 = Path.GetTempFileName();
+        var p4 = Path.GetTempFileName();
+        var l1 = Path.GetTempFileName();
+        var l2 = Path.GetTempFileName();
+
+        try
+        {
+            using (var p = new Image<Rgba32>(600, 1000))
+            {
+                await p.SaveAsPngAsync(p1);
+                await p.SaveAsPngAsync(p2);
+                await p.SaveAsPngAsync(p3);
+                await p.SaveAsPngAsync(p4);
+            }
+            using (var l = new Image<Rgba32>(1200, 1000))
+            {
+                await l.SaveAsPngAsync(l1);
+                await l.SaveAsPngAsync(l2);
+            }
+
+            // Case 1: 2 portraits -> 1 pair
+            var plan2P = await ImageProcessingService.PlanBatchAsync(new[] { p1, p2 });
+            Assert.Single(plan2P);
+            var pair = Assert.IsType<ImageBatchItem.PortraitPair>(plan2P[0]);
+            Assert.Equal(p1, pair.LeftFilePath);
+            Assert.Equal(p2, pair.RightFilePath);
+
+            // Case 2: 4 portraits -> 2 pairs
+            var plan4P = await ImageProcessingService.PlanBatchAsync(new[] { p1, p2, p3, p4 });
+            Assert.Equal(2, plan4P.Count);
+            Assert.IsType<ImageBatchItem.PortraitPair>(plan4P[0]);
+            Assert.IsType<ImageBatchItem.PortraitPair>(plan4P[1]);
+
+            // Case 3: Mixed: L1, P1, L2, P2, P3
+            var planMixed = await ImageProcessingService.PlanBatchAsync(new[] { l1, p1, l2, p2, p3 });
+            Assert.Equal(4, planMixed.Count);
+            Assert.IsType<ImageBatchItem.Landscape>(planMixed[0]);
+            var mixedPair = Assert.IsType<ImageBatchItem.PortraitPair>(planMixed[1]);
+            Assert.Equal(p1, mixedPair.LeftFilePath);
+            Assert.Equal(p2, mixedPair.RightFilePath);
+            Assert.IsType<ImageBatchItem.Landscape>(planMixed[2]);
+            var lone = Assert.IsType<ImageBatchItem.LonePortrait>(planMixed[3]);
+            Assert.Equal(p3, lone.FilePath);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(p3);
+            File.Delete(p4);
+            File.Delete(l1);
+            File.Delete(l2);
+        }
+    }
+
+    [Fact]
+    public async Task ProcessPortraitPairCompositesLeftAndRightSideBySide()
+    {
+        var leftFile = Path.GetTempFileName();
+        var rightFile = Path.GetTempFileName();
+        var overlayFile = Path.GetTempFileName();
+
+        try
+        {
+            // Left photo is pure red (255, 0, 0)
+            using (var left = new Image<Rgba32>(600, 1000, new Rgba32(255, 0, 0, 255)))
+                await left.SaveAsPngAsync(leftFile);
+
+            // Right photo is pure green (0, 255, 0)
+            using (var right = new Image<Rgba32>(600, 1000, new Rgba32(0, 255, 0, 255)))
+                await right.SaveAsPngAsync(rightFile);
+
+            // Overlay is transparent with a small blue box at top-right
+            using (var overlay = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+            {
+                overlay[1100, 50] = new Rgba32(0, 0, 255, 255);
+                await overlay.SaveAsPngAsync(overlayFile);
+            }
+
+            var service = new ImageProcessingService();
+            var result = await service.ProcessPortraitPairAsync(leftFile, rightFile, overlayFile, "PairTest", 0, 1);
+
+            Assert.NotNull(result);
+            Assert.Equal("PairTest_01.jpg", result.FileName);
+
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+
+            // Left side pixel (x=200, y=500) should be predominantly Red
+            var leftPixel = decoded[200, 500];
+            Assert.True(leftPixel.R > 200 && leftPixel.G < 50, "Left side should contain left red image.");
+
+            // Right side pixel (x=900, y=500) should be predominantly Green
+            var rightPixel = decoded[900, 500];
+            Assert.True(rightPixel.G > 200 && rightPixel.R < 50, "Right side should contain right green image.");
+        }
+        finally
+        {
+            File.Delete(leftFile);
+            File.Delete(rightFile);
+            File.Delete(overlayFile);
+        }
+    }
+
+    [Fact]
+    public async Task ProcessLonePortraitCompositesCentered()
+    {
+        var loneFile = Path.GetTempFileName();
+        var overlayFile = Path.GetTempFileName();
+
+        try
+        {
+            using (var photo = new Image<Rgba32>(600, 1000, new Rgba32(255, 0, 0, 255)))
+                await photo.SaveAsPngAsync(loneFile);
+            using (var overlay = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+                await overlay.SaveAsPngAsync(overlayFile);
+
+            var service = new ImageProcessingService();
+            var result = await service.ProcessLonePortraitAsync(loneFile, overlayFile, "LoneTest", 0, 1);
+
+            Assert.NotNull(result);
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+
+            // Center pixel (x=600, y=500) should be Red
+            var centerPixel = decoded[600, 500];
+            Assert.True(centerPixel.R > 200);
+
+            // Left edge pixel (x=50, y=500) should be the dark background
+            var darkEdgePixel = decoded[50, 500];
+            Assert.True(darkEdgePixel.R < 30 && darkEdgePixel.G < 30 && darkEdgePixel.B < 30);
+        }
+        finally
+        {
+            File.Delete(loneFile);
+            File.Delete(overlayFile);
+        }
+    }
+
+    [Fact]
+    public async Task ViewModelApplyProcessesPortraitPairsCorrectly()
+    {
+        var p1 = Path.GetTempFileName();
+        var p2 = Path.GetTempFileName();
+        var overlay = Path.GetTempFileName();
+
+        try
+        {
+            using (var portrait = new Image<Rgba32>(600, 1000, new Rgba32(255, 255, 255, 255)))
+            {
+                await portrait.SaveAsPngAsync(p1);
+                await portrait.SaveAsPngAsync(p2);
+            }
+            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+                await frame.SaveAsPngAsync(overlay);
+
+            var vm = new MainWindowViewModel(new ImageProcessingService())
+            {
+                SelectedFiles = new[] { p1, p2 },
+                Prefix = "Listing"
+            };
+
+            await vm.ApplyAsync(overlay);
+
+            // 2 portrait photos should result in 1 paired branded output
+            Assert.Single(vm.Results);
+            Assert.Equal("Listing_01.jpg", vm.Results[0].FileName);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
 }
 
 public class ZipSafetyTests
