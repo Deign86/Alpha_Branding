@@ -13,7 +13,7 @@ public static class InstallerService
     public const string Marker = "ALPHA_BRANDING_PAYLOAD_V1";
     public const string ProductName = "Alpha Premier Realty Branding Studio";
     public const string Publisher = "Alpha Premier Realty";
-    public const string DefaultVersion = "1.2.0.0";
+    public const string DefaultVersion = "1.3.0.0";
 
     public static string InstallDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

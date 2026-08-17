@@ -282,4 +282,201 @@ public class UiAutomationTests
             tempDir.Delete(true);
         }
     }
+
+    [Fact]
+    public void CaptureScreenshotsOfAllSystemScreensAndEdgeCases()
+    {
+        var screenshotsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "Alpha_Branding_Screenshots");
+        var stockDir = Path.Combine(screenshotsDir, "Sample_Properties");
+        Directory.CreateDirectory(screenshotsDir);
+        Directory.CreateDirectory(stockDir);
+
+        var house = Path.Combine(stockDir, "01_Modern_House_And_Lot_Landscape.jpg");
+        var warehouse = Path.Combine(stockDir, "02_Industrial_Warehouse_Landscape.jpg");
+        var condo = Path.Combine(stockDir, "03_Luxury_Condo_HighRise_Portrait.jpg");
+        var villa = Path.Combine(stockDir, "04_Tall_Villa_Facade_Portrait.jpg");
+        var office = Path.Combine(stockDir, "05_Commercial_Office_Landscape.jpg");
+        var suburban = Path.Combine(stockDir, "06_Suburban_Home_Landscape.jpg");
+
+        // Fallback generator if images are missing
+        if (!File.Exists(house))
+        {
+            using var img = new Image<Rgba32>(1600, 1000, new Rgba32(40, 80, 160, 255));
+            img.SaveAsJpeg(house);
+        }
+        if (!File.Exists(warehouse))
+        {
+            using var img = new Image<Rgba32>(1600, 1000, new Rgba32(180, 140, 40, 255));
+            img.SaveAsJpeg(warehouse);
+        }
+        if (!File.Exists(condo))
+        {
+            using var img = new Image<Rgba32>(800, 1200, new Rgba32(50, 120, 180, 255));
+            img.SaveAsJpeg(condo);
+        }
+        if (!File.Exists(villa))
+        {
+            using var img = new Image<Rgba32>(800, 1200, new Rgba32(180, 60, 60, 255));
+            img.SaveAsJpeg(villa);
+        }
+        if (!File.Exists(office))
+        {
+            using var img = new Image<Rgba32>(1600, 1000, new Rgba32(70, 70, 70, 255));
+            img.SaveAsJpeg(office);
+        }
+        if (!File.Exists(suburban))
+        {
+            using var img = new Image<Rgba32>(1600, 1000, new Rgba32(50, 150, 50, 255));
+            img.SaveAsJpeg(suburban);
+        }
+
+        var appPath = GetAppExecutablePath();
+
+        // 1. Empty State
+        using (var automation = new UIA3Automation())
+        {
+            var app = Application.Launch(appPath);
+            try
+            {
+                var win = GetAppMainWindow(app, automation);
+                FlaUI.Core.Capturing.Capture.Element(win).ToFile(Path.Combine(screenshotsDir, "01_MainWindow_EmptyState.png"));
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+
+        // 2, 3, 4, 5: Loaded Property Photos, Prefix, Gallery Grid, Modal Preview
+        using (var automation = new UIA3Automation())
+        {
+            var args = $"\"{house}\" \"{warehouse}\" \"{condo}\" \"{villa}\" \"{office}\" \"{suburban}\"";
+            var app = Application.Launch(appPath, args);
+            try
+            {
+                var win = GetAppMainWindow(app, automation);
+                var prefixBox = win.FindFirstDescendant(cf => cf.ByAutomationId("PrefixTextBox"))?.AsTextBox();
+                if (prefixBox != null)
+                {
+                    prefixBox.Text = "AlphaPremier_LuxuryProperties";
+                    Thread.Sleep(200);
+                }
+
+                FlaUI.Core.Capturing.Capture.Element(win).ToFile(Path.Combine(screenshotsDir, "02_MainWindow_PhotosLoaded_PatternPreview.png"));
+
+                var applyBtn = win.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton();
+                applyBtn?.Invoke();
+
+                Retry.WhileFalse(() => win.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true, TimeSpan.FromSeconds(10));
+                Thread.Sleep(400);
+
+                FlaUI.Core.Capturing.Capture.Element(win).ToFile(Path.Combine(screenshotsDir, "03_MainWindow_BrandedGallery_ProcessingComplete.png"));
+
+                var previewBtns = win.FindAllDescendants(cf => cf.ByAutomationId("PreviewButton"));
+                if (previewBtns.Length >= 2)
+                {
+                    previewBtns[1].AsButton().Invoke();
+                    var modal = Retry.WhileNull(() => win.FindFirstDescendant(cf => cf.ByControlType(ControlType.Window)), TimeSpan.FromSeconds(5)).Result;
+                    if (modal != null)
+                    {
+                        Thread.Sleep(400);
+                        FlaUI.Core.Capturing.Capture.Element(modal).ToFile(Path.Combine(screenshotsDir, "04_PreviewModal_Landscape_Warehouse_Inspector.png"));
+
+                        var nextBtn = modal.FindFirstDescendant(cf => cf.ByAutomationId("PreviewNextButton"))?.AsButton();
+                        nextBtn?.Invoke();
+                        Thread.Sleep(400);
+
+                        FlaUI.Core.Capturing.Capture.Element(modal).ToFile(Path.Combine(screenshotsDir, "05_PreviewModal_PortraitPair_Condo_And_Villa.png"));
+
+                        modal.AsWindow().Close();
+                        Thread.Sleep(300);
+                    }
+                }
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+
+        // 6. Edge Case: Single Portrait Duplicate Side-by-Side
+        using (var automation = new UIA3Automation())
+        {
+            var app = Application.Launch(appPath, $"\"{condo}\"");
+            try
+            {
+                var win = GetAppMainWindow(app, automation);
+                var prefixBox = win.FindFirstDescendant(cf => cf.ByAutomationId("PrefixTextBox"))?.AsTextBox();
+                if (prefixBox != null)
+                {
+                    prefixBox.Text = "Lone_Condo_Listing";
+                    Thread.Sleep(150);
+                }
+                win.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton()?.Invoke();
+                Retry.WhileFalse(() => win.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true, TimeSpan.FromSeconds(10));
+                Thread.Sleep(400);
+
+                FlaUI.Core.Capturing.Capture.Element(win).ToFile(Path.Combine(screenshotsDir, "06_EdgeCase_SinglePortrait_DuplicatePair.png"));
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+
+        // 7. Edge Case: 1 Portrait + 1 Landscape Paired Side-by-Side
+        using (var automation = new UIA3Automation())
+        {
+            var app = Application.Launch(appPath, $"\"{condo}\" \"{warehouse}\"");
+            try
+            {
+                var win = GetAppMainWindow(app, automation);
+                var prefixBox = win.FindFirstDescendant(cf => cf.ByAutomationId("PrefixTextBox"))?.AsTextBox();
+                if (prefixBox != null)
+                {
+                    prefixBox.Text = "Condo_Warehouse_Pair";
+                    Thread.Sleep(150);
+                }
+                win.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton()?.Invoke();
+                Retry.WhileFalse(() => win.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true, TimeSpan.FromSeconds(10));
+                Thread.Sleep(400);
+
+                FlaUI.Core.Capturing.Capture.Element(win).ToFile(Path.Combine(screenshotsDir, "07_EdgeCase_OddPortraits_MatchedWithLandscape.png"));
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+
+        // 8. Edge Case: Special Character Prefix Sanitization
+        using (var automation = new UIA3Automation())
+        {
+            var app = Application.Launch(appPath, $"\"{house}\"");
+            try
+            {
+                var win = GetAppMainWindow(app, automation);
+                var prefixBox = win.FindFirstDescendant(cf => cf.ByAutomationId("PrefixTextBox"))?.AsTextBox();
+                if (prefixBox != null)
+                {
+                    prefixBox.Text = "BGC / High-End * Villa #88?";
+                    Thread.Sleep(200);
+                }
+                win.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton()?.Invoke();
+                Retry.WhileFalse(() => win.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true, TimeSpan.FromSeconds(10));
+                Thread.Sleep(400);
+
+                FlaUI.Core.Capturing.Capture.Element(win).ToFile(Path.Combine(screenshotsDir, "08_EdgeCase_SpecialCharPrefixSanitization.png"));
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+    }
 }

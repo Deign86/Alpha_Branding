@@ -1,8 +1,9 @@
-## Alpha Premier Realty Branding Studio v1.2.0
+## Alpha Premier Realty Branding Studio v1.3.0
 
 Native .NET 8 WPF desktop application with a self-contained win-x64 installer.
 
 ### Changes
+- Updated to high-resolution official Alpha Premier Realty branding watermark template.
 - Improved image processing throughput by generating previews directly from encoded JPEG bytes.
 - Fixed cancellation token handling so batch operations cancel immediately when requested.
 - Hardened crash logging to use local application data directory with fallback support.
