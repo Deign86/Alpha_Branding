@@ -34,6 +34,15 @@ public class FileNameGeneratorTests
         Assert.Equal(120, name.Length);
         Assert.EndsWith("_01.jpg", name);
     }
+
+    [Theory]
+    [InlineData("Bahay_Kubo_#1", "Bahay_Kubo_#1_01.jpg")]
+    [InlineData("Mandaluyong / Condo * 101?", "Mandaluyong  Condo  101_01.jpg")]
+    [InlineData("  Maynila_Proyekto_  ", "Maynila_Proyekto__01.jpg")]
+    public void HandlesUnicodeSpecialCharactersAndWhitespace(string input, string expected)
+    {
+        Assert.Equal(expected, FileNameGenerator.Generate(input, 0, 5));
+    }
 }
 
 public class UiInitializationTests
@@ -43,11 +52,69 @@ public class UiInitializationTests
     {
         var thread = new System.Threading.Thread(() =>
         {
-            var app = new App();
+            if (System.Windows.Application.Current == null)
+                _ = new App();
             var window = new MainWindow();
             Assert.NotNull(window);
             var preview = new PreviewWindow(new List<BrandedImage>(), 0);
             Assert.NotNull(preview);
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void BrandedImageRaisesPropertyChangedWhenFileNameChanges()
+    {
+        var item = new BrandedImage
+        {
+            FileName = "Initial_01.jpg",
+            ImageBytes = Array.Empty<byte>(),
+            Preview = new System.Windows.Media.Imaging.BitmapImage(),
+            SequenceIndex = 0,
+            BatchSize = 1
+        };
+
+        var fired = false;
+        item.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(BrandedImage.FileName))
+                fired = true;
+        };
+
+        item.FileName = "Updated_01.jpg";
+        Assert.True(fired, "BrandedImage must raise PropertyChanged for UI data binding when FileName is mutated.");
+        Assert.Equal("Updated_01.jpg", item.FileName);
+    }
+
+    [Fact]
+    public void MainWindowLoadFilesFiltersSupportedExtensionsOnly()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            if (System.Windows.Application.Current == null)
+                _ = new App();
+
+            var tempImg = Path.GetTempFileName() + ".png";
+            var tempTxt = Path.GetTempFileName() + ".txt";
+            try
+            {
+                File.WriteAllText(tempImg, "fake image");
+                File.WriteAllText(tempTxt, "text file");
+
+                var window = new MainWindow();
+                window.LoadFiles(new[] { tempImg, tempTxt, "non_existent.jpg" });
+
+                var vm = (MainWindowViewModel)window.DataContext;
+                Assert.Single(vm.SelectedFiles);
+                Assert.Equal(tempImg, vm.SelectedFiles[0]);
+            }
+            finally
+            {
+                if (File.Exists(tempImg)) File.Delete(tempImg);
+                if (File.Exists(tempTxt)) File.Delete(tempTxt);
+            }
         });
         thread.SetApartmentState(System.Threading.ApartmentState.STA);
         thread.Start();

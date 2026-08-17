@@ -47,6 +47,7 @@
                 <!-- Current Filename -->
                 <TextBlock Grid.Column="1"
                            Text="{Binding Current.FileName}"
+                           AutomationProperties.AutomationId="PreviewCurrentFileNameTextBlock"
                            Foreground="{StaticResource GoldLight}"
                            FontSize="15"
                            FontWeight="Bold"
@@ -62,6 +63,7 @@
                         Padding="16,5"
                         VerticalAlignment="Center">
                     <TextBlock Text="{Binding PositionText}"
+                               AutomationProperties.AutomationId="PreviewPositionBadgeTextBlock"
                                Foreground="{StaticResource GoldLight}"
                                FontSize="12"
                                FontWeight="Bold"/>
@@ -78,6 +80,7 @@
                 Padding="12"
                 Margin="0,0,0,14">
             <Image Source="{Binding Current.Preview}"
+                   AutomationProperties.AutomationId="PreviewImage"
                    Stretch="Uniform"
                    RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
@@ -103,12 +106,14 @@
                 <!-- Centered Navigation Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Content="◀  PREVIOUS"
+                            AutomationProperties.AutomationId="PreviewPreviousButton"
                             Click="Previous_Click"
                             Style="{StaticResource SecondaryButton}"
                             Padding="18,9"
                             Margin="0,0,12,0"/>
 
                     <Button Content="NEXT  ▶"
+                            AutomationProperties.AutomationId="PreviewNextButton"
                             Click="Next_Click"
                             Style="{StaticResource PrimaryButton}"
                             Padding="22,9"/>

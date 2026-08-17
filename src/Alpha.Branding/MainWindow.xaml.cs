@@ -17,6 +17,31 @@ public partial class MainWindow : Window
         InitializeComponent();
         WindowThemeHelper.EnableDarkTitleBar(this);
         DataContext = _viewModel;
+        Loaded += MainWindow_Loaded;
+    }
+
+    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        var args = Environment.GetCommandLineArgs();
+        if (args.Length > 1)
+        {
+            LoadFiles(args.Skip(1));
+        }
+    }
+
+    public void LoadFiles(IEnumerable<string> filePaths)
+    {
+        var supported = filePaths.Where(f =>
+        {
+            if (!File.Exists(f)) return false;
+            var ext = Path.GetExtension(f).ToLowerInvariant();
+            return ext is ".jpg" or ".jpeg" or ".png" or ".bmp" or ".webp";
+        }).ToArray();
+
+        if (supported.Length > 0)
+        {
+            _viewModel.SelectedFiles = supported;
+        }
     }
 
     private void SelectPhotos_Click(object sender, RoutedEventArgs e)
@@ -35,6 +60,11 @@ public partial class MainWindow : Window
     private async void Export_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy) return;
+        if (_viewModel.Results.Count == 0)
+        {
+            MessageBox.Show("Apply branding before exporting.", "Export failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
         var dialog = new SaveFileDialog { FileName = $"{FileNameGenerator.FolderName(_viewModel.Prefix)}_Export.zip", Filter = "ZIP archive|*.zip" };
         if (dialog.ShowDialog() == true)
         {
@@ -77,21 +107,9 @@ public partial class MainWindow : Window
     private void Window_Drop(object sender, DragEventArgs e)
     {
         if (_viewModel.IsBusy) return;
-        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files)
         {
-            if (e.Data.GetData(DataFormats.FileDrop) is string[] files)
-            {
-                var supported = Array.FindAll(files, f =>
-                {
-                    var ext = Path.GetExtension(f).ToLowerInvariant();
-                    return ext is ".jpg" or ".jpeg" or ".png" or ".bmp" or ".webp";
-                });
-
-                if (supported.Length > 0)
-                {
-                    _viewModel.SelectedFiles = supported;
-                }
-            }
+            LoadFiles(files);
         }
     }
 }
