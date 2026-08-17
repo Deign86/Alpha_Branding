@@ -2,6 +2,7 @@ using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 
@@ -101,7 +102,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         try
         {
             Status = $"Saving {image.FileName}…";
-            await File.WriteAllBytesAsync(path, image.WebpBytes);
+            await File.WriteAllBytesAsync(path, image.ImageBytes);
             Status = "Image export complete.";
         }
         finally
@@ -130,7 +131,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     var fileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize);
                     var entry = archive.CreateEntry($"{folder}/{fileName}");
                     await using var stream = entry.Open();
-                    await stream.WriteAsync(result.WebpBytes);
+                    await stream.WriteAsync(result.ImageBytes);
                 }
             }
 
@@ -139,13 +140,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
         finally
         {
-            try
+            if (File.Exists(temporaryPath))
             {
-                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
-            }
-            catch
-            {
-                // The destination is already complete; a leftover temp file is safe to remove later.
+                try { File.Delete(temporaryPath); } catch { }
             }
 
             IsBusy = false;

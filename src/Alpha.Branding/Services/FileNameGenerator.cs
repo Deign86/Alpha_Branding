@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 
 namespace Alpha.Branding.Services;
@@ -13,7 +14,7 @@ public static class FileNameGenerator
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
     };
 
-    public static string Generate(string? prefix, int zeroBasedIndex, int total, string extension = "webp")
+    public static string Generate(string? prefix, int zeroBasedIndex, int total, string extension = "jpg")
     {
         var safePrefix = SanitizeComponent(prefix, DefaultPrefix);
         var digits = total >= 100 ? 3 : 2;
@@ -46,6 +47,6 @@ public static class FileNameGenerator
     private static string SanitizeExtension(string extension)
     {
         var clean = new string(extension.Trim().TrimStart('.').Where(c => char.IsLetterOrDigit(c)).ToArray());
-        return string.IsNullOrEmpty(clean) ? "webp" : clean.ToLowerInvariant();
+        return string.IsNullOrEmpty(clean) ? "jpg" : clean.ToLowerInvariant();
     }
 }

@@ -6,12 +6,17 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Assets\logo.png" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Assets\alpha_branding.png" CopyToOutputDirectory="PreserveNewest" />
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\logo_phoenix.png" />
+    <Resource Include="Assets\logo w name.png" />
+    <Resource Include="Assets\logo w name (group only).png" />
+    <None Update="Assets\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
+

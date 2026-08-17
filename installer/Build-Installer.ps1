@@ -30,7 +30,8 @@ try {
     & dotnet publish $project --configuration Release --runtime win-x64 --self-contained true --output $publish --nologo
     if ($LASTEXITCODE -ne 0) { throw "Application publish failed with exit code $LASTEXITCODE." }
     Require-File (Join-Path $publish 'Alpha.Branding.exe') 'published executable'
-    Require-File (Join-Path $publish 'Assets\logo.png') 'published logo asset'
+    Require-File (Join-Path $publish 'Assets\logo_phoenix.png') 'published phoenix logo asset'
+    Require-File (Join-Path $publish 'Assets\logo w name.png') 'published full logo asset'
     Require-File (Join-Path $publish 'Assets\alpha_branding.png') 'published branding asset'
     Set-Content -LiteralPath (Join-Path $publish 'InstallerVersion.txt') -Value $Version -Encoding ASCII
 

@@ -1,4 +1,5 @@
 using Alpha.Branding.Models;
+using Alpha.Branding.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -14,6 +15,7 @@ public partial class PreviewWindow : System.Windows.Window, INotifyPropertyChang
     public PreviewWindow(IReadOnlyList<BrandedImage> results, int selectedIndex)
     {
         InitializeComponent();
+        WindowThemeHelper.EnableDarkTitleBar(this);
         _results = results;
         _selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, results.Count - 1));
         DataContext = this;

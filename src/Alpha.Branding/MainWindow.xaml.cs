@@ -2,6 +2,7 @@ using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using Alpha.Branding.ViewModels;
 using Microsoft.Win32;
+using System.IO;
 using System.Windows;
 
 namespace Alpha.Branding;
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        WindowThemeHelper.EnableDarkTitleBar(this);
         DataContext = _viewModel;
     }
 
@@ -44,7 +46,7 @@ public partial class MainWindow : Window
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: BrandedImage image }) return;
-        var dialog = new SaveFileDialog { FileName = image.FileName, Filter = "WebP image|*.webp" };
+        var dialog = new SaveFileDialog { FileName = image.FileName, Filter = "JPEG image|*.jpg;*.jpeg|All files|*.*" };
         if (dialog.ShowDialog() == true)
         {
             try { await _viewModel.SaveImageAsync(image, dialog.FileName); }
@@ -58,4 +60,39 @@ public partial class MainWindow : Window
         var index = _viewModel.Results.IndexOf(image);
         if (index >= 0) new PreviewWindow(_viewModel.Results, index) { Owner = this }.ShowDialog();
     }
+
+    private void Window_DragOver(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+        else
+        {
+            e.Effects = DragDropEffects.None;
+        }
+    }
+
+    private void Window_Drop(object sender, DragEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            if (e.Data.GetData(DataFormats.FileDrop) is string[] files)
+            {
+                var supported = Array.FindAll(files, f =>
+                {
+                    var ext = Path.GetExtension(f).ToLowerInvariant();
+                    return ext is ".jpg" or ".jpeg" or ".png" or ".bmp" or ".webp";
+                });
+
+                if (supported.Length > 0)
+                {
+                    _viewModel.SelectedFiles = supported;
+                }
+            }
+        }
+    }
 }
+
