@@ -10,6 +10,7 @@ namespace Alpha.Branding;
 public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel = new(new ImageProcessingService());
+    public MainWindowViewModel ViewModel => _viewModel;
     private readonly string _overlayPath = Path.Combine(AppContext.BaseDirectory, "Assets", "alpha_branding.png");
 
     public MainWindow()
