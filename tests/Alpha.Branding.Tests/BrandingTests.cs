@@ -36,6 +36,26 @@ public class FileNameGeneratorTests
     }
 }
 
+public class UiInitializationTests
+{
+    [Fact]
+    public void CanInstantiateWindowsWithoutException()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            var app = new App();
+            var window = new MainWindow();
+            Assert.NotNull(window);
+            var preview = new PreviewWindow(new List<BrandedImage>(), 0);
+            Assert.NotNull(preview);
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+}
+
+
 public class ImageProcessingTests
 {
     [Fact]

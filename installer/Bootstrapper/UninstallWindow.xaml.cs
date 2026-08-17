@@ -7,6 +7,7 @@ public partial class UninstallWindow : Window
     public UninstallWindow()
     {
         InitializeComponent();
+        WindowThemeHelper.EnableDarkTitleBar(this);
     }
 
     private async void BtnUninstall_Click(object sender, RoutedEventArgs e)

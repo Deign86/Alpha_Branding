@@ -11,6 +11,7 @@ public partial class InstallWindow : Window
     public InstallWindow()
     {
         InitializeComponent();
+        WindowThemeHelper.EnableDarkTitleBar(this);
         _targetDirectory = InstallerService.InstallDirectory;
         TxtInstallPath.Text = _targetDirectory;
         string version = InstallerService.GetPayloadVersion();
