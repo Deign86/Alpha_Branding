@@ -55,9 +55,9 @@ public sealed class ImageProcessingService
             {
                 isPortrait = await IsPortraitAsync(path, cancellationToken);
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Fallback to landscape if orientation check fails
+                // Fallback to landscape if orientation check fails for corrupt/missing files
             }
             orientations[i] = (path, isPortrait, i);
         }
@@ -116,7 +116,7 @@ public sealed class ImageProcessingService
         {
             isPortrait = await IsPortraitAsync(inputPath, cancellationToken);
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // Fallback to landscape processing if detection fails
         }
@@ -206,22 +206,20 @@ public sealed class ImageProcessingService
     {
         await using var output = new MemoryStream();
         await image.SaveAsJpegAsync(output, new JpegEncoder { Quality = 90 }, cancellationToken);
+        var imageBytes = output.ToArray();
         return new BrandedImage
         {
             FileName = FileNameGenerator.Generate(prefix, index, total),
-            ImageBytes = output.ToArray(),
-            Preview = CreatePreview(image),
+            ImageBytes = imageBytes,
+            Preview = CreatePreview(imageBytes),
             SequenceIndex = index,
             BatchSize = total
         };
     }
 
-    private static BitmapImage CreatePreview(Image<Rgba32> image)
+    public static BitmapImage CreatePreview(byte[] imageBytes)
     {
-        using var preview = new MemoryStream();
-        image.SaveAsPng(preview);
-        preview.Position = 0;
-
+        using var preview = new MemoryStream(imageBytes);
         var bitmap = new BitmapImage();
         bitmap.BeginInit();
         bitmap.CacheOption = BitmapCacheOption.OnLoad;

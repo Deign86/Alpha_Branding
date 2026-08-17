@@ -527,3 +527,60 @@ public class ZipSafetyTests
         return buffer.ToArray();
     }
 }
+
+public class AntiSlopAndResilienceTests
+{
+    [Fact]
+    public async Task PlanBatchPropagatesCancellationToken()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var tempImg = Path.GetTempFileName();
+        try
+        {
+            using (var img = new Image<Rgba32>(100, 100))
+                await img.SaveAsPngAsync(tempImg);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            {
+                await ImageProcessingService.PlanBatchAsync(new[] { tempImg }, cts.Token);
+            });
+        }
+        finally
+        {
+            if (File.Exists(tempImg)) File.Delete(tempImg);
+        }
+    }
+
+    [Fact]
+    public async Task CreatePreviewProducesValidFrozenBitmapImageFromJpegBytes()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            using (var img = new Image<Rgba32>(1200, 1000, new Rgba32(200, 150, 50, 255)))
+                await img.SaveAsJpegAsync(tempFile);
+
+            var bytes = await File.ReadAllBytesAsync(tempFile);
+            var bitmap = ImageProcessingService.CreatePreview(bytes);
+
+            Assert.NotNull(bitmap);
+            Assert.True(bitmap.IsFrozen, "Preview BitmapImage must be frozen for thread-safe cross-UI usage.");
+            Assert.Equal(1200, bitmap.PixelWidth);
+            Assert.Equal(1000, bitmap.PixelHeight);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void AppLogCrashDoesNotThrowEvenOnSimulatedExceptions()
+    {
+        var ex = new InvalidOperationException("Simulated crash for resilience test");
+        var record = Record.Exception(() => App.LogCrash(ex));
+        Assert.Null(record);
+    }
+}

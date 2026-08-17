@@ -114,6 +114,11 @@ public static class InstallerService
             progress?.Report((50, "Installing application files..."));
             await Task.Run(() =>
             {
+                if (Process.GetProcessesByName("Alpha.Branding").Length > 0)
+                {
+                    throw new InvalidOperationException("Alpha Premier Realty Branding Studio is currently running. Please close it before installing.");
+                }
+
                 if (Directory.Exists(targetDirectory))
                 {
                     try { Directory.Delete(targetDirectory, true); } catch { }
@@ -132,7 +137,8 @@ public static class InstallerService
             progress?.Report((90, "Registering application with Windows..."));
             await Task.Run(() =>
             {
-                using var key = Registry.CurrentUser.CreateSubKey(UninstallKey)!;
+                using var key = Registry.CurrentUser.CreateSubKey(UninstallKey)
+                    ?? throw new InvalidOperationException("Unable to create registry uninstall registration.");
                 key.SetValue("DisplayName", ProductName);
                 key.SetValue("DisplayVersion", version);
                 key.SetValue("Publisher", Publisher);
@@ -211,7 +217,7 @@ public static class InstallerService
         await Task.Run(() =>
         {
             string dir = InstallDirectory;
-            string command = $"ping 127.0.0.1 -n 2 >nul & rmdir /s /q \"{dir}\"";
+            string command = $"choice /C Y /N /D Y /T 2 >nul & if exist \"{dir}\" rmdir /s /q \"{dir}\"";
             var psi = new ProcessStartInfo("cmd.exe", "/c " + command)
             {
                 CreateNoWindow = true,
@@ -228,15 +234,28 @@ public static class InstallerService
     {
         Directory.CreateDirectory(ShortcutDirectory);
         Type shellType = Type.GetTypeFromProgID("WScript.Shell") ?? throw new InvalidOperationException("Windows shortcut support is unavailable.");
-        object shell = Activator.CreateInstance(shellType)!;
-        object shortcut = shellType.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, shell, new object[] { ShortcutPath })!;
-        Type shortcutType = shortcut.GetType();
-        shortcutType.InvokeMember("TargetPath", BindingFlags.SetProperty, null, shortcut, new object[] { appPath });
-        shortcutType.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, shortcut, new object[] { installDir });
-        shortcutType.InvokeMember("Description", BindingFlags.SetProperty, null, shortcut, new object[] { ProductName });
-        shortcutType.InvokeMember("Save", BindingFlags.InvokeMethod, null, shortcut, null);
-        Marshal.FinalReleaseComObject(shortcut);
-        Marshal.FinalReleaseComObject(shell);
+        object? shell = Activator.CreateInstance(shellType) ?? throw new InvalidOperationException("Failed to initialize Windows shell automation object.");
+        try
+        {
+            object? shortcut = shellType.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, shell, new object[] { ShortcutPath })
+                ?? throw new InvalidOperationException("Failed to create shortcut object.");
+            try
+            {
+                Type shortcutType = shortcut.GetType();
+                shortcutType.InvokeMember("TargetPath", BindingFlags.SetProperty, null, shortcut, new object[] { appPath });
+                shortcutType.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, shortcut, new object[] { installDir });
+                shortcutType.InvokeMember("Description", BindingFlags.SetProperty, null, shortcut, new object[] { ProductName });
+                shortcutType.InvokeMember("Save", BindingFlags.InvokeMethod, null, shortcut, null);
+            }
+            finally
+            {
+                Marshal.FinalReleaseComObject(shortcut);
+            }
+        }
+        finally
+        {
+            Marshal.FinalReleaseComObject(shell);
+        }
     }
 }
 
