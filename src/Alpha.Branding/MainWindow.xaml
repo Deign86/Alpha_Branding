@@ -89,6 +89,7 @@
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding SelectionSummary}"
+                                   AutomationProperties.AutomationId="SelectionSummaryTextBlock"
                                    Foreground="{StaticResource GoldLight}"
                                    FontSize="12"
                                    FontWeight="Bold"
@@ -117,6 +118,7 @@
                     <!-- File Selection & Prefix Input -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="SELECT PHOTOS"
+                                AutomationProperties.AutomationId="SelectPhotosButton"
                                 Click="SelectPhotos_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource PrimaryButton}"
@@ -130,6 +132,7 @@
                                        Margin="0,0,0,5"/>
                             <StackPanel Orientation="Horizontal">
                                 <TextBox Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.AutomationId="PrefixTextBox"
                                          Width="230"
                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"/>
                                 <Border Background="{StaticResource GoldSubtle}"
@@ -141,7 +144,11 @@
                                         VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Preview: " Foreground="{StaticResource TextMuted}" FontSize="12"/>
-                                        <TextBlock Text="{Binding PatternPreview}" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding PatternPreview}"
+                                                   AutomationProperties.AutomationId="PatternPreviewTextBlock"
+                                                   Foreground="{StaticResource GoldLight}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -151,12 +158,14 @@
                     <!-- Action Buttons -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
                         <Button Content="APPLY BRANDING"
+                                AutomationProperties.AutomationId="ApplyBrandingButton"
                                 Click="Apply_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource PrimaryButton}"
                                 Margin="0,0,12,0"/>
 
                         <Button Content="EXPORT ZIP"
+                                AutomationProperties.AutomationId="ExportZipButton"
                                 Click="Export_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource SecondaryButton}"/>
@@ -174,10 +183,15 @@
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="STATUS: " Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold" Margin="0,0,6,0"/>
-                        <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimary}" FontSize="12" FontWeight="Medium"/>
+                        <TextBlock Text="{Binding Status}"
+                                   AutomationProperties.AutomationId="StatusTextBlock"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="12"
+                                   FontWeight="Medium"/>
                     </StackPanel>
 
                     <ProgressBar Grid.Column="1"
+                                 AutomationProperties.AutomationId="ProgressBar"
                                  Value="{Binding Progress, Mode=OneWay}"
                                  Height="8"
                                  VerticalAlignment="Center"/>
@@ -216,6 +230,7 @@
                                LineHeight="21"
                                Margin="0,0,0,26"/>
                     <Button Content="SELECT PHOTOS TO BEGIN"
+                            AutomationProperties.AutomationId="EmptyStateSelectButton"
                             Click="SelectPhotos_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                             Style="{StaticResource PrimaryButton}"
@@ -225,10 +240,12 @@
             </Border>
 
             <!-- Results Grid Display -->
-            <ScrollViewer Visibility="{Binding Results.Count, Converter={StaticResource CountToVisibilityConverter}}"
+            <ScrollViewer AutomationProperties.AutomationId="ResultsScrollViewer"
+                          Visibility="{Binding Results.Count, Converter={StaticResource CountToVisibilityConverter}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Results}">
+                <ItemsControl ItemsSource="{Binding Results}"
+                              AutomationProperties.AutomationId="ResultsItemsControl">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel/>
@@ -267,6 +284,7 @@
                                     <!-- Filename and Details -->
                                     <Grid Margin="0,10,0,10">
                                         <TextBlock Text="{Binding FileName}"
+                                                   AutomationProperties.AutomationId="ResultFileNameTextBlock"
                                                    Foreground="{StaticResource GoldLight}"
                                                    FontWeight="Bold"
                                                    FontSize="12"
@@ -283,6 +301,7 @@
 
                                         <Button Grid.Column="0"
                                                 Content="PREVIEW"
+                                                AutomationProperties.AutomationId="PreviewButton"
                                                 Click="Preview_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallActionButton}"
@@ -290,6 +309,7 @@
 
                                         <Button Grid.Column="1"
                                                 Content="SAVE"
+                                                AutomationProperties.AutomationId="SaveButton"
                                                 Click="Save_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallGoldButton}"/>
