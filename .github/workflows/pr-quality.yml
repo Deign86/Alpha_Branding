@@ -29,7 +29,7 @@ jobs:
       - name: Native application dependency scan
         shell: pwsh
         run: |
-          $matches = git grep -n -i -E 'Tauri|Electron|WebView2|webview|React|Vite|Next\.js' -- ':!README.md' ':!PLAN.md' ':!GATES.md' || $null
+          $matches = git grep -n -i -E 'Tauri|Electron|WebView2|webview|React|Vite|Next\.js|TypeScript|Node\.js' -- src tests || $null
           if ($matches) { Write-Error $matches; exit 1 }
       - name: Anti-slop review
         uses: peakoss/anti-slop@v0
