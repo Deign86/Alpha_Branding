@@ -33,6 +33,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public ISessionConfirmationService ConfirmationService => _confirmationService;
 
     public ObservableCollection<BrandedImage> Results { get; } = [];
+    public ObservableCollection<SelectedPhotoItem> SelectedPhotos { get; } = [];
+
+    public bool HasResults => Results.Count > 0;
+    public bool HasSelectedPhotos => SelectedPhotos.Count > 0 && Results.Count == 0;
+    public bool IsEmptyState => SelectedPhotos.Count == 0 && Results.Count == 0;
 
     public string Prefix
     {
@@ -112,9 +117,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         set
         {
             _selectedFiles = value ?? [];
+            UpdateSelectedPhotos();
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectionSummary));
             OnPropertyChanged(nameof(CanApply));
+            OnPropertyChanged(nameof(HasSelectedPhotos));
+            OnPropertyChanged(nameof(IsEmptyState));
             UpdateApplyStatus();
         }
     }
@@ -144,6 +152,59 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool HasApplyWarning => HasUnsavedEdits && SelectedFiles.Count > 0;
     public bool HasApplyHint => SelectedFiles.Count > 0 && Results.Count > 0;
 
+    public void RemoveSelectedFile(string filePath)
+    {
+        if (IsBusy) return;
+        var updated = _selectedFiles.Where(f => !string.Equals(f, filePath, StringComparison.OrdinalIgnoreCase)).ToArray();
+        SelectedFiles = updated;
+    }
+
+    private void UpdateSelectedPhotos()
+    {
+        SelectedPhotos.Clear();
+        foreach (var file in _selectedFiles)
+        {
+            var sizeText = string.Empty;
+            System.Windows.Media.Imaging.BitmapImage? thumb = null;
+
+            if (File.Exists(file))
+            {
+                try
+                {
+                    var fileInfo = new FileInfo(file);
+                    var mb = fileInfo.Length / (1024.0 * 1024.0);
+                    sizeText = mb >= 1.0 ? $"{mb:0.1} MB" : $"{Math.Max(1, fileInfo.Length / 1024)} KB";
+                }
+                catch { }
+
+                try
+                {
+                    var bytes = File.ReadAllBytes(file);
+                    using var ms = new MemoryStream(bytes);
+                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                    bmp.BeginInit();
+                    bmp.StreamSource = ms;
+                    bmp.DecodePixelWidth = 270;
+                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    bmp.EndInit();
+                    bmp.Freeze();
+                    thumb = bmp;
+                }
+                catch { }
+            }
+
+            SelectedPhotos.Add(new SelectedPhotoItem
+            {
+                FilePath = file,
+                Thumbnail = thumb,
+                FileSizeText = sizeText
+            });
+        }
+
+        OnPropertyChanged(nameof(HasSelectedPhotos));
+        OnPropertyChanged(nameof(IsEmptyState));
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public void MarkDirty()
@@ -160,6 +221,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         HasUnsavedEdits = false;
         UpdateApplyStatus();
         OnPropertyChanged(nameof(CanExport));
+        OnPropertyChanged(nameof(HasResults));
+        OnPropertyChanged(nameof(HasSelectedPhotos));
+        OnPropertyChanged(nameof(IsEmptyState));
     }
 
     public async Task<bool> ApplyWorkflowAsync(string overlayPath, CancellationToken token = default)
@@ -335,6 +399,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public async Task<int> ExportIndividualFilesAsync(string folderPath, CancellationToken token = default)
+    {
+        if (IsBusy) return 0;
+        if (Results.Count == 0) throw new InvalidOperationException("Apply branding before exporting.");
+        if (string.IsNullOrWhiteSpace(folderPath)) throw new ArgumentException("Destination folder path must be specified.", nameof(folderPath));
+
+        IsBusy = true;
+        var savedCount = 0;
+        try
+        {
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            Status = $"Exporting {Results.Count} individual image(s)…";
+            Progress = 0;
+            var total = Results.Count;
+
+            for (var i = 0; i < total; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                var result = Results[i];
+                var fileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize);
+                var destinationFilePath = Path.Combine(folderPath, fileName);
+
+                Status = $"Saving {i + 1} of {total} ({fileName})…";
+                await File.WriteAllBytesAsync(destinationFilePath, result.ImageBytes, token);
+                savedCount++;
+                Progress = (i + 1d) / total * 100;
+            }
+
+            HasUnsavedEdits = false;
+            var folderDisplayName = string.IsNullOrEmpty(Path.GetFileName(folderPath)) ? folderPath : Path.GetFileName(folderPath);
+            Status = $"Export complete: {savedCount} file(s) saved to {folderDisplayName}.";
+            return savedCount;
+        }
+        finally
+        {
+            IsBusy = false;
+            UpdateApplyStatus();
+        }
+    }
+
     private void RenameResults()
     {
         for (var i = 0; i < Results.Count; i++)
@@ -381,6 +489,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasApplyWarning));
         OnPropertyChanged(nameof(CanApply));
         OnPropertyChanged(nameof(CanExport));
+        OnPropertyChanged(nameof(HasResults));
+        OnPropertyChanged(nameof(HasSelectedPhotos));
+        OnPropertyChanged(nameof(IsEmptyState));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));

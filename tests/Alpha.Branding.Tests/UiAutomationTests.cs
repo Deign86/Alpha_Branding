@@ -361,5 +361,106 @@ public class UiAutomationTests
             tempDir.Delete(true);
         }
     }
+
+    [Fact]
+    public void ExportDropdownMenuOpensAndPresentsZipAndIndividualOptions()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var (landscape, _, _) = CreateTestImages(tempDir.FullName);
+            var appPath = GetAppExecutablePath();
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(appPath, $"\"{landscape}\"");
+
+            try
+            {
+                var window = GetAppMainWindow(app, automation);
+                Assert.NotNull(window);
+
+                var applyBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton();
+                Assert.NotNull(applyBtn);
+                applyBtn.Invoke();
+
+                var statusCompleted = Retry.WhileFalse(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true,
+                    TimeSpan.FromSeconds(8));
+                Assert.True(statusCompleted.Success);
+
+                var exportBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("ExportZipButton"))?.AsButton();
+                Assert.NotNull(exportBtn);
+                Assert.True(exportBtn.IsEnabled);
+
+                exportBtn.Invoke();
+                Thread.Sleep(300);
+
+                var contextMenu = Retry.WhileNull(
+                    () => automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("ExportContextMenu")) ??
+                          window.FindFirstDescendant(cf => cf.ByAutomationId("ExportContextMenu")),
+                    TimeSpan.FromSeconds(4)).Result;
+                Assert.NotNull(contextMenu);
+
+                var zipOption = contextMenu.FindFirstDescendant(cf => cf.ByAutomationId("ExportZipMenuItem"));
+                Assert.NotNull(zipOption);
+
+                var individualOption = contextMenu.FindFirstDescendant(cf => cf.ByAutomationId("ExportIndividualMenuItem"));
+                Assert.NotNull(individualOption);
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public void SelectedPhotosImmediatelyDisplayInMainGalleryBeforeApplyingBranding()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var (landscape, p1, _) = CreateTestImages(tempDir.FullName);
+            var appPath = GetAppExecutablePath();
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(appPath, $"\"{landscape}\" \"{p1}\"");
+
+            try
+            {
+                var window = GetAppMainWindow(app, automation);
+                Assert.NotNull(window);
+
+                var stagedViewer = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("SelectedPhotosScrollViewer")),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(stagedViewer);
+
+                var stagedItems = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("SelectedPhotosItemsControl")),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(stagedItems);
+
+                var stagedCard = window.FindFirstDescendant(cf => cf.ByAutomationId("SelectedFileNameTextBlock"));
+                Assert.NotNull(stagedCard);
+                Assert.True(stagedCard.Name.Contains("L1.png") || stagedCard.Name.Contains("P1.png"));
+
+                var removeBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("RemoveSelectedPhotoButton"));
+                Assert.NotNull(removeBtn);
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
 }
 

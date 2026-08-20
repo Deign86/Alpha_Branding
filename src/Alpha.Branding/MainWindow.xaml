@@ -223,12 +223,45 @@
                                     Style="{StaticResource PrimaryButton}"
                                     Margin="0,0,12,0"/>
 
-                            <Button Content="EXPORT ZIP"
+                            <Button x:Name="ExportDropdownButton"
                                     AutomationProperties.AutomationId="ExportZipButton"
-                                    ToolTip="Package all processed branded images into a single ZIP archive (Ctrl+E)"
-                                    Click="Export_Click"
+                                    ToolTip="Export branded photos as ZIP archive or individual files (Ctrl+E / Ctrl+Shift+E)"
+                                    Click="ExportDropdown_Click"
                                     IsEnabled="{Binding CanExport}"
-                                    Style="{StaticResource SecondaryButton}"/>
+                                    Style="{StaticResource SecondaryButton}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="EXPORT" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <Path Data="M 0 0 L 3.5 3.5 L 7 0 Z"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          Margin="8,1,0,0"
+                                          VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Button.ContextMenu>
+                                    <ContextMenu x:Name="ExportContextMenu"
+                                                 AutomationProperties.AutomationId="ExportContextMenu">
+                                        <MenuItem x:Name="ExportZipMenuItem"
+                                                  AutomationProperties.AutomationId="ExportZipMenuItem"
+                                                  Header="Export as ZIP Archive (.zip)"
+                                                  InputGestureText="Ctrl+E"
+                                                  ToolTip="Package all branded images into a single ZIP archive"
+                                                  Click="ExportZip_Click">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="📦" FontSize="12" VerticalAlignment="Center"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem x:Name="ExportIndividualMenuItem"
+                                                  AutomationProperties.AutomationId="ExportIndividualMenuItem"
+                                                  Header="Export as Individual Files..."
+                                                  InputGestureText="Ctrl+Shift+E"
+                                                  ToolTip="Save all branded photos directly to a selected folder"
+                                                  Click="ExportIndividual_Click">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="📁" FontSize="12" VerticalAlignment="Center"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -263,7 +296,7 @@
         <!-- MAIN GALLERY / RESULTS AREA -->
         <Grid Grid.Row="2">
             <!-- Empty State Display -->
-            <Border Visibility="{Binding Results.Count, Converter={StaticResource EmptyToVisibilityConverter}}"
+            <Border Visibility="{Binding IsEmptyState, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Background="{StaticResource SurfaceDark}"
                     BorderBrush="{StaticResource BorderSubtle}"
                     BorderThickness="1"
@@ -301,9 +334,135 @@
                 </StackPanel>
             </Border>
 
+            <!-- Staged / Selected Photos Gallery Display -->
+            <Grid Visibility="{Binding HasSelectedPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Staged Section Header & Quick Action -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource SurfaceDark}"
+                        BorderBrush="{StaticResource BorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="18,10"
+                        Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="SELECTED PHOTOS (" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedFiles.Count}" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text=") — Ready to process. Click 'APPLY BRANDING' to watermark." Foreground="{StaticResource TextSecondary}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="ADD MORE"
+                                    AutomationProperties.AutomationId="AddMorePhotosButton"
+                                    ToolTip="Select additional photos to add to this session"
+                                    Click="AddMorePhotos_Click"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                    Style="{StaticResource SmallActionButton}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="APPLY BRANDING"
+                                    AutomationProperties.AutomationId="StagedApplyButton"
+                                    ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
+                                    Click="Apply_Click"
+                                    IsEnabled="{Binding CanApply}"
+                                    Style="{StaticResource SmallGoldButton}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Staged Photos Grid -->
+                <ScrollViewer Grid.Row="1"
+                              AutomationProperties.AutomationId="SelectedPhotosScrollViewer"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding SelectedPhotos}"
+                                  AutomationProperties.AutomationId="SelectedPhotosItemsControl">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="270"
+                                        Margin="0,0,16,16"
+                                        Background="{StaticResource SurfaceDark}"
+                                        BorderBrush="{StaticResource BorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Padding="10"
+                                        AutomationProperties.Name="{Binding FileName}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                                    <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                        <!-- Image Thumbnail -->
+                                        <Border CornerRadius="8"
+                                                ClipToBounds="True"
+                                                Background="{StaticResource BackgroundDark}"
+                                                Height="190">
+                                            <Image Source="{Binding Thumbnail}"
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border>
+
+                                        <!-- Filename and Size Details -->
+                                        <Grid Margin="0,10,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding FileName}"
+                                                       AutomationProperties.AutomationId="SelectedFileNameTextBlock"
+                                                       Foreground="{StaticResource TextPrimary}"
+                                                       FontWeight="Bold"
+                                                       FontSize="12"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding FilePath}"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding FileSizeText}"
+                                                       Foreground="{StaticResource TextMuted}"
+                                                       FontSize="11"
+                                                       Margin="8,0,0,0"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- Action Button: Remove -->
+                                        <Button Content="REMOVE FROM SELECTION"
+                                                AutomationProperties.AutomationId="RemoveSelectedPhotoButton"
+                                                ToolTip="Remove this photo from the selected batch"
+                                                Click="RemoveSelectedPhoto_Click"
+                                                IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                Style="{StaticResource SmallActionButton}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
             <!-- Results Grid Display -->
             <ScrollViewer AutomationProperties.AutomationId="ResultsScrollViewer"
-                          Visibility="{Binding Results.Count, Converter={StaticResource CountToVisibilityConverter}}"
+                          Visibility="{Binding HasResults, Converter={StaticResource BooleanToVisibilityConverter}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Results}"

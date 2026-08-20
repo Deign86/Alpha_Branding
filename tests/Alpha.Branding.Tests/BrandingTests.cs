@@ -595,6 +595,8 @@ public sealed class TestSessionConfirmationService : ISessionConfirmationService
     public SessionPromptResult DesiredPromptResult { get; set; } = SessionPromptResult.Cancel;
     public string? DesiredSaveZipPath { get; set; }
     public bool PromptSaveZipCalled { get; private set; }
+    public string? DesiredExportFolderPath { get; set; }
+    public bool PromptExportFolderCalled { get; private set; }
 
     public SessionPromptResult PromptUnsavedEdits(string title, string message)
     {
@@ -608,6 +610,12 @@ public sealed class TestSessionConfirmationService : ISessionConfirmationService
     {
         PromptSaveZipCalled = true;
         return DesiredSaveZipPath;
+    }
+
+    public string? PromptExportFolder()
+    {
+        PromptExportFolderCalled = true;
+        return DesiredExportFolderPath;
     }
 }
 
@@ -981,6 +989,214 @@ public class SessionWorkflowSafetyTests
         {
             File.Delete(overlay);
         }
+    }
+}
+
+public class IndividualFilesExportTests
+{
+    [Fact]
+    public async Task ExportIndividualFilesSavesAllImagesToSpecifiedDirectory()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService())
+            {
+                Prefix = "Condo_Listing"
+            };
+
+            var bytes1 = new byte[] { 10, 20, 30 };
+            var bytes2 = new byte[] { 40, 50, 60 };
+
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(vm.Prefix, 0, 2),
+                ImageBytes = bytes1,
+                SequenceIndex = 0,
+                BatchSize = 2,
+                Preview = new System.Windows.Media.Imaging.BitmapImage()
+            });
+
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(vm.Prefix, 1, 2),
+                ImageBytes = bytes2,
+                SequenceIndex = 1,
+                BatchSize = 2,
+                Preview = new System.Windows.Media.Imaging.BitmapImage()
+            });
+
+            vm.MarkDirty();
+            Assert.True(vm.HasUnsavedEdits);
+
+            var savedCount = await vm.ExportIndividualFilesAsync(tempDir.FullName);
+
+            Assert.Equal(2, savedCount);
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.Contains("Export complete: 2 file(s) saved", vm.Status);
+
+            var file1 = Path.Combine(tempDir.FullName, "Condo_Listing_01.jpg");
+            var file2 = Path.Combine(tempDir.FullName, "Condo_Listing_02.jpg");
+
+            Assert.True(File.Exists(file1));
+            Assert.True(File.Exists(file2));
+            Assert.Equal(bytes1, await File.ReadAllBytesAsync(file1));
+            Assert.Equal(bytes2, await File.ReadAllBytesAsync(file2));
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task ExportIndividualFilesThrowsWhenNoResults()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => vm.ExportIndividualFilesAsync(tempDir.FullName));
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task ExportIndividualFilesThrowsWhenFolderPathIsInvalid(string? invalidPath)
+    {
+        var vm = new MainWindowViewModel(new ImageProcessingService());
+        vm.Results.Add(new BrandedImage
+        {
+            FileName = "Test_01.jpg",
+            ImageBytes = new byte[] { 1, 2, 3 },
+            SequenceIndex = 0,
+            BatchSize = 1,
+            Preview = new System.Windows.Media.Imaging.BitmapImage()
+        });
+
+        await Assert.ThrowsAsync<ArgumentException>(() => vm.ExportIndividualFilesAsync(invalidPath!));
+    }
+
+    [Fact]
+    public async Task ExportIndividualFilesRespectsCancellationToken()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService());
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = "Test_01.jpg",
+                ImageBytes = new byte[] { 1, 2, 3 },
+                SequenceIndex = 0,
+                BatchSize = 1,
+                Preview = new System.Windows.Media.Imaging.BitmapImage()
+            });
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                vm.ExportIndividualFilesAsync(tempDir.FullName, cts.Token));
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+}
+
+public class SelectedPhotosStagingTests
+{
+    [Fact]
+    public async Task SelectedFilesPopulatesSelectedPhotosAndUpdatesViewStates()
+    {
+        var p1 = Path.GetTempFileName() + ".jpg";
+        var p2 = Path.GetTempFileName() + ".png";
+        try
+        {
+            using (var img = new Image<Rgba32>(800, 600, new Rgba32(255, 0, 0, 255)))
+            {
+                await img.SaveAsJpegAsync(p1);
+                await img.SaveAsPngAsync(p2);
+            }
+
+            var vm = new MainWindowViewModel(new ImageProcessingService());
+
+            // Initial State: Empty
+            Assert.True(vm.IsEmptyState);
+            Assert.False(vm.HasSelectedPhotos);
+            Assert.False(vm.HasResults);
+            Assert.Empty(vm.SelectedPhotos);
+
+            // Selecting files
+            vm.SelectedFiles = new[] { p1, p2 };
+
+            Assert.False(vm.IsEmptyState);
+            Assert.True(vm.HasSelectedPhotos);
+            Assert.False(vm.HasResults);
+            Assert.Equal(2, vm.SelectedPhotos.Count);
+            Assert.Equal(Path.GetFileName(p1), vm.SelectedPhotos[0].FileName);
+            Assert.Equal(Path.GetFileName(p2), vm.SelectedPhotos[1].FileName);
+            Assert.NotEmpty(vm.SelectedPhotos[0].FileSizeText);
+
+            // Remove one file
+            vm.RemoveSelectedFile(p1);
+            Assert.Single(vm.SelectedPhotos);
+            Assert.Equal(Path.GetFileName(p2), vm.SelectedPhotos[0].FileName);
+            Assert.True(vm.HasSelectedPhotos);
+            Assert.False(vm.IsEmptyState);
+
+            // Remove remaining file -> back to empty state
+            vm.RemoveSelectedFile(p2);
+            Assert.Empty(vm.SelectedPhotos);
+            Assert.False(vm.HasSelectedPhotos);
+            Assert.True(vm.IsEmptyState);
+        }
+        finally
+        {
+            if (File.Exists(p1)) File.Delete(p1);
+            if (File.Exists(p2)) File.Delete(p2);
+        }
+    }
+
+    [Fact]
+    public void ResultsPopulatedSwitchesToHasResultsState()
+    {
+        var vm = new MainWindowViewModel(new ImageProcessingService())
+        {
+            SelectedFiles = new[] { "fake.jpg" }
+        };
+
+        Assert.True(vm.HasSelectedPhotos);
+        Assert.False(vm.IsEmptyState);
+        Assert.False(vm.HasResults);
+
+        // When Results has items, HasResults is true and HasSelectedPhotos is false
+        vm.Results.Add(new BrandedImage
+        {
+            FileName = "Output_01.jpg",
+            ImageBytes = Array.Empty<byte>(),
+            SequenceIndex = 0,
+            BatchSize = 1,
+            Preview = new System.Windows.Media.Imaging.BitmapImage()
+        });
+
+        Assert.True(vm.HasResults);
+        Assert.False(vm.HasSelectedPhotos);
+        Assert.False(vm.IsEmptyState);
+
+        // DiscardEdits returns to SelectedPhotos state since files are still selected
+        vm.DiscardEdits();
+        Assert.False(vm.HasResults);
+        Assert.True(vm.HasSelectedPhotos);
+        Assert.False(vm.IsEmptyState);
     }
 }
 

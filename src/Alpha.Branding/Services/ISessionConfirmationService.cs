@@ -14,6 +14,7 @@ public interface ISessionConfirmationService
 {
     SessionPromptResult PromptUnsavedEdits(string title, string message);
     string? PromptSaveZip(string defaultFileName);
+    string? PromptExportFolder();
 }
 
 public sealed class DefaultSessionConfirmationService : ISessionConfirmationService
@@ -52,5 +53,21 @@ public sealed class DefaultSessionConfirmationService : ISessionConfirmationServ
         };
 
         return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? PromptExportFolder()
+    {
+        if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.CheckAccess())
+        {
+            return Application.Current.Dispatcher.Invoke(() => PromptExportFolder());
+        }
+
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Select Destination Folder for Individual Photos",
+            Multiselect = false
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FolderName : null;
     }
 }

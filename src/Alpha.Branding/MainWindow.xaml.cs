@@ -103,13 +103,37 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() == true) _viewModel.SelectedFiles = dialog.FileNames;
     }
 
+    private void AddMorePhotos_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+        var dialog = new OpenFileDialog { Multiselect = true, Filter = "Images|*.jpg;*.jpeg;*.png;*.bmp;*.webp|All files|*.*" };
+        if (dialog.ShowDialog() == true)
+        {
+            var combined = _viewModel.SelectedFiles.ToList();
+            foreach (var file in dialog.FileNames)
+            {
+                if (!combined.Contains(file, StringComparer.OrdinalIgnoreCase))
+                {
+                    combined.Add(file);
+                }
+            }
+            _viewModel.SelectedFiles = combined;
+        }
+    }
+
+    private void RemoveSelectedPhoto_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
+        _viewModel.RemoveSelectedFile(item.FilePath);
+    }
+
     private async void Apply_Click(object sender, RoutedEventArgs e)
     {
         try { await _viewModel.ApplyWorkflowAsync(_overlayPath); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Branding failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
-    private async void Export_Click(object sender, RoutedEventArgs e)
+    private void ExportDropdown_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy) return;
         if (_viewModel.Results.Count == 0)
@@ -117,11 +141,61 @@ public partial class MainWindow : Window
             MessageBox.Show("Apply branding before exporting.", "Export failed", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        var dialog = new SaveFileDialog { FileName = $"{FileNameGenerator.FolderName(_viewModel.Prefix)}_Export.zip", Filter = "ZIP archive|*.zip" };
-        if (dialog.ShowDialog() == true)
+
+        if (sender is FrameworkElement element && element.ContextMenu != null)
         {
-            try { await _viewModel.ExportZipAsync(dialog.FileName); }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Export failed", MessageBoxButton.OK, MessageBoxImage.Error); }
+            element.ContextMenu.PlacementTarget = element;
+            element.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            element.ContextMenu.IsOpen = true;
+        }
+    }
+
+    private void Export_Click(object sender, RoutedEventArgs e) => ExportDropdown_Click(sender, e);
+
+    private async void ExportZip_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+        if (_viewModel.Results.Count == 0)
+        {
+            MessageBox.Show("Apply branding before exporting.", "Export failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var defaultName = $"{FileNameGenerator.FolderName(_viewModel.Prefix)}_Export.zip";
+        var savePath = _viewModel.ConfirmationService.PromptSaveZip(defaultName);
+        if (!string.IsNullOrWhiteSpace(savePath))
+        {
+            try
+            {
+                await _viewModel.ExportZipAsync(savePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Export failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private async void ExportIndividual_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+        if (_viewModel.Results.Count == 0)
+        {
+            MessageBox.Show("Apply branding before exporting.", "Export failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var targetFolder = _viewModel.ConfirmationService.PromptExportFolder();
+        if (!string.IsNullOrWhiteSpace(targetFolder))
+        {
+            try
+            {
+                await _viewModel.ExportIndividualFilesAsync(targetFolder);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Export failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 
@@ -182,11 +256,19 @@ public partial class MainWindow : Window
                 e.Handled = true;
             }
         }
+        else if (e.KeyboardDevice.Modifiers == (System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift) && e.Key == System.Windows.Input.Key.E)
+        {
+            if (_viewModel.CanExport)
+            {
+                ExportIndividual_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
         else if (e.KeyboardDevice.Modifiers == System.Windows.Input.ModifierKeys.Control && (e.Key == System.Windows.Input.Key.E || e.Key == System.Windows.Input.Key.S))
         {
             if (_viewModel.CanExport)
             {
-                Export_Click(this, new RoutedEventArgs());
+                ExportZip_Click(this, new RoutedEventArgs());
                 e.Handled = true;
             }
         }
