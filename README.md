@@ -54,6 +54,24 @@ Alpha.Branding.Setup.exe --uninstall
 
 The installer is not code-signed, so Windows SmartScreen may show its normal warning for an unsigned executable.
 
+## Silent PowerShell Installer (`Install.ps1`)
+
+For automated environments, CI/CD runners (GitHub Actions), and remote management tools (Action1 RMM) where typical GUI setup executables cannot run:
+
+```powershell
+# Silent local installation:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1
+
+# Remote Action1 RMM deployment:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 `
+  -DownloadUrl "https://github.com/Deign86/Alpha_Branding/releases/latest/download/Alpha.Branding.Setup.exe" `
+  -AllUsers `
+  -CreateDesktopShortcut
+
+# Silent uninstallation:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -Uninstall
+```
+
 ## Build and test the application
 
 From the repository root:

@@ -64,6 +64,14 @@ jobs:
         run: |
           $path = Join-Path $env:GITHUB_WORKSPACE 'artifacts\Alpha.Branding.Setup.exe'
           if (-not (Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -le 0) { throw 'EXE installer artifact is missing or empty.' }
+      - name: Validate PowerShell installer
+        shell: powershell
+        run: |
+          $testInstallDir = Join-Path ([System.IO.Path]::GetTempPath()) 'AlphaBranding_CiInstallTest'
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -InstallDir $testInstallDir -NoShortcuts -NoRegistry
+          $installedExe = Join-Path $testInstallDir 'Alpha.Branding.exe'
+          if (-not (Test-Path -LiteralPath $installedExe)) { throw "PowerShell installer failed to deploy Alpha.Branding.exe" }
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -Uninstall -InstallDir $testInstallDir
       - name: Upload EXE installer
         uses: actions/upload-artifact@v4
         with:
