@@ -350,9 +350,25 @@ $tempStage = Join-Path ([System.IO.Path]::GetTempPath()) ("AlphaBranding_Install
 New-Item -ItemType Directory -Path $tempStage -Force | Out-Null
 
 try {
-    # 0. Download if DownloadUrl provided
+    # 0. Check for local repository files or point directly to GitHub repo release
+    $defaultSetupExe = Join-Path $repoRoot 'artifacts\Alpha.Branding.Setup.exe'
+    $defaultPublishDir = Join-Path $repoRoot 'artifacts\publish'
+    $csprojPath = Join-Path $repoRoot 'src\Alpha.Branding\Alpha.Branding.csproj'
+
+    $hasLocalSource = ($SourceDir -and (Test-Path -LiteralPath $SourceDir)) -or `
+                      ($ZipPath -and (Test-Path -LiteralPath $ZipPath)) -or `
+                      ($SetupExe -and (Test-Path -LiteralPath $SetupExe)) -or `
+                      (Test-Path -LiteralPath $defaultSetupExe) -or `
+                      (Test-Path -LiteralPath (Join-Path $defaultPublishDir 'Alpha.Branding.exe')) -or `
+                      (Test-Path -LiteralPath $csprojPath)
+
+    if (-not $hasLocalSource -and [string]::IsNullOrWhiteSpace($DownloadUrl)) {
+        $DownloadUrl = 'https://github.com/Deign86/Alpha_Branding/releases/latest/download/Alpha.Branding.Setup.exe'
+        Write-InstallLog "No local payload found. Pointing directly to GitHub repo: $DownloadUrl" -Color 'Cyan'
+    }
+
     if ($DownloadUrl) {
-        Write-InstallLog "Downloading installer asset from: $DownloadUrl" -Color 'Cyan'
+        Write-InstallLog "Downloading installer asset from GitHub: $DownloadUrl" -Color 'Cyan'
         $downloadFile = Join-Path $tempStage ("AlphaBranding_Download_" + [Guid]::NewGuid().ToString('N') + $(if ($DownloadUrl -match '\.exe($|\?)') { '.exe' } else { '.zip' }))
         $oldProgress = $ProgressPreference
         $ProgressPreference = 'SilentlyContinue'
@@ -390,11 +406,6 @@ try {
         [System.IO.Compression.ZipFile]::ExtractToDirectory($extractedZip, $unzipTarget)
         $sourceFilesDir = $unzipTarget
     } else {
-        # Auto-discover from artifacts or source
-        $defaultSetupExe = Join-Path $repoRoot 'artifacts\Alpha.Branding.Setup.exe'
-        $defaultPublishDir = Join-Path $repoRoot 'artifacts\publish'
-        $csprojPath = Join-Path $repoRoot 'src\Alpha.Branding\Alpha.Branding.csproj'
-
         if (Test-Path -LiteralPath $defaultSetupExe) {
             Write-InstallLog "Found artifact setup executable: $defaultSetupExe" -Color 'Gray'
             $extractedZip = Join-Path $tempStage 'payload.zip'
