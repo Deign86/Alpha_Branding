@@ -268,6 +268,59 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsEmptyState));
     }
 
+    public async Task<bool> LoadFilesWorkflowAsync(IEnumerable<string> filePaths)
+    {
+        if (IsBusy) return false;
+        var filesList = filePaths?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
+        if (filesList.Length == 0) return false;
+
+        if (HasUnsavedEdits || Results.Count > 0)
+        {
+            var message = HasUnsavedEdits
+                ? "You have unsaved edits in the current session. Loading a new batch will replace the current items and discard those unsaved edits."
+                : "Starting a new branding session will replace the active items in the current session. Do you want to export your current items first, discard and continue, or cancel?";
+
+            var promptResult = _confirmationService.PromptUnsavedEdits(
+                "Start a new branding session?",
+                message);
+
+            switch (promptResult)
+            {
+                case SessionPromptResult.Cancel:
+                    Status = "New session canceled. Current session retained.";
+                    return false;
+
+                case SessionPromptResult.SaveAndContinue:
+                    var defaultFileName = $"{FileNameGenerator.FolderName(Prefix)}_Export.zip";
+                    var exportPath = _confirmationService.PromptSaveZip(defaultFileName);
+                    if (string.IsNullOrWhiteSpace(exportPath))
+                    {
+                        Status = "Save canceled. Current session retained.";
+                        return false;
+                    }
+
+                    try
+                    {
+                        await ExportZipAsync(exportPath);
+                        DiscardEdits();
+                    }
+                    catch (Exception ex)
+                    {
+                        Status = $"Export failed: {ex.Message}";
+                        return false;
+                    }
+                    break;
+
+                case SessionPromptResult.DiscardAndContinue:
+                    DiscardEdits();
+                    break;
+            }
+        }
+
+        SelectedFiles = filesList;
+        return true;
+    }
+
     public async Task<bool> ApplyWorkflowAsync(string overlayPath, CancellationToken token = default)
     {
         if (IsBusy) return false;

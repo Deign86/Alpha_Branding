@@ -3,9 +3,9 @@
 Native .NET 8 WPF desktop application with a self-contained win-x64 installer.
 
 ### Changes
-- **Destructive Action Confirmation Popups**: Protected all destructive workflows with popup confirmation dialogs. Starting a new branding session when active items exist in the current session now always prompts the user to either save (ZIP export), discard, or cancel.
-- **Application Exit Guard**: Closing the application with unsaved edits or active branded results now prompts the user to save before exiting.
-- **Visual Session Warnings**: Dynamic session indicators warn the user when applying branding will overwrite or replace active session media.
+- **Drag-and-Drop & File Selection Protection**: Dropping a new batch of files onto the upload section or selecting new media while active session results exist now immediately prompts the user with the session confirmation dialog (Cancel, Discard & Continue, or Save & Continue), streamlining the UI/UX.
+- **Fixed Confirmation Dialog Sizing**: Increased dialog width to 640px and adjusted action button layout to ensure no button text or actions are cut off across all display resolutions and DPI scales.
+- **Application Exit Guard**: Closing the application with unsaved edits or active branded results prompts the user to save before exiting.
 
 ### Installation
 Download `Alpha.Branding.Setup.exe` to install per-user without administrator access.

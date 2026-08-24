@@ -87,7 +87,7 @@ public partial class MainWindow : Window
 
     private const string MediaFilter = "All Supported Media|*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|Photos (*.jpg;*.png;*.webp)|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Videos (*.mp4;*.mov;*.wmv)|*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|All files|*.*";
 
-    public void LoadFiles(IEnumerable<string> filePaths)
+    public async Task<bool> LoadFilesAsync(IEnumerable<string> filePaths)
     {
         var supported = filePaths.Where(f =>
         {
@@ -98,15 +98,25 @@ public partial class MainWindow : Window
 
         if (supported.Length > 0)
         {
-            _viewModel.SelectedFiles = supported;
+            return await _viewModel.LoadFilesWorkflowAsync(supported);
         }
+
+        return false;
     }
 
-    private void SelectPhotos_Click(object sender, RoutedEventArgs e)
+    public void LoadFiles(IEnumerable<string> filePaths)
+    {
+        _ = LoadFilesAsync(filePaths);
+    }
+
+    private async void SelectPhotos_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy) return;
         var dialog = new OpenFileDialog { Multiselect = true, Filter = MediaFilter };
-        if (dialog.ShowDialog() == true) _viewModel.SelectedFiles = dialog.FileNames;
+        if (dialog.ShowDialog() == true)
+        {
+            await LoadFilesAsync(dialog.FileNames);
+        }
     }
 
     private void AddMorePhotos_Click(object sender, RoutedEventArgs e)
@@ -239,12 +249,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Window_Drop(object sender, DragEventArgs e)
+    private async void Window_Drop(object sender, DragEventArgs e)
     {
         if (_viewModel.IsBusy) return;
         if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files)
         {
-            LoadFiles(files);
+            await LoadFilesAsync(files);
         }
     }
 

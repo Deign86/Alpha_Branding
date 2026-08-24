@@ -876,6 +876,77 @@ public class SessionWorkflowSafetyTests
     }
 
     [Fact]
+    public async Task DroppingNewBatchWithActiveSessionPromptsConfirmationAndCancels()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.Cancel
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "ActiveSession"
+            };
+
+            await vm.ApplyAsync(overlay);
+            Assert.Single(vm.Results);
+            Assert.Equal("ActiveSession_01.jpg", vm.Results[0].FileName);
+
+            // User drops a new batch of files onto the upload section
+            var loaded = await vm.LoadFilesWorkflowAsync(new[] { p2 });
+            Assert.False(loaded);
+            Assert.True(promptService.PromptCalled);
+            Assert.Equal("Start a new branding session?", promptService.LastPromptTitle);
+            Assert.Single(vm.Results);
+            Assert.Equal("ActiveSession_01.jpg", vm.Results[0].FileName);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task DroppingNewBatchWithActiveSessionDiscardAndContinues()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.DiscardAndContinue
+            };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
+            {
+                SelectedFiles = new[] { p1 },
+                Prefix = "FirstSession"
+            };
+
+            await vm.ApplyAsync(overlay);
+            Assert.Single(vm.Results);
+
+            // User drops a new batch of files onto upload section -> discards and stages new files
+            var loaded = await vm.LoadFilesWorkflowAsync(new[] { p2 });
+            Assert.True(loaded);
+            Assert.True(promptService.PromptCalled);
+            Assert.Empty(vm.Results);
+            Assert.Single(vm.SelectedFiles);
+            Assert.Equal(p2, vm.SelectedFiles[0]);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
     public async Task DirtyStateLifecycleTransitions()
     {
         var (p1, p2, overlay) = await CreateSampleImagesAsync();
