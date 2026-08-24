@@ -28,12 +28,16 @@ public partial class MainWindow : Window
 
     protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (_viewModel.HasUnsavedEdits)
+        if (_viewModel.HasUnsavedEdits || _viewModel.HasResults)
         {
             e.Cancel = true;
+            var message = _viewModel.HasUnsavedEdits
+                ? "You have unsaved edits in the current session. Do you want to save them before exiting?"
+                : "You have active branded items in the current session. Do you want to save them before exiting?";
+
             var result = _viewModel.ConfirmationService.PromptUnsavedEdits(
                 "Unsaved edits in current session",
-                "You have unsaved edits in the current session. Do you want to save them before exiting?");
+                message);
 
             if (result == SessionPromptResult.Cancel)
             {

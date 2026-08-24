@@ -273,11 +273,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (IsBusy) return false;
         if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one media file first.");
 
-        if (HasUnsavedEdits)
+        if (HasUnsavedEdits || Results.Count > 0)
         {
+            var message = HasUnsavedEdits
+                ? "You have unsaved edits in the current session. Applying branding to the newly selected files will replace the current items and discard those unsaved edits."
+                : "Starting a new branding session will replace the active items in the current session. Applying branding to the newly selected files will discard the current items.";
+
             var promptResult = _confirmationService.PromptUnsavedEdits(
                 "Start a new branding session?",
-                "You have unsaved edits in the current session. Applying branding to the newly selected files will replace the current items and discard those unsaved edits.");
+                message);
 
             switch (promptResult)
             {

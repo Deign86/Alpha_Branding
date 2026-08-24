@@ -640,12 +640,15 @@ public class SessionWorkflowSafetyTests
     }
 
     [Fact]
-    public async Task NewSelectionWithoutDirtyEditsStartsBrandingDirectly()
+    public async Task NewSelectionWithExistingResultsPromptsConfirmation()
     {
         var (p1, p2, overlay) = await CreateSampleImagesAsync();
         try
         {
-            var promptService = new TestSessionConfirmationService();
+            var promptService = new TestSessionConfirmationService
+            {
+                DesiredPromptResult = SessionPromptResult.Cancel
+            };
             var vm = new MainWindowViewModel(new ImageProcessingService(), promptService)
             {
                 SelectedFiles = new[] { p1 },
@@ -663,15 +666,23 @@ public class SessionWorkflowSafetyTests
             // Select new photos without editing existing results
             vm.SelectedFiles = new[] { p2 };
             Assert.False(vm.HasUnsavedEdits);
-            Assert.Equal("1 new photo(s) selected — applying branding will start a new session.", vm.ApplyStatusHint);
             Assert.False(vm.HasApplyWarning);
+            Assert.True(vm.HasApplyHint);
 
-            // Apply branding to new selection -> starts directly without modal confirmation
+            // Apply branding to new selection -> prompts confirmation because results exist
             var appliedSecond = await vm.ApplyWorkflowAsync(overlay);
-            Assert.True(appliedSecond);
-            Assert.False(promptService.PromptCalled, "Modal prompt should not appear when there are no dirty edits.");
+            Assert.False(appliedSecond);
+            Assert.True(promptService.PromptCalled, "Modal prompt must appear when active results exist.");
+            Assert.Equal("Start a new branding session?", promptService.LastPromptTitle);
+            Assert.Contains("replace the active items", promptService.LastPromptMessage, StringComparison.OrdinalIgnoreCase);
             Assert.Single(vm.Results);
-            Assert.False(vm.HasUnsavedEdits);
+            Assert.Equal("Initial_01.jpg", vm.Results[0].FileName);
+
+            // Now allow discard and continue
+            promptService.DesiredPromptResult = SessionPromptResult.DiscardAndContinue;
+            var appliedThird = await vm.ApplyWorkflowAsync(overlay);
+            Assert.True(appliedThird);
+            Assert.Single(vm.Results);
         }
         finally
         {

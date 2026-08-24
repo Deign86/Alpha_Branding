@@ -363,6 +363,61 @@ public class UiAutomationTests
     }
 
     [Fact]
+    public void ActiveSessionOverwriteConfirmationModalAppearsInUI()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var (landscape, p1, _) = CreateTestImages(tempDir.FullName);
+            var appPath = GetAppExecutablePath();
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(appPath, $"\"{landscape}\"");
+
+            try
+            {
+                var window = GetAppMainWindow(app, automation);
+                Assert.NotNull(window);
+
+                var applyBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"))?.AsButton();
+                Assert.NotNull(applyBtn);
+                applyBtn.Invoke();
+
+                var statusCompleted = Retry.WhileFalse(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name?.Contains("Completed") == true,
+                    TimeSpan.FromSeconds(8));
+                Assert.True(statusCompleted.Success);
+
+                // Click Apply Branding again without editing -> confirmation dialog must still appear to protect session
+                applyBtn.Invoke();
+
+                var modal = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByControlType(ControlType.Window)),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(modal);
+                Assert.Contains("Start a new branding session?", modal.Name);
+
+                var message = modal.FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationMessageTextBlock"));
+                Assert.NotNull(message);
+                Assert.Contains("replace the active items", message.Name, StringComparison.OrdinalIgnoreCase);
+
+                var cancelBtn = modal.FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationCancelButton"))?.AsButton();
+                Assert.NotNull(cancelBtn);
+                cancelBtn.Invoke();
+                Thread.Sleep(300);
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
     public void ExportDropdownMenuOpensAndPresentsZipAndIndividualOptions()
     {
         var tempDir = Directory.CreateTempSubdirectory();
