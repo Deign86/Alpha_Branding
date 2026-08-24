@@ -26,17 +26,38 @@ public sealed class DefaultSessionConfirmationService : ISessionConfirmationServ
             return Application.Current.Dispatcher.Invoke(() => PromptUnsavedEdits(title, message));
         }
 
-        var activeWindow = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                           ?? Application.Current?.MainWindow;
-
-        var dialog = new SessionConfirmationDialog(title, message);
-        if (activeWindow != null && activeWindow.IsLoaded)
+        try
         {
-            dialog.Owner = activeWindow;
-        }
+            var existingDialog = Application.Current?.Windows.OfType<SessionConfirmationDialog>().FirstOrDefault(w => w.IsVisible);
+            if (existingDialog != null)
+            {
+                existingDialog.Activate();
+                return SessionPromptResult.Cancel;
+            }
 
-        dialog.ShowDialog();
-        return dialog.Result;
+            var activeWindow = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive && w.IsVisible && !(w is SessionConfirmationDialog))
+                               ?? Application.Current?.MainWindow;
+
+            var dialog = new SessionConfirmationDialog(title, message);
+            if (activeWindow != null && activeWindow.IsLoaded && activeWindow.IsVisible && activeWindow != dialog)
+            {
+                try
+                {
+                    dialog.Owner = activeWindow;
+                }
+                catch
+                {
+                    // Parent window might be closing; proceed without explicit owner
+                }
+            }
+
+            dialog.ShowDialog();
+            return dialog.Result;
+        }
+        catch (InvalidOperationException)
+        {
+            return SessionPromptResult.Cancel;
+        }
     }
 
     public string? PromptSaveZip(string defaultFileName)

@@ -26,10 +26,27 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
     }
 
+    private bool _isExiting;
+
     protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        if (_isExiting)
+        {
+            base.OnClosing(e);
+            return;
+        }
+
         if (_viewModel.HasUnsavedEdits || _viewModel.HasResults)
         {
+            // If a confirmation dialog is already open on screen, activate it and cancel this close event
+            var existingDialog = Application.Current?.Windows.OfType<SessionConfirmationDialog>().FirstOrDefault(w => w.IsVisible);
+            if (existingDialog != null)
+            {
+                e.Cancel = true;
+                existingDialog.Activate();
+                return;
+            }
+
             e.Cancel = true;
             var message = _viewModel.HasUnsavedEdits
                 ? "You have unsaved edits in the current session. Do you want to save them before exiting?"
@@ -47,7 +64,8 @@ public partial class MainWindow : Window
             if (result == SessionPromptResult.DiscardAndContinue)
             {
                 _viewModel.DiscardEdits();
-                Close();
+                _isExiting = true;
+                _ = Dispatcher.BeginInvoke(new Action(Close));
                 return;
             }
 
@@ -61,7 +79,8 @@ public partial class MainWindow : Window
                     {
                         await _viewModel.ExportZipAsync(savePath);
                         _viewModel.DiscardEdits();
-                        Close();
+                        _isExiting = true;
+                        _ = Dispatcher.BeginInvoke(new Action(Close));
                     }
                     catch (Exception ex)
                     {
@@ -76,12 +95,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         var args = Environment.GetCommandLineArgs();
         if (args.Length > 1)
         {
-            LoadFiles(args.Skip(1));
+            await LoadFilesAsync(args.Skip(1));
         }
     }
 

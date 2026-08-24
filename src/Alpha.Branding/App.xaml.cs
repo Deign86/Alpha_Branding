@@ -12,6 +12,7 @@ public partial class App : Application
         DispatcherUnhandledException += (s, e) =>
         {
             LogCrash(e.Exception);
+            e.Handled = true;
             MessageBox.Show(e.Exception.Message, "Application Error", MessageBoxButton.OK, MessageBoxImage.Error);
         };
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
