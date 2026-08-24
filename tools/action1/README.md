@@ -1,17 +1,13 @@
 # Action1 deployment scripts
 
-These scripts provide an unattended deployment path for Alpha Premier Branding without launching the interactive WPF bootstrapper.
+The Action1 wrapper and installer are designed for unattended deployment. They do not display installer windows, prompts, or application UI, and they return an exit code for Action1.
 
-## Required change
+The installer downloads the public GitHub Release asset:
 
-Edit `Install-AlphaPremierBranding.ps1` and replace `$DownloadUrl` with a direct HTTPS URL to a ZIP containing the published Windows application output.
+`https://github.com/Deign86/Alpha_Branding/releases/latest/download/AlphaBranding-1.6.3.zip`
 
-The ZIP should contain either a `publish`, `app-files`, or `Alpha.Branding` directory, or contain the published files at its root. It must include the application EXE and its accompanying DLL, JSON, and asset files.
+The release asset must exist and contain the published Windows application output. It may contain a `publish`, `app-files`, or `Alpha.Branding` folder, or published files at the archive root. The archive must include the application EXE and supporting files.
 
-## Action1 Run Script
+Use `Run-AlphaPremierBranding-Install.ps1` in Action1's PowerShell Run Script action. Do not add a top-level `param()` block because Action1 prepends preference assignments. The script installs to `C:\Program Files\Alpha Premier Branding`, creates common Desktop and Start Menu shortcuts, registers Add/Remove Programs, and creates a silent uninstaller. Logs are written to `C:\ProgramData\Alpha Premier Branding\action1-install.log`.
 
-Use `Run-AlphaPremierBranding-Install.ps1` as the Action1 PowerShell Run Script. It downloads the installer script from this branch, executes it, propagates the exit code, and removes its temporary copy.
-
-The installer script itself then downloads the application ZIP, copies it to `C:\Program Files\Alpha Premier Branding`, creates common Desktop and Start Menu shortcuts, registers the app under the machine-wide uninstall registry key, and creates an uninstaller.
-
-Do not add a `param()` block to the wrapper because Action1 prepends preference assignments before executing Run Script content. Do not place secrets in these files. For production, pin the raw script URL to a reviewed commit SHA or host it on a controlled HTTPS endpoint.
+The application itself is not launched during installation. The application and bootstrapper are not used by this deployment path, avoiding interactive WPF UI.
