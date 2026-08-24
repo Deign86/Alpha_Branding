@@ -159,10 +159,14 @@ if ($isMachineInstall) {
 }
 $startMenuShortcut = Join-Path $startMenuFolder ($productName + '.lnk')
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = if (Test-Path -LiteralPath (Join-Path $scriptDir '..\Alpha_Branding.sln')) {
+$scriptDir = if ($MyInvocation.MyCommand.Path) {
+    Split-Path -Parent $MyInvocation.MyCommand.Path
+} else {
+    $PWD.Path
+}
+$repoRoot = if ($scriptDir -and (Test-Path -LiteralPath (Join-Path $scriptDir '..\Alpha_Branding.sln'))) {
     (Resolve-Path (Join-Path $scriptDir '..')).Path
-} elseif (Test-Path -LiteralPath (Join-Path $scriptDir 'Alpha_Branding.sln')) {
+} elseif ($scriptDir -and (Test-Path -LiteralPath (Join-Path $scriptDir 'Alpha_Branding.sln'))) {
     $scriptDir
 } else {
     $scriptDir
