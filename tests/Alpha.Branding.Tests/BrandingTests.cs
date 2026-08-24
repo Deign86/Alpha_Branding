@@ -1644,4 +1644,63 @@ public class VideoProcessingTests
     }
 }
 
+public class InstallerPayloadDiscoveryTests
+{
+    [Fact]
+    public void DiscoversPayloadInUnsignedBinaryStream()
+    {
+        var header = new byte[1000];
+        var payload = new byte[500];
+        new Random(42).NextBytes(payload);
+        var marker = System.Text.Encoding.UTF8.GetBytes(Alpha.Branding.Bootstrapper.InstallerService.Marker);
+        var lengthBytes = BitConverter.GetBytes((long)payload.Length);
+
+        using var ms = new MemoryStream();
+        ms.Write(header);
+        long expectedStart = ms.Position;
+        ms.Write(payload);
+        ms.Write(marker);
+        ms.Write(lengthBytes);
+
+        bool found = Alpha.Branding.Bootstrapper.InstallerService.TryGetPayloadLocation(ms, out long start, out long length);
+        Assert.True(found);
+        Assert.Equal(expectedStart, start);
+        Assert.Equal(payload.Length, length);
+    }
+
+    [Fact]
+    public void DiscoversPayloadInAuthenticodeSignedBinaryStreamWithTrailingSignature()
+    {
+        var header = new byte[2000];
+        var payload = new byte[800];
+        new Random(123).NextBytes(payload);
+        var marker = System.Text.Encoding.UTF8.GetBytes(Alpha.Branding.Bootstrapper.InstallerService.Marker);
+        var lengthBytes = BitConverter.GetBytes((long)payload.Length);
+        var fakeSignatureTable = new byte[7500]; // Simulated Authenticode PKCS#7 table appended at end
+
+        using var ms = new MemoryStream();
+        ms.Write(header);
+        long expectedStart = ms.Position;
+        ms.Write(payload);
+        ms.Write(marker);
+        ms.Write(lengthBytes);
+        ms.Write(fakeSignatureTable);
+
+        bool found = Alpha.Branding.Bootstrapper.InstallerService.TryGetPayloadLocation(ms, out long start, out long length);
+        Assert.True(found);
+        Assert.Equal(expectedStart, start);
+        Assert.Equal(payload.Length, length);
+    }
+
+    [Fact]
+    public void ReturnsFalseWhenMarkerIsMissingOrStreamTooSmall()
+    {
+        using var emptyStream = new MemoryStream(new byte[10]);
+        Assert.False(Alpha.Branding.Bootstrapper.InstallerService.TryGetPayloadLocation(emptyStream, out _, out _));
+
+        using var randomStream = new MemoryStream(new byte[1000]);
+        Assert.False(Alpha.Branding.Bootstrapper.InstallerService.TryGetPayloadLocation(randomStream, out _, out _));
+    }
+}
+
 

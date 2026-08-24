@@ -5,3 +5,10 @@ artifacts/
 *.user
 *.suo
 tools/flaui-mcp/
+
+# Code signing certificates and keys
+installer/certs/
+*.pfx
+*.cer
+*.p12
+*.snk

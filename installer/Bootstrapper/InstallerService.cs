@@ -30,6 +30,60 @@ public static class InstallerService
     public static string AppExecutablePath => Path.Combine(InstallDirectory, "Alpha.Branding.exe");
     public static string SetupExecutablePath => Path.Combine(InstallDirectory, "Alpha.Branding.Setup.exe");
 
+    public static bool TryGetPayloadLocation(Stream stream, out long payloadStart, out long payloadLength)
+    {
+        payloadStart = 0;
+        payloadLength = 0;
+        byte[] markerBytes = Encoding.UTF8.GetBytes(Marker);
+        int trailerOverhead = markerBytes.Length + sizeof(long);
+        if (stream.Length < trailerOverhead) return false;
+
+        // When unsigned, the trailer is at the very end of the file.
+        // When Authenticode-signed, the Authenticode certificate table is appended at the end,
+        // so the trailer precedes the signature. We scan backwards in the last 1MB of the file.
+        const int maxScanWindow = 1024 * 1024;
+        int scanSize = (int)Math.Min(stream.Length, maxScanWindow);
+        long scanStart = stream.Length - scanSize;
+        stream.Seek(scanStart, SeekOrigin.Begin);
+
+        byte[] scanBuffer = new byte[scanSize];
+        int bytesRead = 0;
+        while (bytesRead < scanSize)
+        {
+            int r = stream.Read(scanBuffer, bytesRead, scanSize - bytesRead);
+            if (r == 0) break;
+            bytesRead += r;
+        }
+
+        for (int i = bytesRead - trailerOverhead; i >= 0; i--)
+        {
+            bool match = true;
+            for (int j = 0; j < markerBytes.Length; j++)
+            {
+                if (scanBuffer[i + j] != markerBytes[j])
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match)
+            {
+                long length = BitConverter.ToInt64(scanBuffer, i + markerBytes.Length);
+                long markerAbsolutePos = scanStart + i;
+                long pStart = markerAbsolutePos - length;
+                if (length > 0 && pStart >= 0 && pStart <= stream.Length - trailerOverhead)
+                {
+                    payloadStart = pStart;
+                    payloadLength = length;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static bool HasPayload()
     {
         try
@@ -37,12 +91,7 @@ public static class InstallerService
             string setupPath = Environment.ProcessPath ?? "";
             if (!File.Exists(setupPath)) return false;
             using var stream = new FileStream(setupPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            byte[] markerBytes = Encoding.UTF8.GetBytes(Marker);
-            if (stream.Length < sizeof(long) + markerBytes.Length) return false;
-            stream.Seek(-(sizeof(long) + markerBytes.Length), SeekOrigin.End);
-            byte[] readMarker = new byte[markerBytes.Length];
-            if (stream.Read(readMarker, 0, markerBytes.Length) != markerBytes.Length) return false;
-            return readMarker.SequenceEqual(markerBytes);
+            return TryGetPayloadLocation(stream, out _, out _);
         }
         catch
         {
@@ -57,14 +106,9 @@ public static class InstallerService
             string setupPath = Environment.ProcessPath ?? "";
             if (!File.Exists(setupPath)) return DefaultVersion;
             using var stream = new FileStream(setupPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            byte[] markerBytes = Encoding.UTF8.GetBytes(Marker);
-            if (stream.Length < sizeof(long) + markerBytes.Length) return DefaultVersion;
-            stream.Seek(-sizeof(long), SeekOrigin.End);
-            using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
-            long length = reader.ReadInt64();
-            if (length <= 0 || length > stream.Length - markerBytes.Length - sizeof(long)) return DefaultVersion;
+            if (!TryGetPayloadLocation(stream, out long payloadStart, out _)) return DefaultVersion;
 
-            stream.Seek(-(sizeof(long) + markerBytes.Length + length), SeekOrigin.End);
+            stream.Seek(payloadStart, SeekOrigin.Begin);
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
             var entry = archive.GetEntry("InstallerVersion.txt");
             if (entry != null)
@@ -162,24 +206,12 @@ public static class InstallerService
     {
         string setupPath = Environment.ProcessPath ?? throw new InvalidOperationException("Process path not found.");
         using var stream = new FileStream(setupPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        byte[] marker = Encoding.UTF8.GetBytes(Marker);
-        if (stream.Length < sizeof(long) + marker.Length)
-            throw new InvalidDataException("Installer payload trailer is missing.");
+        if (!TryGetPayloadLocation(stream, out long payloadStart, out long payloadLength))
+            throw new InvalidDataException("Installer payload trailer is missing or invalid.");
 
-        stream.Seek(-sizeof(long), SeekOrigin.End);
-        using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
-        long length = reader.ReadInt64();
-        if (length <= 0 || length > stream.Length - marker.Length - sizeof(long))
-            throw new InvalidDataException("Installer payload length is invalid.");
-
-        stream.Seek(-(sizeof(long) + marker.Length), SeekOrigin.End);
-        byte[] readMarker = reader.ReadBytes(marker.Length);
-        if (!readMarker.SequenceEqual(marker))
-            throw new InvalidDataException("Installer payload marker is invalid.");
-
-        stream.Seek(-(sizeof(long) + marker.Length + length), SeekOrigin.End);
+        stream.Seek(payloadStart, SeekOrigin.Begin);
         using var output = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None);
-        stream.CopyTo(output, length);
+        stream.CopyTo(output, payloadLength);
     }
 
     public static async Task UninstallAsync(IProgress<(double Progress, string Status)>? progress = null)
