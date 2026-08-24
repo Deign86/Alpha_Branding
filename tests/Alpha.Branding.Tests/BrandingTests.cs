@@ -1542,6 +1542,49 @@ public class VideoProcessingTests
         thread.Start();
         thread.Join();
     }
+
+    [Fact]
+    public async Task CreateAdaptedOverlayGeneratesExactTargetDimensions()
+    {
+        var tempOverlay = Path.GetTempFileName() + ".png";
+        try
+        {
+            using (var img = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1200, 1000, new SixLabors.ImageSharp.PixelFormats.Rgba32(0, 0, 0, 0)))
+            {
+                await img.SaveAsPngAsync(tempOverlay);
+            }
+
+            // Landscape
+            var landscapePath = await VideoProcessingService.CreateAdaptedOverlayAsync(tempOverlay, 1920, 1080);
+            try
+            {
+                using var decoded = await Image.LoadAsync(landscapePath);
+                Assert.Equal(1920, decoded.Width);
+                Assert.Equal(1080, decoded.Height);
+            }
+            finally
+            {
+                if (File.Exists(landscapePath)) File.Delete(landscapePath);
+            }
+
+            // Portrait
+            var portraitPath = await VideoProcessingService.CreateAdaptedOverlayAsync(tempOverlay, 1080, 1920);
+            try
+            {
+                using var decoded = await Image.LoadAsync(portraitPath);
+                Assert.Equal(1080, decoded.Width);
+                Assert.Equal(1920, decoded.Height);
+            }
+            finally
+            {
+                if (File.Exists(portraitPath)) File.Delete(portraitPath);
+            }
+        }
+        finally
+        {
+            if (File.Exists(tempOverlay)) File.Delete(tempOverlay);
+        }
+    }
 }
 
 

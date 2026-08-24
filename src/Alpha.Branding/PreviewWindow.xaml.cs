@@ -60,23 +60,30 @@ public partial class PreviewWindow : Window, INotifyPropertyChanged
         _isPlaying = false;
         PlayPauseButton.Content = "▶ PLAY";
 
-        if (Current?.IsVideo == true && !string.IsNullOrWhiteSpace(Current.VideoFilePath) && File.Exists(Current.VideoFilePath))
+        if (Current?.IsVideo == true)
         {
-            try
+            PreviewImageViewer.Visibility = Visibility.Collapsed;
+            VideoPlayerContainer.Visibility = Visibility.Visible;
+            if (!string.IsNullOrWhiteSpace(Current.VideoFilePath) && File.Exists(Current.VideoFilePath))
             {
-                VideoPlayer.Source = new Uri(Current.VideoFilePath);
-                VideoPlayer.Play();
-                _isPlaying = true;
-                PlayPauseButton.Content = "⏸ PAUSE";
-                _timer.Start();
-            }
-            catch
-            {
-                // Gracefully fallback
+                try
+                {
+                    VideoPlayer.Source = new Uri(Current.VideoFilePath);
+                    VideoPlayer.Play();
+                    _isPlaying = true;
+                    PlayPauseButton.Content = "⏸ PAUSE";
+                    _timer.Start();
+                }
+                catch
+                {
+                    // Gracefully fallback
+                }
             }
         }
         else
         {
+            PreviewImageViewer.Visibility = Visibility.Visible;
+            VideoPlayerContainer.Visibility = Visibility.Collapsed;
             VideoPlayer.Source = null;
         }
     }

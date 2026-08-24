@@ -98,7 +98,7 @@
                        AutomationProperties.AutomationId="PreviewImage"
                        Stretch="Uniform"
                        RenderOptions.BitmapScalingMode="HighQuality"
-                       Visibility="{Binding IsVideoCurrent, Converter={StaticResource InverseBooleanConverter}}"/>
+                       Visibility="{Binding IsVideoCurrent, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 
                 <!-- Video Player Container -->
                 <Grid x:Name="VideoPlayerContainer"

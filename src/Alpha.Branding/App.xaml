@@ -54,6 +54,7 @@
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <local:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <local:EmptyToVisibilityConverter x:Key="EmptyToVisibilityConverter"/>
 
