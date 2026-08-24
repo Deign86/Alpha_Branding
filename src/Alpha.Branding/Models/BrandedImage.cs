@@ -19,7 +19,11 @@ public sealed class BrandedImage : INotifyPropertyChanged
         }
     }
 
-    public required byte[] ImageBytes { get; init; }
+    public byte[] ImageBytes { get; init; } = Array.Empty<byte>();
+    public string? VideoFilePath { get; init; }
+    public MediaType MediaType { get; init; } = MediaType.Image;
+    public bool IsVideo => MediaType == MediaType.Video;
+    public string DurationText { get; init; } = string.Empty;
     public required System.Windows.Media.Imaging.BitmapImage Preview { get; init; }
     public int SequenceIndex { get; init; }
     public int BatchSize { get; init; }

@@ -9,4 +9,7 @@ public sealed class SelectedPhotoItem
     public string FileName => Path.GetFileName(FilePath);
     public ImageSource? Thumbnail { get; init; }
     public string FileSizeText { get; init; } = string.Empty;
+    public MediaType MediaType { get; init; } = MediaType.Image;
+    public bool IsVideo => MediaType == MediaType.Video;
+    public string DurationText { get; init; } = string.Empty;
 }

@@ -14,6 +14,9 @@ public static class FileNameGenerator
         "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
     };
 
+    public static string Generate(string? prefix, int zeroBasedIndex, int total, Models.MediaType mediaType) =>
+        Generate(prefix, zeroBasedIndex, total, mediaType == Models.MediaType.Video ? "mp4" : "jpg");
+
     public static string Generate(string? prefix, int zeroBasedIndex, int total, string extension = "jpg")
     {
         var safePrefix = SanitizeComponent(prefix, DefaultPrefix);

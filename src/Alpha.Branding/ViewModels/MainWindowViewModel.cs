@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
+using System.Windows.Media.Imaging;
 
 namespace Alpha.Branding.ViewModels;
 
@@ -17,7 +18,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _isBusy;
     private bool _isProcessing;
     private bool _hasUnsavedEdits;
-    private string _status = "Select property photos to begin.";
+    private string _status = "Select property photos and videos to begin.";
     private double _progress;
     private IReadOnlyList<string> _selectedFiles = [];
 
@@ -130,7 +131,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool CanApply => !IsBusy && SelectedFiles.Count > 0;
     public bool CanExport => !IsBusy && Results.Count > 0;
 
-    public string SelectionSummary => SelectedFiles.Count == 0 ? "No photos selected" : $"{SelectedFiles.Count} photo(s) selected";
+    public string SelectionSummary
+    {
+        get
+        {
+            if (SelectedFiles.Count == 0) return "No photos selected";
+            var photoCount = SelectedFiles.Count(f => !VideoProcessingService.IsVideoFile(f));
+            var videoCount = SelectedFiles.Count(f => VideoProcessingService.IsVideoFile(f));
+
+            if (videoCount == 0)
+                return $"{photoCount} photo(s) selected";
+            if (photoCount == 0)
+                return $"{videoCount} video(s) selected";
+
+            return $"{SelectedFiles.Count} item(s) selected ({photoCount} photos, {videoCount} videos)";
+        }
+    }
 
     public string ApplyStatusHint
     {
@@ -142,7 +158,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 {
                     return "Unsaved edits in current session.";
                 }
-                return $"{SelectedFiles.Count} new photo(s) selected — applying branding will start a new session.";
+                var photoCount = SelectedFiles.Count(f => !VideoProcessingService.IsVideoFile(f));
+                var videoCount = SelectedFiles.Count(f => VideoProcessingService.IsVideoFile(f));
+                var noun = videoCount == 0 ? "photo(s)" : (photoCount == 0 ? "video(s)" : "item(s)");
+                return $"{SelectedFiles.Count} new {noun} selected — applying branding will start a new session.";
             }
 
             return string.Empty;
@@ -165,7 +184,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         foreach (var file in _selectedFiles)
         {
             var sizeText = string.Empty;
-            System.Windows.Media.Imaging.BitmapImage? thumb = null;
+            BitmapImage? thumb = null;
+            var isVideo = VideoProcessingService.IsVideoFile(file);
+            var durationText = string.Empty;
 
             if (File.Exists(file))
             {
@@ -177,27 +198,48 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 }
                 catch { }
 
-                try
+                if (isVideo)
                 {
-                    var bytes = File.ReadAllBytes(file);
-                    using var ms = new MemoryStream(bytes);
-                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                    bmp.BeginInit();
-                    bmp.StreamSource = ms;
-                    bmp.DecodePixelWidth = 270;
-                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                    bmp.EndInit();
-                    bmp.Freeze();
-                    thumb = bmp;
+                    try
+                    {
+                        var task = Task.Run(() => VideoProcessingService.GetVideoMetadataAsync(file));
+                        if (task.Wait(TimeSpan.FromMilliseconds(500)))
+                        {
+                            var meta = task.Result;
+                            thumb = meta.Thumbnail;
+                            durationText = meta.DurationText;
+                        }
+                    }
+                    catch { }
+
+                    thumb ??= ImageProcessingService.CreateFallbackThumbnail();
                 }
-                catch { }
+                else
+                {
+                    try
+                    {
+                        var bytes = File.ReadAllBytes(file);
+                        using var ms = new MemoryStream(bytes);
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.StreamSource = ms;
+                        bmp.DecodePixelWidth = 270;
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        thumb = bmp;
+                    }
+                    catch { }
+                }
             }
 
             SelectedPhotos.Add(new SelectedPhotoItem
             {
                 FilePath = file,
                 Thumbnail = thumb,
-                FileSizeText = sizeText
+                FileSizeText = sizeText,
+                MediaType = isVideo ? MediaType.Video : MediaType.Image,
+                DurationText = durationText
             });
         }
 
@@ -229,13 +271,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public async Task<bool> ApplyWorkflowAsync(string overlayPath, CancellationToken token = default)
     {
         if (IsBusy) return false;
-        if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one image first.");
+        if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one media file first.");
 
         if (HasUnsavedEdits)
         {
             var promptResult = _confirmationService.PromptUnsavedEdits(
                 "Start a new branding session?",
-                "You have unsaved edits in the current session. Applying branding to the newly selected photos will replace the current photos and discard those unsaved edits.");
+                "You have unsaved edits in the current session. Applying branding to the newly selected files will replace the current items and discard those unsaved edits.");
 
             switch (promptResult)
             {
@@ -277,7 +319,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public async Task ApplyAsync(string overlayPath, CancellationToken token = default)
     {
         if (IsBusy) return;
-        if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one image first.");
+        if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one media file first.");
 
         IsBusy = true;
         _isProcessing = true;
@@ -287,7 +329,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var failures = 0;
         try
         {
-            Status = "Analyzing photo orientations…";
+            Status = "Analyzing media files…";
             var plan = await ImageProcessingService.PlanBatchAsync(SelectedFiles, token);
             var total = plan.Count;
 
@@ -302,13 +344,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                         : $"Pair: {Path.GetFileName(pair.LeftFilePath)} + {Path.GetFileName(pair.RightFilePath)}",
                     ImageBatchItem.Landscape landscape => Path.GetFileName(landscape.FilePath),
                     ImageBatchItem.LonePortrait lone => Path.GetFileName(lone.FilePath),
+                    ImageBatchItem.Video video => $"Video: {Path.GetFileName(video.FilePath)}",
                     _ => string.Empty
                 };
 
                 Status = $"Processing {i + 1} of {total} ({itemDescription})…";
+                var itemBaseProgress = (double)i / total * 100.0;
+                var itemPortion = 100.0 / total;
+
+                var videoProgress = new Progress<double>(percent =>
+                {
+                    Progress = Math.Min(100.0, itemBaseProgress + (percent / 100.0) * itemPortion);
+                    Status = $"Watermarking video {i + 1} of {total} ({percent:0}%)…";
+                });
+
                 try
                 {
-                    Results.Add(await _processor.ProcessBatchItemAsync(item, overlayPath, Prefix, i, total, token));
+                    Results.Add(await _processor.ProcessBatchItemAsync(item, overlayPath, Prefix, i, total, videoProgress, token));
                 }
                 catch (OperationCanceledException)
                 {
@@ -326,9 +378,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             RenameResults();
             HasUnsavedEdits = false;
             OnPropertyChanged(nameof(CanExport));
+            var hasVideos = Results.Any(r => r.IsVideo);
+            var itemNoun = hasVideos ? "item(s)" : "image(s)";
             Status = failures == 0
-                ? $"Completed {Results.Count} image(s)."
-                : $"Completed {Results.Count} image(s); skipped {failures}.";
+                ? $"Completed {Results.Count} {itemNoun}."
+                : $"Completed {Results.Count} {itemNoun}; skipped {failures}.";
         }
         finally
         {
@@ -338,15 +392,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public async Task SaveImageAsync(BrandedImage image, string path)
+    public async Task SaveImageAsync(BrandedImage image, string path) => await SaveMediaAsync(image, path);
+
+    public async Task SaveMediaAsync(BrandedImage media, string path)
     {
         if (IsBusy) return;
         IsBusy = true;
         try
         {
-            Status = $"Saving {image.FileName}…";
-            await File.WriteAllBytesAsync(path, image.ImageBytes);
-            Status = "Image export complete.";
+            Status = $"Saving {media.FileName}…";
+            if (media.IsVideo && !string.IsNullOrWhiteSpace(media.VideoFilePath) && File.Exists(media.VideoFilePath))
+            {
+                await Task.Run(() => File.Copy(media.VideoFilePath, path, true));
+            }
+            else
+            {
+                await File.WriteAllBytesAsync(path, media.ImageBytes);
+            }
+            Status = "Export complete.";
             if (Results.Count == 1)
             {
                 HasUnsavedEdits = false;
@@ -376,10 +439,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 for (var i = 0; i < Results.Count; i++)
                 {
                     var result = Results[i];
-                    var fileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize);
+                    var fileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize, result.MediaType);
                     var entry = archive.CreateEntry($"{folder}/{fileName}");
                     await using var stream = entry.Open();
-                    await stream.WriteAsync(result.ImageBytes);
+
+                    if (result.IsVideo && !string.IsNullOrWhiteSpace(result.VideoFilePath) && File.Exists(result.VideoFilePath))
+                    {
+                        await using var videoStream = File.OpenRead(result.VideoFilePath);
+                        await videoStream.CopyToAsync(stream);
+                    }
+                    else
+                    {
+                        await stream.WriteAsync(result.ImageBytes);
+                    }
                 }
             }
 
@@ -414,7 +486,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 Directory.CreateDirectory(folderPath);
             }
 
-            Status = $"Exporting {Results.Count} individual image(s)…";
+            Status = $"Exporting {Results.Count} individual item(s)…";
             Progress = 0;
             var total = Results.Count;
 
@@ -422,11 +494,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 token.ThrowIfCancellationRequested();
                 var result = Results[i];
-                var fileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize);
+                var fileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize, result.MediaType);
                 var destinationFilePath = Path.Combine(folderPath, fileName);
 
                 Status = $"Saving {i + 1} of {total} ({fileName})…";
-                await File.WriteAllBytesAsync(destinationFilePath, result.ImageBytes, token);
+                if (result.IsVideo && !string.IsNullOrWhiteSpace(result.VideoFilePath) && File.Exists(result.VideoFilePath))
+                {
+                    await Task.Run(() => File.Copy(result.VideoFilePath, destinationFilePath, true), token);
+                }
+                else
+                {
+                    await File.WriteAllBytesAsync(destinationFilePath, result.ImageBytes, token);
+                }
+
                 savedCount++;
                 Progress = (i + 1d) / total * 100;
             }
@@ -448,7 +528,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         for (var i = 0; i < Results.Count; i++)
         {
             var result = Results[i];
-            result.FileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize);
+            result.FileName = FileNameGenerator.Generate(Prefix, result.SequenceIndex, result.BatchSize, result.MediaType);
         }
     }
 

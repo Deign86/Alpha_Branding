@@ -462,5 +462,45 @@ public class UiAutomationTests
             tempDir.Delete(true);
         }
     }
+
+    [Fact]
+    public void VideoSelectionDisplaysVideoSummaryAndBadgesInUI()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var videoPath = Path.Combine(tempDir.FullName, "tour_video.mp4");
+            File.WriteAllBytes(videoPath, new byte[] { 0, 0, 0, 1 });
+
+            var appPath = GetAppExecutablePath();
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(appPath, $"\"{videoPath}\"");
+
+            try
+            {
+                var window = GetAppMainWindow(app, automation);
+                Assert.NotNull(window);
+
+                var summaryText = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("SelectionSummaryTextBlock")),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(summaryText);
+                Assert.Equal("1 video(s) selected", summaryText.Name);
+
+                var stagedCard = window.FindFirstDescendant(cf => cf.ByAutomationId("SelectedFileNameTextBlock"));
+                Assert.NotNull(stagedCard);
+                Assert.Equal("tour_video.mp4", stagedCard.Name);
+            }
+            finally
+            {
+                try { app.Close(); } catch { }
+                try { if (!app.HasExited) app.Kill(); } catch { }
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
 }
 

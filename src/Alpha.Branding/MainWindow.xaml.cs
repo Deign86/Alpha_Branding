@@ -81,13 +81,15 @@ public partial class MainWindow : Window
         }
     }
 
+    private const string MediaFilter = "All Supported Media|*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|Photos (*.jpg;*.png;*.webp)|*.jpg;*.jpeg;*.png;*.bmp;*.webp|Videos (*.mp4;*.mov;*.wmv)|*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|All files|*.*";
+
     public void LoadFiles(IEnumerable<string> filePaths)
     {
         var supported = filePaths.Where(f =>
         {
             if (!File.Exists(f)) return false;
             var ext = Path.GetExtension(f).ToLowerInvariant();
-            return ext is ".jpg" or ".jpeg" or ".png" or ".bmp" or ".webp";
+            return ext is ".jpg" or ".jpeg" or ".png" or ".bmp" or ".webp" or ".mp4" or ".mov" or ".wmv" or ".avi" or ".m4v" or ".mkv" or ".webm";
         }).ToArray();
 
         if (supported.Length > 0)
@@ -99,14 +101,14 @@ public partial class MainWindow : Window
     private void SelectPhotos_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy) return;
-        var dialog = new OpenFileDialog { Multiselect = true, Filter = "Images|*.jpg;*.jpeg;*.png;*.bmp;*.webp|All files|*.*" };
+        var dialog = new OpenFileDialog { Multiselect = true, Filter = MediaFilter };
         if (dialog.ShowDialog() == true) _viewModel.SelectedFiles = dialog.FileNames;
     }
 
     private void AddMorePhotos_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy) return;
-        var dialog = new OpenFileDialog { Multiselect = true, Filter = "Images|*.jpg;*.jpeg;*.png;*.bmp;*.webp|All files|*.*" };
+        var dialog = new OpenFileDialog { Multiselect = true, Filter = MediaFilter };
         if (dialog.ShowDialog() == true)
         {
             var combined = _viewModel.SelectedFiles.ToList();
@@ -202,10 +204,13 @@ public partial class MainWindow : Window
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: BrandedImage image }) return;
-        var dialog = new SaveFileDialog { FileName = image.FileName, Filter = "JPEG image|*.jpg;*.jpeg|All files|*.*" };
+        var filter = image.IsVideo
+            ? "MP4 Video|*.mp4|All files|*.*"
+            : "JPEG image|*.jpg;*.jpeg|All files|*.*";
+        var dialog = new SaveFileDialog { FileName = image.FileName, Filter = filter };
         if (dialog.ShowDialog() == true)
         {
-            try { await _viewModel.SaveImageAsync(image, dialog.FileName); }
+            try { await _viewModel.SaveMediaAsync(image, dialog.FileName); }
             catch (Exception ex) { MessageBox.Show(ex.Message, "Save failed", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
     }

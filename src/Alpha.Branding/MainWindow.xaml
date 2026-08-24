@@ -118,9 +118,9 @@
 
                     <!-- File Selection & Prefix Input -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="SELECT PHOTOS"
+                        <Button Content="SELECT MEDIA"
                                 AutomationProperties.AutomationId="SelectPhotosButton"
-                                ToolTip="Select property photographs to brand (Ctrl+O)"
+                                ToolTip="Select property photography and video clips to brand (Ctrl+O)"
                                 Click="SelectPhotos_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource PrimaryButton}"
@@ -175,8 +175,8 @@
                                     <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
-                                            <Setter Property="Background" Value="#2D1A10"/>
-                                            <Setter Property="BorderBrush" Value="#E07A2B"/>
+                                             <Setter Property="Background" Value="#2D1A10"/>
+                                             <Setter Property="BorderBrush" Value="#E07A2B"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -217,7 +217,7 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Content="APPLY BRANDING"
                                     AutomationProperties.AutomationId="ApplyBrandingButton"
-                                    ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
+                                    ToolTip="Process and watermark selected property photos and videos (Ctrl+B / F5)"
                                     Click="Apply_Click"
                                     IsEnabled="{Binding CanApply}"
                                     Style="{StaticResource PrimaryButton}"
@@ -225,7 +225,7 @@
 
                             <Button x:Name="ExportDropdownButton"
                                     AutomationProperties.AutomationId="ExportZipButton"
-                                    ToolTip="Export branded photos as ZIP archive or individual files (Ctrl+E / Ctrl+Shift+E)"
+                                    ToolTip="Export branded photos and videos as ZIP archive or individual files (Ctrl+E / Ctrl+Shift+E)"
                                     Click="ExportDropdown_Click"
                                     IsEnabled="{Binding CanExport}"
                                     Style="{StaticResource SecondaryButton}">
@@ -243,7 +243,7 @@
                                                   AutomationProperties.AutomationId="ExportZipMenuItem"
                                                   Header="Export as ZIP Archive (.zip)"
                                                   InputGestureText="Ctrl+E"
-                                                  ToolTip="Package all branded images into a single ZIP archive"
+                                                  ToolTip="Package all branded assets into a single ZIP archive"
                                                   Click="ExportZip_Click">
                                             <MenuItem.Icon>
                                                 <TextBlock Text="📦" FontSize="12" VerticalAlignment="Center"/>
@@ -253,7 +253,7 @@
                                                   AutomationProperties.AutomationId="ExportIndividualMenuItem"
                                                   Header="Export as Individual Files..."
                                                   InputGestureText="Ctrl+Shift+E"
-                                                  ToolTip="Save all branded photos directly to a selected folder"
+                                                  ToolTip="Save all branded photos and videos directly to a selected folder"
                                                   Click="ExportIndividual_Click">
                                             <MenuItem.Icon>
                                                 <TextBlock Text="📁" FontSize="12" VerticalAlignment="Center"/>
@@ -316,16 +316,16 @@
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
-                    <TextBlock Text="Import property photography to apply official Alpha Premier Realty watermarks and generate publication-ready high-resolution assets."
+                    <TextBlock Text="Import property photography and walkthrough video clips to apply official Alpha Premier Realty watermarks and generate publication-ready high-resolution assets."
                                Foreground="{StaticResource TextSecondary}"
                                FontSize="13"
                                TextAlignment="Center"
                                TextWrapping="Wrap"
                                LineHeight="21"
                                Margin="0,0,0,26"/>
-                    <Button Content="SELECT PHOTOS TO BEGIN"
+                    <Button Content="SELECT MEDIA TO BEGIN"
                             AutomationProperties.AutomationId="EmptyStateSelectButton"
-                            ToolTip="Choose photos from your computer to start (Ctrl+O)"
+                            ToolTip="Choose photos and videos from your computer to start (Ctrl+O)"
                             Click="SelectPhotos_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                             Style="{StaticResource PrimaryButton}"
@@ -334,7 +334,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- Staged / Selected Photos Gallery Display -->
+            <!-- Staged / Selected Photos & Videos Gallery Display -->
             <Grid Visibility="{Binding HasSelectedPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -357,7 +357,7 @@
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="SELECTED PHOTOS (" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text="SELECTED MEDIA (" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding SelectedFiles.Count}" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
                             <TextBlock Text=") — Ready to process. Click 'APPLY BRANDING' to watermark." Foreground="{StaticResource TextSecondary}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
                         </StackPanel>
@@ -365,14 +365,14 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="ADD MORE"
                                     AutomationProperties.AutomationId="AddMorePhotosButton"
-                                    ToolTip="Select additional photos to add to this session"
+                                    ToolTip="Select additional photos or videos to add to this session"
                                     Click="AddMorePhotos_Click"
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                     Style="{StaticResource SmallActionButton}"
                                     Margin="0,0,10,0"/>
                             <Button Content="APPLY BRANDING"
                                     AutomationProperties.AutomationId="StagedApplyButton"
-                                    ToolTip="Process and watermark selected property photos (Ctrl+B / F5)"
+                                    ToolTip="Process and watermark selected property photos and videos (Ctrl+B / F5)"
                                     Click="Apply_Click"
                                     IsEnabled="{Binding CanApply}"
                                     Style="{StaticResource SmallGoldButton}"/>
@@ -380,7 +380,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Staged Photos Grid -->
+                <!-- Staged Media Grid -->
                 <ScrollViewer Grid.Row="1"
                               AutomationProperties.AutomationId="SelectedPhotosScrollViewer"
                               VerticalScrollBarVisibility="Auto"
@@ -413,15 +413,36 @@
                                         </Style>
                                     </Border.Style>
                                     <StackPanel>
-                                        <!-- Image Thumbnail -->
-                                        <Border CornerRadius="8"
-                                                ClipToBounds="True"
-                                                Background="{StaticResource BackgroundDark}"
-                                                Height="190">
-                                            <Image Source="{Binding Thumbnail}"
-                                                   Stretch="Uniform"
-                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-                                        </Border>
+                                        <!-- Thumbnail Container with Video Badge -->
+                                        <Grid Height="190">
+                                            <Border CornerRadius="8"
+                                                    ClipToBounds="True"
+                                                    Background="{StaticResource BackgroundDark}">
+                                                <Image Source="{Binding Thumbnail}"
+                                                       Stretch="Uniform"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            </Border>
+
+                                            <!-- Video Indicator Badge -->
+                                            <Border Visibility="{Binding IsVideo, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Background="#CC0A0A0A"
+                                                    BorderBrush="{StaticResource Gold}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Padding="7,3"
+                                                    Margin="8"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Top">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="▶ VIDEO" Foreground="{StaticResource GoldLight}" FontSize="10" FontWeight="Bold"/>
+                                                    <TextBlock Text="{Binding DurationText, StringFormat=' • {0}'}"
+                                                               Visibility="{Binding DurationText, Converter={StaticResource EmptyToVisibilityConverter}}"
+                                                               Foreground="{StaticResource TextPrimary}"
+                                                               FontSize="10"
+                                                               FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
 
                                         <!-- Filename and Size Details -->
                                         <Grid Margin="0,10,0,10">
@@ -448,7 +469,7 @@
                                         <!-- Action Button: Remove -->
                                         <Button Content="REMOVE FROM SELECTION"
                                                 AutomationProperties.AutomationId="RemoveSelectedPhotoButton"
-                                                ToolTip="Remove this photo from the selected batch"
+                                                ToolTip="Remove this item from the selected batch"
                                                 Click="RemoveSelectedPhoto_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallActionButton}"/>
@@ -493,15 +514,36 @@
                                     </Style>
                                 </Border.Style>
                                 <StackPanel>
-                                    <!-- Image Thumbnail -->
-                                    <Border CornerRadius="8"
-                                            ClipToBounds="True"
-                                            Background="{StaticResource BackgroundDark}"
-                                            Height="190">
-                                        <Image Source="{Binding Preview}"
-                                               Stretch="Uniform"
-                                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                                    </Border>
+                                    <!-- Image Thumbnail with Video Badge -->
+                                    <Grid Height="190">
+                                        <Border CornerRadius="8"
+                                                ClipToBounds="True"
+                                                Background="{StaticResource BackgroundDark}">
+                                            <Image Source="{Binding Preview}"
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border>
+
+                                        <!-- Video Indicator Badge -->
+                                        <Border Visibility="{Binding IsVideo, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Background="#CC0A0A0A"
+                                                BorderBrush="{StaticResource Gold}"
+                                                BorderThickness="1"
+                                                CornerRadius="4"
+                                                Padding="7,3"
+                                                Margin="8"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Top">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="▶ VIDEO" Foreground="{StaticResource GoldLight}" FontSize="10" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding DurationText, StringFormat=' • {0}'}"
+                                                           Visibility="{Binding DurationText, Converter={StaticResource EmptyToVisibilityConverter}}"
+                                                           Foreground="{StaticResource TextPrimary}"
+                                                           FontSize="10"
+                                                           FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
 
                                     <!-- Filename and Details -->
                                     <Grid Margin="0,10,0,10">
@@ -524,7 +566,7 @@
                                         <Button Grid.Column="0"
                                                 Content="PREVIEW"
                                                 AutomationProperties.AutomationId="PreviewButton"
-                                                ToolTip="Open full-resolution preview and inspector"
+                                                ToolTip="Open preview player and inspector"
                                                 Click="Preview_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallActionButton}"
@@ -533,7 +575,7 @@
                                         <Button Grid.Column="1"
                                                 Content="SAVE"
                                                 AutomationProperties.AutomationId="SaveButton"
-                                                ToolTip="Save single high-resolution branded photo"
+                                                ToolTip="Save branded asset"
                                                 Click="Save_Click"
                                                 IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                 Style="{StaticResource SmallGoldButton}"/>
@@ -547,5 +589,3 @@
         </Grid>
     </Grid>
 </Window>
-
-

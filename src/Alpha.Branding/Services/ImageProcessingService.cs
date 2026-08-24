@@ -14,6 +14,7 @@ public abstract record ImageBatchItem
     public sealed record Landscape(string FilePath) : ImageBatchItem;
     public sealed record PortraitPair(string LeftFilePath, string RightFilePath) : ImageBatchItem;
     public sealed record LonePortrait(string FilePath) : ImageBatchItem;
+    public sealed record Video(string FilePath) : ImageBatchItem;
 }
 
 public sealed class ImageProcessingService
@@ -46,10 +47,19 @@ public sealed class ImageProcessingService
     {
         if (filePaths.Count == 0) return Array.Empty<ImageBatchItem>();
 
-        var orientations = new (string Path, bool IsPortrait, int Index)[filePaths.Count];
+        var plannedItems = new List<(int Order, ImageBatchItem Item)>();
+        var imageOrientations = new List<(string Path, bool IsPortrait, int Index)>();
+
         for (var i = 0; i < filePaths.Count; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var path = filePaths[i];
+            if (VideoProcessingService.IsVideoFile(path))
+            {
+                plannedItems.Add((i, new ImageBatchItem.Video(path)));
+                continue;
+            }
+
             var isPortrait = false;
             try
             {
@@ -59,13 +69,11 @@ public sealed class ImageProcessingService
             {
                 // Fallback to landscape if orientation check fails for corrupt/missing files
             }
-            orientations[i] = (path, isPortrait, i);
+            imageOrientations.Add((path, isPortrait, i));
         }
 
-        var portraitList = orientations.Where(o => o.IsPortrait).ToList();
-        var landscapeList = orientations.Where(o => !o.IsPortrait).ToList();
-
-        var plannedItems = new List<(int Order, ImageBatchItem Item)>();
+        var portraitList = imageOrientations.Where(o => o.IsPortrait).ToList();
+        var landscapeList = imageOrientations.Where(o => !o.IsPortrait).ToList();
 
         // 1. Pair up portraits with each other
         var pIdx = 0;
@@ -191,13 +199,28 @@ public sealed class ImageProcessingService
         return await CreateBrandedImageAsync(canvas, prefix, index, total, cancellationToken);
     }
 
-    public async Task<BrandedImage> ProcessBatchItemAsync(ImageBatchItem item, string overlayPath, string? prefix, int index, int total, CancellationToken cancellationToken = default)
+    private readonly VideoProcessingService _videoProcessor;
+
+    public ImageProcessingService(VideoProcessingService? videoProcessor = null)
+    {
+        _videoProcessor = videoProcessor ?? new VideoProcessingService();
+    }
+
+    public async Task<BrandedImage> ProcessBatchItemAsync(
+        ImageBatchItem item,
+        string overlayPath,
+        string? prefix,
+        int index,
+        int total,
+        IProgress<double>? videoProgress = null,
+        CancellationToken cancellationToken = default)
     {
         return item switch
         {
             ImageBatchItem.Landscape landscape => await ProcessLandscapeAsync(landscape.FilePath, overlayPath, prefix, index, total, cancellationToken),
             ImageBatchItem.PortraitPair pair => await ProcessPortraitPairAsync(pair.LeftFilePath, pair.RightFilePath, overlayPath, prefix, index, total, cancellationToken),
             ImageBatchItem.LonePortrait lone => await ProcessLonePortraitAsync(lone.FilePath, overlayPath, prefix, index, total, cancellationToken),
+            ImageBatchItem.Video video => await _videoProcessor.ProcessVideoAsync(video.FilePath, overlayPath, prefix, index, total, videoProgress, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(item))
         };
     }
@@ -209,12 +232,21 @@ public sealed class ImageProcessingService
         var imageBytes = output.ToArray();
         return new BrandedImage
         {
-            FileName = FileNameGenerator.Generate(prefix, index, total),
+            FileName = FileNameGenerator.Generate(prefix, index, total, MediaType.Image),
+            MediaType = MediaType.Image,
             ImageBytes = imageBytes,
             Preview = CreatePreview(imageBytes),
             SequenceIndex = index,
             BatchSize = total
         };
+    }
+
+    public static BitmapImage CreateFallbackThumbnail()
+    {
+        using var img = new Image<Rgba32>(320, 240, new Rgba32(24, 24, 24, 255));
+        using var ms = new MemoryStream();
+        img.SaveAsJpeg(ms);
+        return CreatePreview(ms.ToArray());
     }
 
     public static BitmapImage CreatePreview(byte[] imageBytes)

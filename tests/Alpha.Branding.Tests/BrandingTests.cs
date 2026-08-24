@@ -1200,4 +1200,348 @@ public class SelectedPhotosStagingTests
     }
 }
 
+public class VideoProcessingTests
+{
+    private sealed class MockVideoProcessingService : VideoProcessingService
+    {
+        public bool ProcessVideoCalled { get; private set; }
+        public string? LastInputPath { get; private set; }
+
+        public override async Task<BrandedImage> ProcessVideoAsync(
+            string inputVideoPath,
+            string overlayImagePath,
+            string? prefix,
+            int index,
+            int total,
+            IProgress<double>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            ProcessVideoCalled = true;
+            LastInputPath = inputVideoPath;
+            progress?.Report(100.0);
+
+            var tempOut = Path.GetTempFileName() + ".mp4";
+            await File.WriteAllBytesAsync(tempOut, new byte[] { 0x00, 0x00, 0x00, 0x1C, 0x66, 0x74, 0x79, 0x70 }, cancellationToken);
+
+            return new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(prefix, index, total, MediaType.Video),
+                MediaType = MediaType.Video,
+                VideoFilePath = tempOut,
+                DurationText = "1:30",
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = index,
+                BatchSize = total
+            };
+        }
+    }
+
+    [Theory]
+    [InlineData("video.mp4", true)]
+    [InlineData("tour.mov", true)]
+    [InlineData("clip.wmv", true)]
+    [InlineData("clip.avi", true)]
+    [InlineData("drone.m4v", true)]
+    [InlineData("walkthrough.mkv", true)]
+    [InlineData("walkthrough.webm", true)]
+    [InlineData("photo.jpg", false)]
+    [InlineData("photo.png", false)]
+    [InlineData("doc.pdf", false)]
+    [InlineData("", false)]
+    public void VideoFileDetectionIdentifiesSupportedFormats(string path, bool expected)
+    {
+        Assert.Equal(expected, VideoProcessingService.IsVideoFile(path));
+    }
+
+    [Fact]
+    public void FileNameGeneratorGeneratesMp4ForVideo()
+    {
+        var name = FileNameGenerator.Generate("Listing_Tour", 0, 5, MediaType.Video);
+        Assert.Equal("Listing_Tour_01.mp4", name);
+
+        var imgName = FileNameGenerator.Generate("Listing_Tour", 0, 5, MediaType.Image);
+        Assert.Equal("Listing_Tour_01.jpg", imgName);
+    }
+
+    [Fact]
+    public async Task PlanBatchWithMixedMediaPlacesVideosAndPhotosInOrder()
+    {
+        var p1 = Path.GetTempFileName() + ".jpg";
+        var v1 = Path.GetTempFileName() + ".mp4";
+        var p2 = Path.GetTempFileName() + ".jpg";
+        var v2 = Path.GetTempFileName() + ".mov";
+
+        try
+        {
+            using (var img = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1200, 1000))
+            {
+                await img.SaveAsJpegAsync(p1);
+                await img.SaveAsJpegAsync(p2);
+            }
+            await File.WriteAllBytesAsync(v1, new byte[] { 1, 2, 3 });
+            await File.WriteAllBytesAsync(v2, new byte[] { 4, 5, 6 });
+
+            var plan = await ImageProcessingService.PlanBatchAsync(new[] { p1, v1, p2, v2 });
+
+            Assert.Equal(4, plan.Count);
+            Assert.IsType<ImageBatchItem.Landscape>(plan[0]);
+            var video1 = Assert.IsType<ImageBatchItem.Video>(plan[1]);
+            Assert.Equal(v1, video1.FilePath);
+            Assert.IsType<ImageBatchItem.Landscape>(plan[2]);
+            var video2 = Assert.IsType<ImageBatchItem.Video>(plan[3]);
+            Assert.Equal(v2, video2.FilePath);
+        }
+        finally
+        {
+            if (File.Exists(p1)) File.Delete(p1);
+            if (File.Exists(p2)) File.Delete(p2);
+            if (File.Exists(v1)) File.Delete(v1);
+            if (File.Exists(v2)) File.Delete(v2);
+        }
+    }
+
+    [Fact]
+    public async Task ViewModelAppliesMixedBatchSeamlessly()
+    {
+        var p1 = Path.GetTempFileName() + ".jpg";
+        var v1 = Path.GetTempFileName() + ".mp4";
+        var overlay = Path.GetTempFileName() + ".png";
+
+        try
+        {
+            using (var img = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1200, 1000))
+            {
+                await img.SaveAsJpegAsync(p1);
+                await img.SaveAsPngAsync(overlay);
+            }
+            await File.WriteAllBytesAsync(v1, new byte[] { 1, 2, 3 });
+
+            var mockVideoProcessor = new MockVideoProcessingService();
+            var imgService = new ImageProcessingService(mockVideoProcessor);
+            var vm = new MainWindowViewModel(imgService)
+            {
+                SelectedFiles = new[] { p1, v1 },
+                Prefix = "Penthouse"
+            };
+
+            Assert.Equal("2 item(s) selected (1 photos, 1 videos)", vm.SelectionSummary);
+
+            await vm.ApplyAsync(overlay);
+
+            Assert.Equal(2, vm.Results.Count);
+            Assert.Equal("Penthouse_01.jpg", vm.Results[0].FileName);
+            Assert.False(vm.Results[0].IsVideo);
+
+            Assert.Equal("Penthouse_02.mp4", vm.Results[1].FileName);
+            Assert.True(vm.Results[1].IsVideo);
+            Assert.True(mockVideoProcessor.ProcessVideoCalled);
+            Assert.Equal(v1, mockVideoProcessor.LastInputPath);
+        }
+        finally
+        {
+            if (File.Exists(p1)) File.Delete(p1);
+            if (File.Exists(v1)) File.Delete(v1);
+            if (File.Exists(overlay)) File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task ExportZipPackagesBothPhotosAndVideos()
+    {
+        var tempZip = Path.GetTempFileName() + ".zip";
+        var tempVideo = Path.GetTempFileName() + ".mp4";
+
+        try
+        {
+            var videoBytes = new byte[] { 10, 20, 30, 40 };
+            await File.WriteAllBytesAsync(tempVideo, videoBytes);
+
+            var vm = new MainWindowViewModel(new ImageProcessingService())
+            {
+                Prefix = "Estate"
+            };
+
+            var photoBytes = new byte[] { 1, 2, 3 };
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(vm.Prefix, 0, 2, MediaType.Image),
+                MediaType = MediaType.Image,
+                ImageBytes = photoBytes,
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 0,
+                BatchSize = 2
+            });
+
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(vm.Prefix, 1, 2, MediaType.Video),
+                MediaType = MediaType.Video,
+                VideoFilePath = tempVideo,
+                DurationText = "0:45",
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 1,
+                BatchSize = 2
+            });
+
+            await vm.ExportZipAsync(tempZip);
+
+            Assert.True(File.Exists(tempZip));
+            using var archive = ZipFile.OpenRead(tempZip);
+            Assert.Equal(2, archive.Entries.Count);
+
+            var photoEntry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".jpg"));
+            var videoEntry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".mp4"));
+
+            Assert.NotNull(photoEntry);
+            Assert.NotNull(videoEntry);
+            Assert.Equal("Estate/Estate_01.jpg", photoEntry.FullName);
+            Assert.Equal("Estate/Estate_02.mp4", videoEntry.FullName);
+
+            using (var s = videoEntry.Open())
+            using (var ms = new MemoryStream())
+            {
+                await s.CopyToAsync(ms);
+                Assert.Equal(videoBytes, ms.ToArray());
+            }
+        }
+        finally
+        {
+            if (File.Exists(tempZip)) File.Delete(tempZip);
+            if (File.Exists(tempVideo)) File.Delete(tempVideo);
+        }
+    }
+
+    [Fact]
+    public async Task ExportIndividualFilesSavesBothPhotosAndVideos()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        var tempVideo = Path.GetTempFileName() + ".mp4";
+
+        try
+        {
+            var videoBytes = new byte[] { 100, 101, 102 };
+            await File.WriteAllBytesAsync(tempVideo, videoBytes);
+
+            var vm = new MainWindowViewModel(new ImageProcessingService())
+            {
+                Prefix = "Villa"
+            };
+
+            var photoBytes = new byte[] { 1, 2, 3, 4 };
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(vm.Prefix, 0, 2, MediaType.Image),
+                MediaType = MediaType.Image,
+                ImageBytes = photoBytes,
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 0,
+                BatchSize = 2
+            });
+
+            vm.Results.Add(new BrandedImage
+            {
+                FileName = FileNameGenerator.Generate(vm.Prefix, 1, 2, MediaType.Video),
+                MediaType = MediaType.Video,
+                VideoFilePath = tempVideo,
+                DurationText = "0:30",
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 1,
+                BatchSize = 2
+            });
+
+            var count = await vm.ExportIndividualFilesAsync(tempDir.FullName);
+            Assert.Equal(2, count);
+
+            var photoPath = Path.Combine(tempDir.FullName, "Villa_01.jpg");
+            var videoPath = Path.Combine(tempDir.FullName, "Villa_02.mp4");
+
+            Assert.True(File.Exists(photoPath));
+            Assert.True(File.Exists(videoPath));
+            Assert.Equal(photoBytes, await File.ReadAllBytesAsync(photoPath));
+            Assert.Equal(videoBytes, await File.ReadAllBytesAsync(videoPath));
+        }
+        finally
+        {
+            tempDir.Delete(true);
+            if (File.Exists(tempVideo)) File.Delete(tempVideo);
+        }
+    }
+
+    [Fact]
+    public async Task SaveMediaSavesVideoAsMp4File()
+    {
+        var tempSource = Path.GetTempFileName() + ".mp4";
+        var tempDest = Path.GetTempFileName() + ".mp4";
+
+        try
+        {
+            var bytes = new byte[] { 7, 8, 9 };
+            await File.WriteAllBytesAsync(tempSource, bytes);
+
+            var item = new BrandedImage
+            {
+                FileName = "Walkthrough_01.mp4",
+                MediaType = MediaType.Video,
+                VideoFilePath = tempSource,
+                DurationText = "1:00",
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 0,
+                BatchSize = 1
+            };
+
+            var vm = new MainWindowViewModel(new ImageProcessingService());
+            await vm.SaveMediaAsync(item, tempDest);
+
+            Assert.True(File.Exists(tempDest));
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(tempDest));
+        }
+        finally
+        {
+            if (File.Exists(tempSource)) File.Delete(tempSource);
+            if (File.Exists(tempDest)) File.Delete(tempDest);
+        }
+    }
+
+    [Fact]
+    public void PreviewWindowRecognizesVideoItems()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            if (System.Windows.Application.Current == null)
+                _ = new App();
+
+            var photo = new BrandedImage
+            {
+                FileName = "Photo_01.jpg",
+                MediaType = MediaType.Image,
+                ImageBytes = Array.Empty<byte>(),
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 0,
+                BatchSize = 2
+            };
+
+            var video = new BrandedImage
+            {
+                FileName = "Video_02.mp4",
+                MediaType = MediaType.Video,
+                VideoFilePath = "dummy.mp4",
+                DurationText = "0:30",
+                Preview = ImageProcessingService.CreateFallbackThumbnail(),
+                SequenceIndex = 1,
+                BatchSize = 2
+            };
+
+            var preview = new PreviewWindow(new[] { photo, video }, 0);
+            Assert.False(preview.IsVideoCurrent);
+            Assert.True(preview.HasMultiplePhotos);
+
+            var videoPreview = new PreviewWindow(new[] { photo, video }, 1);
+            Assert.True(videoPreview.IsVideoCurrent);
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+}
+
 
