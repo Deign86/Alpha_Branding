@@ -1543,47 +1543,22 @@ public class VideoProcessingTests
         thread.Join();
     }
 
-    [Fact]
-    public async Task CreateAdaptedOverlayGeneratesExactTargetDimensions()
+    [Theory]
+    [InlineData(1920, 1080, 0, 162, 1200, 675)]       // 16:9 landscape -> full width, centered vertically
+    [InlineData(1280, 720, 0, 162, 1200, 675)]        // 720p landscape -> full width, centered vertically
+    [InlineData(1080, 1920, 319, 0, 562, 1000)]       // 9:16 portrait -> full height, centered horizontally with black bars
+    [InlineData(720, 1280, 319, 0, 562, 1000)]        // 9:16 portrait 720p -> centered horizontally
+    [InlineData(1000, 1000, 100, 0, 1000, 1000)]      // 1:1 square -> full height, centered horizontally
+    [InlineData(1200, 1000, 0, 0, 1200, 1000)]        // 6:5 exact template -> exact fit
+    public void CalculateVideoFitFitsWithin1200x1000Template(
+        double srcW, double srcH,
+        double expectedX, double expectedY, double expectedW, double expectedH)
     {
-        var tempOverlay = Path.GetTempFileName() + ".png";
-        try
-        {
-            using (var img = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1200, 1000, new SixLabors.ImageSharp.PixelFormats.Rgba32(0, 0, 0, 0)))
-            {
-                await img.SaveAsPngAsync(tempOverlay);
-            }
-
-            // Landscape
-            var landscapePath = await VideoProcessingService.CreateAdaptedOverlayAsync(tempOverlay, 1920, 1080);
-            try
-            {
-                using var decoded = await Image.LoadAsync(landscapePath);
-                Assert.Equal(1920, decoded.Width);
-                Assert.Equal(1080, decoded.Height);
-            }
-            finally
-            {
-                if (File.Exists(landscapePath)) File.Delete(landscapePath);
-            }
-
-            // Portrait
-            var portraitPath = await VideoProcessingService.CreateAdaptedOverlayAsync(tempOverlay, 1080, 1920);
-            try
-            {
-                using var decoded = await Image.LoadAsync(portraitPath);
-                Assert.Equal(1080, decoded.Width);
-                Assert.Equal(1920, decoded.Height);
-            }
-            finally
-            {
-                if (File.Exists(portraitPath)) File.Delete(portraitPath);
-            }
-        }
-        finally
-        {
-            if (File.Exists(tempOverlay)) File.Delete(tempOverlay);
-        }
+        var (offX, offY, fitW, fitH) = VideoProcessingService.CalculateVideoFit(srcW, srcH, 1200, 1000);
+        Assert.Equal(expectedX, offX);
+        Assert.Equal(expectedY, offY);
+        Assert.Equal(expectedW, fitW);
+        Assert.Equal(expectedH, fitH);
     }
 }
 
