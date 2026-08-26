@@ -1,0 +1,241 @@
+<Window x:Class="Alpha.Branding.UpdateDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Software Update Available"
+        Icon="Assets/logo_phoenix.png"
+        Width="680" Height="580"
+        MinWidth="600" MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{StaticResource BackgroundDark}"
+        Foreground="{StaticResource TextPrimary}"
+        FontFamily="Segoe UI, Poppins, sans-serif">
+
+    <Border Background="{StaticResource SurfaceDark}"
+            BorderBrush="{StaticResource BorderSubtle}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Margin="16"
+            Padding="22">
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Top Brand & Release Header -->
+                <RowDefinition Height="Auto"/>
+                <!-- Changelog Body -->
+                <RowDefinition Height="*"/>
+                <!-- Download Progress & Notice Area -->
+                <RowDefinition Height="Auto"/>
+                <!-- Action Buttons Footer -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 1. Header with Phoenix Mark and Release Title -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0"
+                       Source="Assets/logo_phoenix.png"
+                       Height="42"
+                       Width="42"
+                       Margin="0,0,16,0"
+                       VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="NEW VERSION AVAILABLE"
+                                   AutomationProperties.AutomationId="UpdateAvailableHeaderTextBlock"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="16"
+                                   FontWeight="Bold"/>
+                        <Border Background="{StaticResource GoldSubtle}"
+                                BorderBrush="{StaticResource Gold}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="8,2"
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="VersionBadgeTextBlock"
+                                       AutomationProperties.AutomationId="VersionBadgeTextBlock"
+                                       Text="v1.8.0"
+                                       Foreground="{StaticResource GoldLight}"
+                                       FontSize="11"
+                                       FontWeight="Bold"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock x:Name="ReleaseTitleTextBlock"
+                               AutomationProperties.AutomationId="ReleaseTitleTextBlock"
+                               Text="Alpha Premier Property Branding Studio Update"
+                               Foreground="{StaticResource Gold}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Margin="0,3,0,0"/>
+                </StackPanel>
+
+                <!-- Current vs New Version Chip -->
+                <Border Grid.Column="2"
+                        Background="{StaticResource SurfaceElevated}"
+                        BorderBrush="{StaticResource BorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="10,6"
+                        VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock x:Name="CurrentVersionTextBlock"
+                                   AutomationProperties.AutomationId="CurrentVersionTextBlock"
+                                   Text="Current: v1.7.0"
+                                   Foreground="{StaticResource TextMuted}"
+                                   FontSize="11"
+                                   HorizontalAlignment="Right"/>
+                        <TextBlock x:Name="PublishedDateTextBlock"
+                                   AutomationProperties.AutomationId="PublishedDateTextBlock"
+                                   Text="Released: Today"
+                                   Foreground="{StaticResource TextSecondary}"
+                                   FontSize="11"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 2. Changelog / Release Notes Box -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource SurfaceElevated}"
+                    BorderBrush="{StaticResource BorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="14"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="RELEASE NOTES &amp; CHANGELOG"
+                               Foreground="{StaticResource Gold}"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Margin="0,0,0,8"/>
+
+                    <ScrollViewer Grid.Row="1"
+                                  AutomationProperties.AutomationId="ChangelogScrollViewer"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <TextBox x:Name="ChangelogTextBox"
+                                 AutomationProperties.AutomationId="ChangelogTextBox"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 Background="Transparent"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 BorderThickness="0"
+                                 FontSize="12"
+                                 Padding="0"
+                                 AcceptsReturn="True"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- 3. Download Progress & Error / Fallback Area -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,16">
+                <!-- Download Progress Bar & Status -->
+                <StackPanel x:Name="ProgressPanel"
+                            AutomationProperties.AutomationId="ProgressPanel"
+                            Visibility="Collapsed">
+                    <Grid Margin="0,0,0,6">
+                        <TextBlock x:Name="DownloadStatusTextBlock"
+                                   AutomationProperties.AutomationId="DownloadStatusTextBlock"
+                                   Text="Downloading update..."
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock x:Name="DownloadPercentTextBlock"
+                                   AutomationProperties.AutomationId="DownloadPercentTextBlock"
+                                   Text="0%"
+                                   Foreground="{StaticResource GoldLight}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </Grid>
+                    <ProgressBar x:Name="DownloadProgressBar"
+                                 AutomationProperties.AutomationId="DownloadProgressBar"
+                                 Value="0"
+                                 Maximum="100"
+                                 Height="8"
+                                 Margin="0,0,0,8"/>
+                </StackPanel>
+
+                <!-- Error Notice (Conditional) -->
+                <Border x:Name="ErrorBorder"
+                        AutomationProperties.AutomationId="ErrorBorder"
+                        Visibility="Collapsed"
+                        Background="#2D1A10"
+                        BorderBrush="#E07A2B"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="ErrorTextBlock"
+                                   AutomationProperties.AutomationId="ErrorTextBlock"
+                                   Text="Update download failed."
+                                   Foreground="#FBBF24"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"/>
+                        <Button Grid.Column="1"
+                                Content="OPEN IN BROWSER"
+                                AutomationProperties.AutomationId="ErrorOpenBrowserButton"
+                                Click="OpenBrowser_Click"
+                                Style="{StaticResource SmallActionButton}"
+                                Margin="10,0,0,0"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- 4. Action Buttons -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Skip Version Button (Left) -->
+                <Button Grid.Column="0"
+                        x:Name="SkipVersionButton"
+                        Content="SKIP THIS VERSION"
+                        AutomationProperties.AutomationId="SkipVersionButton"
+                        ToolTip="Don't prompt again for this release version"
+                        Click="SkipVersion_Click"
+                        Style="{StaticResource SmallActionButton}"/>
+
+                <!-- Actions (Right) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="RemindLaterButton"
+                            Content="REMIND ME LATER"
+                            AutomationProperties.AutomationId="RemindLaterButton"
+                            ToolTip="Dismiss for now and check again later"
+                            Click="RemindLater_Click"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,10,0"/>
+
+                    <Button x:Name="UpdateNowButton"
+                            Content="UPDATE NOW"
+                            AutomationProperties.AutomationId="UpdateNowButton"
+                            ToolTip="Download, verify Authenticode signature, and apply update"
+                            Click="UpdateNow_Click"
+                            Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -10,16 +10,25 @@ namespace Alpha.Branding;
 public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel;
+    private readonly IUpdateService _updateService;
+    private System.Windows.Threading.DispatcherTimer? _updateTimer;
+
     public MainWindowViewModel ViewModel => _viewModel;
+    public IUpdateService AppUpdateService => _updateService;
     private readonly string _overlayPath = Path.Combine(AppContext.BaseDirectory, "Assets", "alpha_branding.png");
 
-    public MainWindow() : this(new MainWindowViewModel(new ImageProcessingService()))
+    public MainWindow() : this(new MainWindowViewModel(new ImageProcessingService()), new UpdateService())
     {
     }
 
-    public MainWindow(MainWindowViewModel viewModel)
+    public MainWindow(MainWindowViewModel viewModel) : this(viewModel, new UpdateService())
+    {
+    }
+
+    public MainWindow(MainWindowViewModel viewModel, IUpdateService? updateService)
     {
         _viewModel = viewModel;
+        _updateService = updateService ?? new UpdateService();
         InitializeComponent();
         WindowThemeHelper.EnableDarkTitleBar(this);
         DataContext = _viewModel;
@@ -101,6 +110,94 @@ public partial class MainWindow : Window
         if (args.Length > 1)
         {
             await LoadFilesAsync(args.Skip(1));
+        }
+
+        InitializeUpdateCheckTriggers();
+    }
+
+    private void InitializeUpdateCheckTriggers()
+    {
+        // Non-blocking delayed check 3 seconds after load
+        _ = Task.Delay(3000).ContinueWith(_ =>
+        {
+            Dispatcher.InvokeAsync(async () =>
+            {
+                await PerformStartupUpdateCheckAsync();
+            });
+        });
+
+        // Background check every 8 hours
+        _updateTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromHours(8)
+        };
+        _updateTimer.Tick += async (s, e) =>
+        {
+            await PerformStartupUpdateCheckAsync();
+        };
+        _updateTimer.Start();
+    }
+
+    public async Task PerformStartupUpdateCheckAsync()
+    {
+        try
+        {
+            var result = await _updateService.CheckForUpdatesAsync(isManualCheck: false);
+            if (result.IsUpdateAvailable && !result.IsSkipped && !result.IsRemindLaterActive)
+            {
+                if (Application.Current?.Windows.OfType<UpdateDialog>().Any(w => w.IsVisible) != true)
+                {
+                    var dialog = new UpdateDialog(result, _updateService) { Owner = this };
+                    dialog.ShowDialog();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            UpdateService.Log("Background startup update check exception", ex);
+        }
+    }
+
+    public async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+
+        try
+        {
+            var result = await _updateService.CheckForUpdatesAsync(isManualCheck: true);
+            if (result.IsUpdateAvailable)
+            {
+                var dialog = new UpdateDialog(result, _updateService) { Owner = this };
+                dialog.ShowDialog();
+            }
+            else if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+            {
+                var prompt = MessageBox.Show(
+                    $"Unable to check for updates:\n\n{result.ErrorMessage}\n\nWould you like to open the GitHub releases page in your browser?",
+                    "Check for Updates",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (prompt == MessageBoxResult.Yes)
+                {
+                    _updateService.OpenReleaseInBrowser();
+                }
+            }
+            else
+            {
+                var currentVer = result.CurrentVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase)
+                    ? result.CurrentVersion
+                    : $"v{result.CurrentVersion}";
+                MessageBox.Show(
+                    $"You're up to date!\n\nAlpha Premier Property Branding Studio {currentVer} is currently the newest version.",
+                    "Check for Updates",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Check for updates error: {ex.Message}", "Update Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

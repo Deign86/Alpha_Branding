@@ -74,4 +74,23 @@ Scope: Fork ownership, inspect and migrate Alpha_Branding to validated native WP
 - [x] G20: Standalone installer build and formatting validation pass with 0 warnings.
   EVIDENCE: `dotnet format --verify-no-changes` exit 0; `Build-Installer.ps1 -Version 1.0.0.0` generated `artifacts/Alpha.Branding.Setup.exe` (144,156,527 bytes).
 
+## Self-Update System Extension
+
+- [x] G21: Version source of truth is synchronized with GitHub release tag format (`vX.Y.Z` / `1.7.0`).
+  EVIDENCE: `Alpha.Branding.csproj` defines Version `1.7.0`; `UpdateService.TryParseVersion` and `IsNewerVersion` strip leading `v` and perform semantic version comparisons.
+
+- [x] G22: GitHub Release watcher queries the REST API with User-Agent headers, skipping prereleases/drafts, and selecting matching assets per install mode.
+  EVIDENCE: `UpdateService.cs` implements non-blocking HttpClient requests with timeout, error handling for rate limits (403), and detects Per-User vs Per-Machine installations.
+
+- [x] G23: Dark Gold Luxury update UI displays release changelog, provides in-place download progress, and supports Skip Version / Remind Later preferences.
+  EVIDENCE: `UpdateDialog.xaml` provides accessible UI with Dark Gold styling; preferences persisted to `%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio\update_settings.json`.
+
+- [x] G24: Download verification enforces Authenticode digital signatures before executing installer binaries.
+  EVIDENCE: `UpdateService.VerifyAuthenticodeSignature` inspects the signing certificate and ensures subject matches `Alpha Premier` publisher before launching.
+
+- [x] G25: Full unit and UI test suite passes with 100 tests, 0 failures, and 0 warnings.
+  CHECK: `dotnet test Alpha_Branding.sln --configuration Release`
+  EXPECT: `Passed! - Failed: 0, Passed: 100`
+  EVIDENCE: 100 tests passed in 1m10s covering version comparison, JSON deserialization, asset matching, update workflows, settings persistence, Authenticode rejection, and UI automation.
+
 

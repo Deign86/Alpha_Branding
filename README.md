@@ -136,6 +136,27 @@ The original repository contained `index.html`, `styles.css`, `script.js`, and f
 
 The native Apply button is intentional: the original visible Apply control was disabled and unused while processing actually happened on file selection. The refactored application makes that operation explicit while preserving the original image dimensions, overlay behavior, naming intent, and local-only workflow.
 
+## Auto-Update System
+
+Alpha Premier Realty Branding Studio includes a native auto-update system powered by the GitHub Releases REST API:
+
+- **Update Check Triggers:**
+  - Automatic check 3 seconds after application launch (non-blocking).
+  - Background periodic check every 8 hours while running.
+  - Manual "CHECK FOR UPDATES" button in the application header bar.
+- **Authenticode Verification:**
+  - All downloaded release assets (`Alpha.Branding.Setup.exe` / `Alpha.Branding.msi`) are verified for valid SHA-256 Authenticode digital signatures from `Alpha Premier` before execution. Tampered or unsigned downloads are rejected.
+- **Update Dialog & Preferences:**
+  - Dark Gold Luxury themed modal showing the new version tag, release title, and scrollable changelog.
+  - In-place download progress indicator reporting bytes and percentage.
+  - User options: "UPDATE NOW", "REMIND ME LATER" (snooze 8 hours), and "SKIP THIS VERSION".
+  - Update preferences and timestamps are stored at `%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio\update_settings.json` (with `%TEMP%` fallback).
+- **Enterprise Lockdown & Policy Override:**
+  - To disable automatic background update checks across managed enterprise environments (e.g. via Group Policy or Intune), set the environment variable:
+    ```powershell
+    [Environment]::SetEnvironmentVariable("ALPHA_BRANDING_DISABLE_AUTO_UPDATE", "1", "Machine")
+    ```
+
 ## Limitations
 
 - Windows is required because the application uses WPF.

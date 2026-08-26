@@ -111,6 +111,10 @@ public class UiAutomationTests
 
             var emptyBannerBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("EmptyStateSelectButton"));
             Assert.NotNull(emptyBannerBtn);
+
+            var updateBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("CheckForUpdatesButton"));
+            Assert.NotNull(updateBtn);
+            Assert.Equal("CHECK FOR UPDATES", updateBtn.Name);
         }
         finally
         {
