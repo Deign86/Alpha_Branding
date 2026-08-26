@@ -294,9 +294,21 @@ function Ensure-NoRunningProcesses([switch]$ForceKill) {
     $processes = Get-Process -Name 'Alpha.Branding' -ErrorAction SilentlyContinue
     if ($processes) {
         if ($ForceKill) {
-            Write-InstallLog 'Stopping running instances of Alpha.Branding...' -Color 'Yellow'
-            $processes | Stop-Process -Force
-            Start-Sleep -Milliseconds 500
+            Write-InstallLog 'Alpha.Branding is running. Requesting graceful window close...' -Color 'Yellow'
+            $processes | ForEach-Object { $_.CloseMainWindow() | Out-Null }
+            $waited = 0
+            while ((Get-Process -Name 'Alpha.Branding' -ErrorAction SilentlyContinue) -and ($waited -lt 15)) {
+                Start-Sleep -Seconds 1
+                $waited++
+            }
+            $stillRunning = Get-Process -Name 'Alpha.Branding' -ErrorAction SilentlyContinue
+            if ($stillRunning) {
+                Write-InstallLog 'Stopping remaining instances of Alpha.Branding...' -Color 'Yellow'
+                $stillRunning | Stop-Process -Force
+                Start-Sleep -Milliseconds 500
+            } else {
+                Write-InstallLog 'Alpha.Branding closed gracefully.' -Color 'Green'
+            }
         } else {
             throw 'Alpha Premier Realty Branding Studio is currently running. Close it or use -Force to proceed.'
         }
@@ -371,17 +383,53 @@ try {
         Write-InstallLog "No local payload found. Pointing directly to GitHub repo: $DownloadUrl" -Color 'Cyan'
     }
 
-    if ($DownloadUrl) {
-        Write-InstallLog "Downloading installer asset from GitHub: $DownloadUrl" -Color 'Cyan'
-        $downloadFile = Join-Path $tempStage ("AlphaBranding_Download_" + [Guid]::NewGuid().ToString('N') + $(if ($DownloadUrl -match '\.exe($|\?)') { '.exe' } else { '.zip' }))
+    function Download-FileReliably([string]$Url, [string]$OutPath) {
+        [System.Net.ServicePointManager]::CheckCertificateRevocationList = $false
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls13
+        
+        # 1. Try curl.exe if available (native in Windows 10/11 & Server 2019+)
+        $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
+        if ($curl) {
+            & $curl.Source -sSL -k --ssl-no-revoke --connect-timeout 15 --retry 3 --retry-delay 2 -o $OutPath $Url
+            if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $OutPath) -and (Get-Item -LiteralPath $OutPath).Length -gt 0) {
+                return
+            }
+        }
+
+        # 2. Try System.Net.WebClient with standard browser User-Agent
+        try {
+            $wc = New-Object System.Net.WebClient
+            $wc.Headers.Add('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')
+            $wc.DownloadFile($Url, $OutPath)
+            $wc.Dispose()
+            if ((Test-Path -LiteralPath $OutPath) -and (Get-Item -LiteralPath $OutPath).Length -gt 0) {
+                return
+            }
+        } catch {}
+
+        # 3. Try BITS transfer
+        try {
+            Start-BitsTransfer -Source $Url -Destination $OutPath -Priority High -ErrorAction Stop
+            if ((Test-Path -LiteralPath $OutPath) -and (Get-Item -LiteralPath $OutPath).Length -gt 0) {
+                return
+            }
+        } catch {}
+
+        # 4. Fallback to Invoke-WebRequest
         $oldProgress = $ProgressPreference
         $ProgressPreference = 'SilentlyContinue'
         try {
-            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls13
-            Invoke-WebRequest -Uri $DownloadUrl -OutFile $downloadFile -UseBasicParsing
+            Invoke-WebRequest -Uri $Url -OutFile $OutPath -UseBasicParsing -UserAgent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         } finally {
             $ProgressPreference = $oldProgress
         }
+    }
+
+    if ($DownloadUrl) {
+        Write-InstallLog "Downloading installer asset from GitHub: $DownloadUrl" -Color 'Cyan'
+        $downloadFile = Join-Path $tempStage ("AlphaBranding_Download_" + [Guid]::NewGuid().ToString('N') + $(if ($DownloadUrl -match '\.exe($|\?)') { '.exe' } else { '.zip' }))
+        Download-FileReliably -Url $DownloadUrl -OutPath $downloadFile
         if ($downloadFile.EndsWith('.exe', [StringComparison]::OrdinalIgnoreCase)) {
             $SetupExe = $downloadFile
         } else {
