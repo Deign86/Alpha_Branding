@@ -259,9 +259,56 @@ public partial class MainWindow : Window
         _viewModel.RemoveSelectedFile(item.FilePath);
     }
 
+    private async void ImportTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+        var dialog = new OpenFileDialog
+        {
+            Title = "Import Branding Template",
+            Filter = "Image Overlay (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp|PNG Image (*.png)|*.png|All files|*.*"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                var validation = await _viewModel.TemplateService.ValidateTemplateAsync(dialog.FileName);
+                if (!validation.IsValid)
+                {
+                    MessageBox.Show(validation.Message, "Invalid Template", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                await _viewModel.ImportTemplateAsync(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to import template: {ex.Message}", "Import Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void DeleteTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || !_viewModel.CanDeleteActiveTemplate) return;
+        var template = _viewModel.SelectedTemplate;
+        if (template == null || template.IsBuiltIn) return;
+
+        var result = MessageBox.Show(
+            $"Are you sure you want to delete the branding template '{template.Name}'?",
+            "Delete Template",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _viewModel.DeleteSelectedTemplate();
+        }
+    }
+
     private async void Apply_Click(object sender, RoutedEventArgs e)
     {
-        try { await _viewModel.ApplyWorkflowAsync(_overlayPath); }
+        try { await _viewModel.ApplyWorkflowAsync(_viewModel.SelectedTemplate?.FilePath); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Branding failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 

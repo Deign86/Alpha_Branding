@@ -22,7 +22,9 @@ public class UiAutomationTests
         {
             Path.Combine(baseDir, "Alpha.Branding.exe"),
             Path.Combine(baseDir, "..", "..", "..", "..", "src", "Alpha.Branding", "bin", "Release", "net8.0-windows", "Alpha.Branding.exe"),
-            Path.Combine(baseDir, "..", "..", "..", "..", "src", "Alpha.Branding", "bin", "Debug", "net8.0-windows", "Alpha.Branding.exe")
+            Path.Combine(baseDir, "..", "..", "..", "..", "src", "Alpha.Branding", "bin", "Debug", "net8.0-windows", "Alpha.Branding.exe"),
+            Path.Combine(baseDir, "..", "..", "..", "..", "src", "Alpha.Branding", "bin", "Debug", "net8.0-windows10.0.19041.0", "Alpha.Branding.exe"),
+            Path.Combine(baseDir, "..", "..", "..", "..", "src", "Alpha.Branding", "bin", "Release", "net8.0-windows10.0.19041.0", "Alpha.Branding.exe")
         };
 
         foreach (var candidate in candidates)
@@ -98,6 +100,15 @@ public class UiAutomationTests
             var patternPreview = window.FindFirstDescendant(cf => cf.ByAutomationId("PatternPreviewTextBlock"));
             Assert.NotNull(patternPreview);
             Assert.Equal("AlphaPremier_Photo_01.jpg", patternPreview.Name);
+
+            var templateCombo = window.FindFirstDescendant(cf => cf.ByAutomationId("TemplateComboBox"));
+            Assert.NotNull(templateCombo);
+
+            var importTemplateBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("ImportTemplateButton"));
+            Assert.NotNull(importTemplateBtn);
+
+            var aspectRatioText = window.FindFirstDescendant(cf => cf.ByAutomationId("ActiveTemplateAspectRatioTextBlock"));
+            Assert.NotNull(aspectRatioText);
 
             var applyBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("ApplyBrandingButton"));
             Assert.NotNull(applyBtn);

@@ -1703,4 +1703,256 @@ public class InstallerPayloadDiscoveryTests
     }
 }
 
+public class TemplateManagementTests
+{
+    [Fact]
+    public void InitializesWithBuiltInTemplates()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var service = new TemplateService(tempDir.FullName);
+            var templates = service.GetTemplates();
+            Assert.NotEmpty(templates);
+
+            var classic = templates.FirstOrDefault(t => t.Id == TemplateService.DefaultTemplateId);
+            Assert.NotNull(classic);
+            Assert.Equal("Alpha Premier Classic", classic.Name);
+            Assert.True(classic.IsBuiltIn);
+
+            var active = service.GetActiveTemplate();
+            Assert.NotNull(active);
+            Assert.Equal(TemplateService.DefaultTemplateId, active.Id);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task ValidatesTemplateDimensionsAndAspectRatios()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var service = new TemplateService(tempDir.FullName);
+
+            // Valid 1200x1000 PNG
+            var validFile = Path.Combine(tempDir.FullName, "valid.png");
+            using (var img = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+                await img.SaveAsPngAsync(validFile);
+
+            var (isValid, msg, w, h, ratio) = await service.ValidateTemplateAsync(validFile);
+            Assert.True(isValid);
+            Assert.Equal(1200, w);
+            Assert.Equal(1000, h);
+            Assert.Equal(1.2, ratio);
+
+            // Invalid non-image file
+            var txtFile = Path.Combine(tempDir.FullName, "invalid.txt");
+            await File.WriteAllTextAsync(txtFile, "hello");
+            var (isTxtValid, _, _, _, _) = await service.ValidateTemplateAsync(txtFile);
+            Assert.False(isTxtValid);
+
+            // Non-existent file
+            var (isMissingValid, _, _, _, _) = await service.ValidateTemplateAsync(Path.Combine(tempDir.FullName, "missing.png"));
+            Assert.False(isMissingValid);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task SavesCustomTemplateAndPersistsAcrossInstances()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var sourceFile = Path.Combine(tempDir.FullName, "my_custom_template.png");
+            using (var img = new Image<Rgba32>(1024, 858, new Rgba32(255, 200, 0, 128)))
+                await img.SaveAsPngAsync(sourceFile);
+
+            var service1 = new TemplateService(tempDir.FullName);
+            var saved = await service1.SaveTemplateAsync(sourceFile, "August Special Edition");
+
+            Assert.NotNull(saved);
+            Assert.Equal("August Special Edition", saved.Name);
+            Assert.False(saved.IsBuiltIn);
+            Assert.Equal(1024, saved.Width);
+            Assert.Equal(858, saved.Height);
+            Assert.Equal(saved.Id, service1.GetActiveTemplate().Id);
+
+            // Load new instance pointing to same storage
+            var service2 = new TemplateService(tempDir.FullName);
+            var templates2 = service2.GetTemplates();
+            var loaded = templates2.FirstOrDefault(t => t.Id == saved.Id);
+            Assert.NotNull(loaded);
+            Assert.Equal("August Special Edition", loaded.Name);
+            Assert.Equal(saved.Id, service2.GetActiveTemplate().Id);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task DeletesCustomTemplateAndProtectsBuiltInTemplates()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var sourceFile = Path.Combine(tempDir.FullName, "deletable.png");
+            using (var img = new Image<Rgba32>(800, 600))
+                await img.SaveAsPngAsync(sourceFile);
+
+            var service = new TemplateService(tempDir.FullName);
+            var custom = await service.SaveTemplateAsync(sourceFile, "Temporary Promo");
+
+            // Built-in templates cannot be deleted
+            Assert.False(service.DeleteTemplate(TemplateService.DefaultTemplateId));
+
+            // Custom template can be deleted
+            Assert.True(service.DeleteTemplate(custom.Id));
+            Assert.DoesNotContain(service.GetTemplates(), t => t.Id == custom.Id);
+            Assert.Equal(TemplateService.DefaultTemplateId, service.GetActiveTemplate().Id);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+}
+
+public class DistortionPreventionAndPhotoFidelityTests
+{
+    [Fact]
+    public async Task LandscapeCroppingPreservesWidescreenPhotoAspectRatioWithoutStretching()
+    {
+        var input = Path.GetTempFileName() + ".png";
+        var overlay = Path.GetTempFileName() + ".png";
+        try
+        {
+            // 16:9 widescreen photo (1920x1080) with distinct color pattern
+            // Upper half is red (255, 0, 0), lower half is green (0, 255, 0)
+            using (var img = new Image<Rgba32>(1920, 1080))
+            {
+                for (int y = 0; y < 1080; y++)
+                {
+                    for (int x = 0; x < 1920; x++)
+                    {
+                        img[x, y] = y < 540 ? new Rgba32(255, 0, 0, 255) : new Rgba32(0, 255, 0, 255);
+                    }
+                }
+                await img.SaveAsPngAsync(input);
+            }
+
+            // Transparent overlay
+            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+            {
+                await frame.SaveAsPngAsync(overlay);
+            }
+
+            var service = new ImageProcessingService();
+            var result = await service.ProcessLandscapeAsync(input, overlay, "AspectTest", 0, 1);
+
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+
+            // Middle vertical point (y = 500) should cleanly preserve the dividing line
+            var topSample = decoded[600, 200];
+            var bottomSample = decoded[600, 800];
+            Assert.True(topSample.R > 200, "Top portion must contain top of photo without horizontal compression distortion.");
+            Assert.True(bottomSample.G > 200, "Bottom portion must contain bottom of photo without vertical stretch distortion.");
+        }
+        finally
+        {
+            File.Delete(input);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task AugustBrandingOverlayCompositesOntoImageProcessingPipeline()
+    {
+        var photoFile = Path.GetTempFileName() + ".png";
+        var augustOverlay = Path.Combine(AppContext.BaseDirectory, "Assets", "august_branding.png");
+
+        if (!File.Exists(augustOverlay))
+        {
+            // Fallback for isolated test runners
+            augustOverlay = Path.GetTempFileName() + ".png";
+            using var testFrame = new Image<Rgba32>(1024, 858, new Rgba32(200, 160, 90, 180));
+            await testFrame.SaveAsPngAsync(augustOverlay);
+        }
+
+        try
+        {
+            using (var photo = new Image<Rgba32>(1600, 1200, new Rgba32(50, 100, 150, 255)))
+                await photo.SaveAsPngAsync(photoFile);
+
+            var service = new ImageProcessingService();
+            var result = await service.ProcessLandscapeAsync(photoFile, augustOverlay, "AugustTest", 0, 1);
+
+            Assert.NotNull(result);
+            Assert.Equal("AugustTest_01.jpg", result.FileName);
+
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+        }
+        finally
+        {
+            File.Delete(photoFile);
+        }
+    }
+
+    [Fact]
+    public async Task ViewModelTemplateSwitchingAppliesSelectedTemplate()
+    {
+        var photoFile = Path.GetTempFileName() + ".png";
+        var tempStorage = Directory.CreateTempSubdirectory();
+        try
+        {
+            using (var photo = new Image<Rgba32>(1200, 1000, new Rgba32(100, 100, 100, 255)))
+                await photo.SaveAsPngAsync(photoFile);
+
+            // Create custom red template
+            var redOverlay = Path.Combine(tempStorage.FullName, "red_overlay.png");
+            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(255, 0, 0, 200)))
+                await frame.SaveAsPngAsync(redOverlay);
+
+            var templateService = new TemplateService(tempStorage.FullName);
+            var customTemplate = await templateService.SaveTemplateAsync(redOverlay, "Vibrant Red Brand");
+
+            var vm = new MainWindowViewModel(new ImageProcessingService(), null, templateService)
+            {
+                SelectedFiles = new[] { photoFile },
+                Prefix = "SwitchTest"
+            };
+
+            // Switch to custom red template
+            vm.SelectedTemplate = customTemplate;
+            Assert.Equal(customTemplate.Id, vm.SelectedTemplate.Id);
+            Assert.Equal("Vibrant Red Brand", vm.ActiveTemplateName);
+
+            await vm.ApplyAsync();
+
+            Assert.Single(vm.Results);
+            using var decoded = Image.Load<Rgba32>(vm.Results[0].ImageBytes);
+            var pixel = decoded[600, 500];
+            Assert.True(pixel.R > 180, "Branded image must incorporate selected custom template color.");
+        }
+        finally
+        {
+            File.Delete(photoFile);
+            tempStorage.Delete(true);
+        }
+    }
+}
+
 

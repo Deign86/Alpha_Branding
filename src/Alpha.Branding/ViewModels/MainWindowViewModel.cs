@@ -14,6 +14,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly ImageProcessingService _processor;
     private readonly ISessionConfirmationService _confirmationService;
+    private readonly ITemplateService _templateService;
+    private BrandingTemplate _selectedTemplate;
     private string _prefix = FileNameGenerator.DefaultPrefix;
     private bool _isBusy;
     private bool _isProcessing;
@@ -24,14 +26,45 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public MainWindowViewModel(
         ImageProcessingService processor,
-        ISessionConfirmationService? confirmationService = null)
+        ISessionConfirmationService? confirmationService = null,
+        ITemplateService? templateService = null)
     {
         _processor = processor;
         _confirmationService = confirmationService ?? new DefaultSessionConfirmationService();
+        _templateService = templateService ?? new TemplateService();
+        _selectedTemplate = _templateService.GetActiveTemplate();
+        LoadTemplates();
         Results.CollectionChanged += OnResultsCollectionChanged;
     }
 
     public ISessionConfirmationService ConfirmationService => _confirmationService;
+    public ITemplateService TemplateService => _templateService;
+
+    public ObservableCollection<BrandingTemplate> AvailableTemplates { get; } = [];
+
+    public BrandingTemplate SelectedTemplate
+    {
+        get => _selectedTemplate;
+        set
+        {
+            if (value != null && _selectedTemplate?.Id != value.Id)
+            {
+                _selectedTemplate = value;
+                _templateService.SetActiveTemplate(value.Id);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ActiveTemplateName));
+                OnPropertyChanged(nameof(ActiveTemplateDimensions));
+                OnPropertyChanged(nameof(ActiveTemplateAspectRatio));
+                OnPropertyChanged(nameof(CanDeleteActiveTemplate));
+                Status = $"Active template: {value.Name} ({value.DimensionsText})";
+            }
+        }
+    }
+
+    public string ActiveTemplateName => SelectedTemplate?.Name ?? "Alpha Premier Classic";
+    public string ActiveTemplateDimensions => SelectedTemplate?.DimensionsText ?? "Standard Resolution";
+    public string ActiveTemplateAspectRatio => SelectedTemplate?.AspectRatioText ?? "6:5 (1.20:1)";
+    public bool CanDeleteActiveTemplate => SelectedTemplate != null && !SelectedTemplate.IsBuiltIn && !IsBusy;
 
     public ObservableCollection<BrandedImage> Results { get; } = [];
     public ObservableCollection<SelectedPhotoItem> SelectedPhotos { get; } = [];
@@ -74,6 +107,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanApply));
                 OnPropertyChanged(nameof(CanExport));
+                OnPropertyChanged(nameof(CanDeleteActiveTemplate));
             }
         }
     }
@@ -321,10 +355,54 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
-    public async Task<bool> ApplyWorkflowAsync(string overlayPath, CancellationToken token = default)
+    public void LoadTemplates()
+    {
+        AvailableTemplates.Clear();
+        foreach (var t in _templateService.GetTemplates())
+        {
+            AvailableTemplates.Add(t);
+        }
+        var active = _templateService.GetActiveTemplate();
+        _selectedTemplate = AvailableTemplates.FirstOrDefault(t => t.Id == active.Id) ?? AvailableTemplates.FirstOrDefault() ?? active;
+        OnPropertyChanged(nameof(SelectedTemplate));
+        OnPropertyChanged(nameof(ActiveTemplateName));
+        OnPropertyChanged(nameof(ActiveTemplateDimensions));
+        OnPropertyChanged(nameof(ActiveTemplateAspectRatio));
+        OnPropertyChanged(nameof(CanDeleteActiveTemplate));
+    }
+
+    public async Task<BrandingTemplate> ImportTemplateAsync(string sourceFilePath, string? templateName = null)
+    {
+        var saved = await _templateService.SaveTemplateAsync(sourceFilePath, templateName ?? Path.GetFileNameWithoutExtension(sourceFilePath));
+        LoadTemplates();
+        SelectedTemplate = AvailableTemplates.FirstOrDefault(t => t.Id == saved.Id) ?? saved;
+        Status = $"Template '{saved.Name}' saved and activated ({saved.DimensionsText}).";
+        return saved;
+    }
+
+    public bool DeleteSelectedTemplate()
+    {
+        if (SelectedTemplate == null || SelectedTemplate.IsBuiltIn) return false;
+        var templateToDelete = SelectedTemplate;
+        var success = _templateService.DeleteTemplate(templateToDelete.Id);
+        if (success)
+        {
+            LoadTemplates();
+            Status = $"Template '{templateToDelete.Name}' deleted.";
+        }
+        return success;
+    }
+
+    public async Task<bool> ApplyWorkflowAsync(string? overlayPath = null, CancellationToken token = default)
     {
         if (IsBusy) return false;
         if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one media file first.");
+
+        var actualOverlay = string.IsNullOrWhiteSpace(overlayPath) ? SelectedTemplate?.FilePath : overlayPath;
+        if (string.IsNullOrWhiteSpace(actualOverlay) || !File.Exists(actualOverlay))
+        {
+            throw new FileNotFoundException("Branding template overlay file not found.", actualOverlay);
+        }
 
         if (HasUnsavedEdits || Results.Count > 0)
         {
@@ -369,14 +447,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             }
         }
 
-        await ApplyAsync(overlayPath, token);
+        await ApplyAsync(actualOverlay, token);
         return true;
     }
 
-    public async Task ApplyAsync(string overlayPath, CancellationToken token = default)
+    public async Task ApplyAsync(string? overlayPath = null, CancellationToken token = default)
     {
         if (IsBusy) return;
         if (SelectedFiles.Count == 0) throw new InvalidOperationException("Select at least one media file first.");
+
+        var actualOverlay = string.IsNullOrWhiteSpace(overlayPath) ? SelectedTemplate?.FilePath : overlayPath;
+        if (string.IsNullOrWhiteSpace(actualOverlay) || !File.Exists(actualOverlay))
+        {
+            throw new FileNotFoundException("Branding template overlay file not found.", actualOverlay);
+        }
 
         IsBusy = true;
         _isProcessing = true;
@@ -417,7 +501,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
                 try
                 {
-                    Results.Add(await _processor.ProcessBatchItemAsync(item, overlayPath, Prefix, i, total, videoProgress, token));
+                    Results.Add(await _processor.ProcessBatchItemAsync(item, actualOverlay, Prefix, i, total, videoProgress, token));
                 }
                 catch (OperationCanceledException)
                 {

@@ -144,8 +144,8 @@ public sealed class ImageProcessingService
         using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
         using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
 
-        photo.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Stretch }));
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Stretch }));
+        photo.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
+        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
         photo.Mutate(context => context.DrawImage(frame, new Point(0, 0), 1f));
 
         return await CreateBrandedImageAsync(photo, prefix, index, total, cancellationToken);
@@ -163,7 +163,7 @@ public sealed class ImageProcessingService
 
         leftPhoto.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(HalfWidth, TargetHeight), Mode = ResizeMode.Crop }));
         rightPhoto.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(HalfWidth, TargetHeight), Mode = ResizeMode.Crop }));
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Stretch }));
+        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
 
         using var canvas = new Image<Rgba32>(TargetWidth, TargetHeight);
         canvas.Mutate(context =>
@@ -185,7 +185,7 @@ public sealed class ImageProcessingService
         using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
 
         photo.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(HalfWidth, TargetHeight), Mode = ResizeMode.Crop }));
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Stretch }));
+        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
 
         // Center lone portrait photo on dark surface background (#121212)
         using var canvas = new Image<Rgba32>(TargetWidth, TargetHeight, new Rgba32(18, 18, 18, 255));
