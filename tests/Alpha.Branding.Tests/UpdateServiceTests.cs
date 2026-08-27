@@ -367,3 +367,74 @@ public class UpdateServiceWorkflowTests
         thread.Join();
     }
 }
+
+public class MarkdownRendererTests
+{
+    [Fact]
+    public void RendersMarkdownHeadersAndBulletListsIntoWpfElementsWithoutRawMarkup()
+    {
+        var thread = new Thread(() =>
+        {
+            var markdown = """
+            ### Changes in v1.8.0
+
+            - **Changeable & Saveable Branding Templates**: Support for selecting built-in templates and `custom` overlays.
+            - **Strict Aspect Ratio Preservation**: Landscape photos are cropped without distortion.
+            """;
+
+            var panel = new System.Windows.Controls.StackPanel();
+            MarkdownRenderer.RenderTo(markdown, panel);
+
+            Assert.NotEmpty(panel.Children);
+
+            // First child: Header TextBlock
+            var header = panel.Children[0] as System.Windows.Controls.TextBlock;
+            Assert.NotNull(header);
+            Assert.DoesNotContain("###", header.Text);
+
+            // Second child: Spacing
+            // Third child: First bullet point Grid
+            var bulletGrid = panel.Children[2] as System.Windows.Controls.Grid;
+            Assert.NotNull(bulletGrid);
+            Assert.Equal(2, bulletGrid.Children.Count);
+
+            var bulletSymbol = bulletGrid.Children[0] as System.Windows.Controls.TextBlock;
+            Assert.NotNull(bulletSymbol);
+            Assert.Equal("•", bulletSymbol.Text);
+
+            var bulletContent = bulletGrid.Children[1] as System.Windows.Controls.TextBlock;
+            Assert.NotNull(bulletContent);
+            Assert.NotEmpty(bulletContent.Inlines);
+
+            // Ensure no raw markdown tokens in inlines
+            foreach (var inline in bulletContent.Inlines)
+            {
+                if (inline is System.Windows.Documents.Run run)
+                {
+                    Assert.DoesNotContain("**", run.Text);
+                }
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
+    public void HandlesEmptyAndNullMarkdownGracefully()
+    {
+        var thread = new Thread(() =>
+        {
+            var panel = new System.Windows.Controls.StackPanel();
+            MarkdownRenderer.RenderTo("", panel);
+            Assert.Empty(panel.Children);
+
+            MarkdownRenderer.RenderTo("   ", panel);
+            Assert.Empty(panel.Children);
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+}
+

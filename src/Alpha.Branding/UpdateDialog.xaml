@@ -127,16 +127,9 @@
                                   AutomationProperties.AutomationId="ChangelogScrollViewer"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <TextBox x:Name="ChangelogTextBox"
-                                 AutomationProperties.AutomationId="ChangelogTextBox"
-                                 IsReadOnly="True"
-                                 TextWrapping="Wrap"
-                                 Background="Transparent"
-                                 Foreground="{StaticResource TextPrimary}"
-                                 BorderThickness="0"
-                                 FontSize="12"
-                                 Padding="0"
-                                 AcceptsReturn="True"/>
+                        <StackPanel x:Name="ChangelogContainer"
+                                    AutomationProperties.AutomationId="ChangelogContainer"
+                                    Margin="0,2,0,2"/>
                     </ScrollViewer>
                 </Grid>
             </Border>

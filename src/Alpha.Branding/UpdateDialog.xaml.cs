@@ -52,11 +52,11 @@ public partial class UpdateDialog : Window
         var notes = release?.Body;
         if (!string.IsNullOrWhiteSpace(notes))
         {
-            ChangelogTextBox.Text = notes;
+            MarkdownRenderer.RenderTo(notes, ChangelogContainer, Resources);
         }
         else
         {
-            ChangelogTextBox.Text = "No release notes provided for this version. Visit GitHub for details.";
+            MarkdownRenderer.RenderTo("No release notes provided for this version. Visit GitHub for details.", ChangelogContainer, Resources);
         }
     }
 
