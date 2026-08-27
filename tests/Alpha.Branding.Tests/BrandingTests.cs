@@ -1714,6 +1714,7 @@ public class TemplateManagementTests
             var service = new TemplateService(tempDir.FullName);
             var templates = service.GetTemplates();
             Assert.NotEmpty(templates);
+            Assert.Single(templates);
 
             var classic = templates.FirstOrDefault(t => t.Id == TemplateService.DefaultTemplateId);
             Assert.NotNull(classic);
@@ -1877,29 +1878,24 @@ public class DistortionPreventionAndPhotoFidelityTests
     }
 
     [Fact]
-    public async Task AugustBrandingOverlayCompositesOntoImageProcessingPipeline()
+    public async Task CustomTemplateOverlayCompositesOntoImageProcessingPipeline()
     {
         var photoFile = Path.GetTempFileName() + ".png";
-        var augustOverlay = Path.Combine(AppContext.BaseDirectory, "Assets", "august_branding.png");
-
-        if (!File.Exists(augustOverlay))
-        {
-            // Fallback for isolated test runners
-            augustOverlay = Path.GetTempFileName() + ".png";
-            using var testFrame = new Image<Rgba32>(1024, 858, new Rgba32(200, 160, 90, 180));
-            await testFrame.SaveAsPngAsync(augustOverlay);
-        }
+        var customOverlay = Path.GetTempFileName() + ".png";
 
         try
         {
+            using (var testFrame = new Image<Rgba32>(1024, 858, new Rgba32(200, 160, 90, 180)))
+                await testFrame.SaveAsPngAsync(customOverlay);
+
             using (var photo = new Image<Rgba32>(1600, 1200, new Rgba32(50, 100, 150, 255)))
                 await photo.SaveAsPngAsync(photoFile);
 
             var service = new ImageProcessingService();
-            var result = await service.ProcessLandscapeAsync(photoFile, augustOverlay, "AugustTest", 0, 1);
+            var result = await service.ProcessLandscapeAsync(photoFile, customOverlay, "CustomTplTest", 0, 1);
 
             Assert.NotNull(result);
-            Assert.Equal("AugustTest_01.jpg", result.FileName);
+            Assert.Equal("CustomTplTest_01.jpg", result.FileName);
 
             using var decoded = Image.Load<Rgba32>(result.ImageBytes);
             Assert.Equal(1200, decoded.Width);
@@ -1908,6 +1904,7 @@ public class DistortionPreventionAndPhotoFidelityTests
         finally
         {
             File.Delete(photoFile);
+            File.Delete(customOverlay);
         }
     }
 

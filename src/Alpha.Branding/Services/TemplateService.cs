@@ -8,7 +8,6 @@ namespace Alpha.Branding.Services;
 public class TemplateService : ITemplateService
 {
     public const string DefaultTemplateId = "alpha_premier_classic";
-    public const string AugustTemplateId = "august_branding";
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -59,25 +58,7 @@ public class TemplateService : ITemplateService
         };
         _templates.Add(classicTemplate);
 
-        // 2. Built-in: August Branding
-        var augustPath = Path.Combine(AppContext.BaseDirectory, "Assets", "august_branding.png");
-        if (File.Exists(augustPath))
-        {
-            var augustTemplate = new BrandingTemplate
-            {
-                Id = AugustTemplateId,
-                Name = "August Branding",
-                FilePath = augustPath,
-                IsBuiltIn = true,
-                Width = 1024,
-                Height = 858,
-                AspectRatio = 1.1935,
-                CreatedAt = new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero)
-            };
-            _templates.Add(augustTemplate);
-        }
-
-        // 3. Load saved user templates from persistent storage
+        // 2. Load saved user templates from persistent storage
         try
         {
             if (File.Exists(_metaFilePath))
