@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.9.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
+      - name: Extract version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+          } else {
+            $tag = "${{ github.ref_name }}"
+            $version = $tag -replace '^v', ''
+          }
+
+          # Ensure 4-part version for installer
+          $parts = $version -split '\.'
+          while ($parts.Count -lt 4) {
+            $parts += '0'
+          }
+          $fullVersion = $parts[0..3] -join '.'
+
+          Write-Host "Version: $version"
+          Write-Host "Full version: $fullVersion"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "full_version=$fullVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore Alpha_Branding.sln
+
+      - name: Build solution
+        run: dotnet build Alpha_Branding.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Alpha_Branding.sln --configuration Release --no-build --verbosity normal
+
+      - name: Decode code signing certificate
+        if: ${{ secrets.CODE_SIGNING_CERT_BASE64 != '' }}
+        shell: pwsh
+        env:
+          CERT_B64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
+        run: |
+          $certDir = "installer\certs"
+          New-Item -ItemType Directory -Path $certDir -Force | Out-Null
+          $certPath = Join-Path $certDir "CodeSigningCert.pfx"
+          $certBytes = [Convert]::FromBase64String($env:CERT_B64)
+          [System.IO.File]::WriteAllBytes($certPath, $certBytes)
+          Write-Host "Certificate decoded to $certPath"
+
+      - name: Build installer
+        shell: pwsh
+        env:
+          CODE_SIGN_PASSWORD: ${{ secrets.CODE_SIGNING_CERT_PASSWORD }}
+        run: |
+          $version = "${{ steps.version.outputs.full_version }}"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\installer\Build-Installer.ps1 -Version $version
+
+      - name: Verify installer artifact
+        shell: pwsh
+        run: |
+          $installerPath = "artifacts\Alpha.Branding.Setup.exe"
+          if (-not (Test-Path $installerPath)) {
+            throw "Installer not found at $installerPath"
+          }
+          $installer = Get-Item $installerPath
+          Write-Host "Installer: $($installer.Name)"
+          Write-Host "Size: $($installer.Length) bytes"
+
+          $sig = Get-AuthenticodeSignature $installerPath
+          Write-Host "Signature status: $($sig.Status)"
+          Write-Host "Signer: $($sig.SignerCertificate.Subject)"
+
+      - name: Create portable archive
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $publishDir = "artifacts\publish-portable"
+
+          Write-Host "Publishing portable win-x64 build..."
+          dotnet publish src/Alpha.Branding/Alpha.Branding.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output $publishDir `
+            --nologo
+
+          $zipPath = "artifacts\Alpha.Branding-v$version-win-x64.zip"
+          Compress-Archive -Path "$publishDir\*" -DestinationPath $zipPath -CompressionLevel Optimal
+          Write-Host "Created portable archive: $zipPath"
+
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          $artifacts = Get-ChildItem -Path artifacts -File | Where-Object { $_.Extension -in @('.exe', '.zip') }
+          $checksumFile = "artifacts\SHA256SUMS.txt"
+
+          $checksums = @()
+          foreach ($file in $artifacts) {
+            $hash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
+            $checksums += "$hash  $($file.Name)"
+            Write-Host "$($file.Name): $hash"
+          }
+
+          $checksums | Set-Content -Path $checksumFile -Encoding UTF8
+          Write-Host "Checksums written to $checksumFile"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          files: |
+            artifacts/Alpha.Branding.Setup.exe
+            artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-win-x64.zip
+            artifacts/SHA256SUMS.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
