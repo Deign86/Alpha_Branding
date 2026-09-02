@@ -124,6 +124,36 @@ public class UiInitializationTests
     }
 
     [Fact]
+    public void MainWindowLoadFilesSupportsJfifFormat()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            if (System.Windows.Application.Current == null)
+                _ = new App();
+
+            var tempJfif = Path.GetTempFileName() + ".jfif";
+            try
+            {
+                File.WriteAllText(tempJfif, "fake jfif image");
+
+                var window = new MainWindow();
+                window.LoadFiles(new[] { tempJfif });
+
+                var vm = (MainWindowViewModel)window.DataContext;
+                Assert.Single(vm.SelectedFiles);
+                Assert.Equal(tempJfif, vm.SelectedFiles[0]);
+            }
+            finally
+            {
+                if (File.Exists(tempJfif)) File.Delete(tempJfif);
+            }
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+
+    [Fact]
     public void MainWindowViewModelCanApplyAndCanExportStateTransitions()
     {
         var vm = new MainWindowViewModel(new ImageProcessingService());
@@ -210,6 +240,33 @@ public class ImageProcessingTests
         {
             File.Delete(input);
             File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task ProcessingHandlesJfifInputFileSuccessfully()
+    {
+        var input = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.jfif");
+        var overlay = Path.GetTempFileName();
+        try
+        {
+            using (var image = new Image<Rgba32>(32, 24, new Rgba32(255, 128, 0, 255)))
+                await image.SaveAsJpegAsync(input);
+            using (var frame = new Image<Rgba32>(8, 8, new Rgba32(0, 0, 255, 255)))
+                await frame.SaveAsPngAsync(overlay);
+
+            var result = await new ImageProcessingService().ProcessAsync(input, overlay, "JfifListing", 0, 1);
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+            Assert.Equal(JpegFormat.Instance, Image.DetectFormat(result.ImageBytes));
+            Assert.Equal("JfifListing_01.jpg", result.FileName);
+        }
+        finally
+        {
+            if (File.Exists(input)) File.Delete(input);
+            if (File.Exists(overlay)) File.Delete(overlay);
         }
     }
 
@@ -1749,6 +1806,17 @@ public class TemplateManagementTests
             Assert.Equal(1200, w);
             Assert.Equal(1000, h);
             Assert.Equal(1.2, ratio);
+
+            // Valid 1200x1000 JFIF
+            var validJfif = Path.Combine(tempDir.FullName, "valid.jfif");
+            using (var img = new Image<Rgba32>(1200, 1000, new Rgba32(255, 0, 0, 255)))
+                await img.SaveAsJpegAsync(validJfif);
+
+            var (isJfifValid, _, jfifW, jfifH, jfifRatio) = await service.ValidateTemplateAsync(validJfif);
+            Assert.True(isJfifValid);
+            Assert.Equal(1200, jfifW);
+            Assert.Equal(1000, jfifH);
+            Assert.Equal(1.2, jfifRatio);
 
             // Invalid non-image file
             var txtFile = Path.Combine(tempDir.FullName, "invalid.txt");

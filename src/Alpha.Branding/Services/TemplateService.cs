@@ -117,9 +117,9 @@ public class TemplateService : ITemplateService
         }
 
         var ext = Path.GetExtension(sourceFilePath).ToLowerInvariant();
-        if (ext is not (".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp"))
+        if (ext is not (".png" or ".jpg" or ".jpeg" or ".jfif" or ".bmp" or ".webp"))
         {
-            return (false, "Unsupported image format. Please select a PNG, JPG, or WEBP image.", 0, 0, 0);
+            return (false, "Unsupported image format. Please select a PNG, JPG, JFIF, or WEBP image.", 0, 0, 0);
         }
 
         try
