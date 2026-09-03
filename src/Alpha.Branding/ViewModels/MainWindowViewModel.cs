@@ -23,6 +23,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _status = "Select property photos and videos to begin.";
     private double _progress;
     private IReadOnlyList<string> _selectedFiles = [];
+    private LayoutMode _globalLayoutMode = LayoutMode.Combine;
+
+    public LayoutMode GlobalLayoutMode
+    {
+        get => _globalLayoutMode;
+        set
+        {
+            if (_globalLayoutMode != value)
+            {
+                _globalLayoutMode = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsCombineLayout));
+                OnPropertyChanged(nameof(IsSeparateLayout));
+                OnPropertyChanged(nameof(LayoutModeText));
+            }
+        }
+    }
+
+    public bool IsCombineLayout => GlobalLayoutMode == LayoutMode.Combine;
+    public bool IsSeparateLayout => GlobalLayoutMode == LayoutMode.Separate;
+    public string LayoutModeText => GlobalLayoutMode == LayoutMode.Combine ? "Combine Pairs" : "Separate All";
+
+    public void SetCombineLayout() => GlobalLayoutMode = LayoutMode.Combine;
+    public void SetSeparateLayout() => GlobalLayoutMode = LayoutMode.Separate;
 
     public MainWindowViewModel(
         ImageProcessingService processor,
@@ -214,9 +238,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private void UpdateSelectedPhotos()
     {
+        var existingMap = SelectedPhotos.ToDictionary(p => p.FilePath, StringComparer.OrdinalIgnoreCase);
         SelectedPhotos.Clear();
         foreach (var file in _selectedFiles)
         {
+            if (existingMap.TryGetValue(file, out var existingItem))
+            {
+                SelectedPhotos.Add(existingItem);
+                continue;
+            }
+
             var sizeText = string.Empty;
             BitmapImage? thumb = null;
             var isVideo = VideoProcessingService.IsVideoFile(file);
@@ -471,7 +502,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         try
         {
             Status = "Analyzing media files…";
-            var plan = await ImageProcessingService.PlanBatchAsync(SelectedFiles, token);
+            var plan = await ImageProcessingService.PlanBatchAsync(SelectedPhotos.ToList(), GlobalLayoutMode, token);
             var total = plan.Count;
 
             for (var i = 0; i < total; i++)
@@ -485,6 +516,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                         : $"Pair: {Path.GetFileName(pair.LeftFilePath)} + {Path.GetFileName(pair.RightFilePath)}",
                     ImageBatchItem.Landscape landscape => Path.GetFileName(landscape.FilePath),
                     ImageBatchItem.LonePortrait lone => Path.GetFileName(lone.FilePath),
+                    ImageBatchItem.SoloImage solo => $"Solo: {Path.GetFileName(solo.FilePath)}",
                     ImageBatchItem.Video video => $"Video: {Path.GetFileName(video.FilePath)}",
                     _ => string.Empty
                 };
@@ -528,6 +560,64 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         finally
         {
             _isProcessing = false;
+            IsBusy = false;
+            UpdateApplyStatus();
+        }
+    }
+
+    public void ResetAllStagedCrops()
+    {
+        foreach (var photo in SelectedPhotos)
+        {
+            photo.ResetCrop();
+        }
+        Status = "All staged image crops have been reset to default.";
+    }
+
+    public async Task ResetAllResultCropsAsync(CancellationToken token = default)
+    {
+        if (IsBusy || Results.Count == 0) return;
+        var count = 0;
+        foreach (var result in Results.Where(r => r.CanEdit && r.HasCustomCrop).ToList())
+        {
+            await ResetBrandedImageCropAsync(result, token);
+            count++;
+        }
+        if (count > 0)
+        {
+            HasUnsavedEdits = true;
+            Status = $"Reset crops on {count} branded image(s).";
+        }
+        else
+        {
+            Status = "All branded images are already using default framing.";
+        }
+    }
+
+    public async Task ResetBrandedImageCropAsync(BrandedImage image, CancellationToken token = default)
+    {
+        if (!image.CanEdit) return;
+        var defaultCrop = new ImageCropSettings();
+        await UpdateBrandedImageCropAsync(image, defaultCrop, image.RightCropSettings != null ? new ImageCropSettings() : null, token);
+    }
+
+    public async Task UpdateBrandedImageCropAsync(BrandedImage image, ImageCropSettings newCrop, ImageCropSettings? newRightCrop = null, CancellationToken token = default)
+    {
+        if (IsBusy || !image.CanEdit) return;
+        IsBusy = true;
+        try
+        {
+            var overlay = SelectedTemplate?.FilePath;
+            await _processor.RebrandImageAsync(image, newCrop, newRightCrop, overlay, token);
+            HasUnsavedEdits = true;
+            Status = $"Updated crop for {image.FileName}.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to update crop: {ex.Message}";
+        }
+        finally
+        {
             IsBusy = false;
             UpdateApplyStatus();
         }

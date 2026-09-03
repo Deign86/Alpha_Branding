@@ -2020,4 +2020,286 @@ public class DistortionPreventionAndPhotoFidelityTests
     }
 }
 
+public class ImageEditingWorkflowTests
+{
+    [Fact]
+    public void ImageCropSettingsClampsZoomAndNormalizesRotation()
+    {
+        var settings = new ImageCropSettings
+        {
+            PanX = 15.5,
+            PanY = -22.0,
+            Zoom = 10.0, // Should clamp to 5.0
+            Rotation = 450 // 450 % 360 = 90
+        };
 
+        Assert.Equal(5.0, settings.Zoom);
+        Assert.Equal(90, settings.Rotation);
+        Assert.False(settings.IsDefault);
+        Assert.Equal("500%", settings.ZoomPercentageText);
+
+        settings.Reset();
+        Assert.True(settings.IsDefault);
+        Assert.Equal(0, settings.PanX);
+        Assert.Equal(0, settings.PanY);
+        Assert.Equal(1.0, settings.Zoom);
+        Assert.Equal(0, settings.Rotation);
+    }
+
+    [Fact]
+    public void ImageCropSettingsCloneAndCopyFromCreateFaithfulCopies()
+    {
+        var original = new ImageCropSettings
+        {
+            PanX = 40,
+            PanY = -30,
+            Zoom = 1.75,
+            Rotation = 180
+        };
+
+        var clone = original.Clone();
+        Assert.Equal(original.PanX, clone.PanX);
+        Assert.Equal(original.PanY, clone.PanY);
+        Assert.Equal(original.Zoom, clone.Zoom);
+        Assert.Equal(original.Rotation, clone.Rotation);
+
+        var copy = new ImageCropSettings();
+        copy.CopyFrom(original);
+        Assert.Equal(original.PanX, copy.PanX);
+        Assert.Equal(original.PanY, copy.PanY);
+        Assert.Equal(original.Zoom, copy.Zoom);
+        Assert.Equal(original.Rotation, copy.Rotation);
+    }
+
+    [Fact]
+    public async Task PlanBatchSupportsKeepImagesSeparateMode()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var p1 = Path.Combine(tempDir.FullName, "P1.png");
+            var p2 = Path.Combine(tempDir.FullName, "P2.png");
+            var l1 = Path.Combine(tempDir.FullName, "L1.png");
+
+            using (var imgP1 = new Image<Rgba32>(800, 1200)) await imgP1.SaveAsPngAsync(p1);
+            using (var imgP2 = new Image<Rgba32>(800, 1200)) await imgP2.SaveAsPngAsync(p2);
+            using (var imgL1 = new Image<Rgba32>(1600, 1000)) await imgL1.SaveAsPngAsync(l1);
+
+            var items = new List<SelectedPhotoItem>
+            {
+                new() { FilePath = p1 },
+                new() { FilePath = p2 },
+                new() { FilePath = l1 }
+            };
+
+            // In Separate mode, every image is a SoloImage (not paired)
+            var planSeparate = await ImageProcessingService.PlanBatchAsync(items, LayoutMode.Separate);
+            Assert.Equal(3, planSeparate.Count);
+            Assert.All(planSeparate, item => Assert.IsType<ImageBatchItem.SoloImage>(item));
+
+            // In Combine mode, the two portraits pair up
+            var planCombine = await ImageProcessingService.PlanBatchAsync(items, LayoutMode.Combine);
+            Assert.Equal(2, planCombine.Count);
+            Assert.IsType<ImageBatchItem.PortraitPair>(planCombine[0]);
+            Assert.IsType<ImageBatchItem.Landscape>(planCombine[1]);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task PlanBatchSupportsMixedLayoutOptions()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var p1 = Path.Combine(tempDir.FullName, "P1.png");
+            var p2 = Path.Combine(tempDir.FullName, "P2.png");
+            var p3 = Path.Combine(tempDir.FullName, "P3.png");
+
+            using (var imgP1 = new Image<Rgba32>(800, 1200)) await imgP1.SaveAsPngAsync(p1);
+            using (var imgP2 = new Image<Rgba32>(800, 1200)) await imgP2.SaveAsPngAsync(p2);
+            using (var imgP3 = new Image<Rgba32>(800, 1200)) await imgP3.SaveAsPngAsync(p3);
+
+            var items = new List<SelectedPhotoItem>
+            {
+                new() { FilePath = p1, LayoutPreference = PhotoLayoutPreference.Solo }, // Explicitly solo
+                new() { FilePath = p2 }, // Auto / Combine
+                new() { FilePath = p3 }  // Auto / Combine
+            };
+
+            var plan = await ImageProcessingService.PlanBatchAsync(items, LayoutMode.Combine);
+            Assert.Equal(2, plan.Count);
+            Assert.IsType<ImageBatchItem.SoloImage>(plan[0]);
+            Assert.IsType<ImageBatchItem.PortraitPair>(plan[1]);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public void RenderCroppedPhotoPreservesAspectRatioAndPreventsDistortion()
+    {
+        // Test with square, landscape, and portrait images
+        using var square = new Image<Rgba32>(1000, 1000, new Rgba32(100, 150, 200, 255));
+        using var landscape = new Image<Rgba32>(1920, 1080, new Rgba32(200, 100, 50, 255));
+        using var portrait = new Image<Rgba32>(800, 1400, new Rgba32(50, 200, 100, 255));
+
+        using var squareResult = ImageProcessingService.RenderCroppedPhoto(square, 1200, 1000, new ImageCropSettings { Zoom = 0.8 });
+        Assert.Equal(1200, squareResult.Width);
+        Assert.Equal(1000, squareResult.Height);
+
+        using var landscapeResult = ImageProcessingService.RenderCroppedPhoto(landscape, 1200, 1000, new ImageCropSettings { PanX = 50, PanY = -30 });
+        Assert.Equal(1200, landscapeResult.Width);
+        Assert.Equal(1000, landscapeResult.Height);
+
+        // Portrait photo solo in landscape frame should fit by default without aggressive cropping
+        using var portraitResult = ImageProcessingService.RenderCroppedPhoto(portrait, 1200, 1000, new ImageCropSettings(), isSoloPortrait: true);
+        Assert.Equal(1200, portraitResult.Width);
+        Assert.Equal(1000, portraitResult.Height);
+
+        // Border area in letterbox should be dark surface #121212
+        var borderSample = portraitResult[10, 500];
+        Assert.Equal(18, borderSample.R);
+        Assert.Equal(18, borderSample.G);
+        Assert.Equal(18, borderSample.B);
+    }
+
+    [Fact]
+    public async Task ZoomOutPreventsExcessiveCropping()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var photoPath = Path.Combine(tempDir.FullName, "wide.png");
+            var overlayPath = Path.Combine(tempDir.FullName, "overlay.png");
+
+            // Very wide 21:9 image with distinct left and right colors
+            using (var img = new Image<Rgba32>(2100, 900))
+            {
+                for (var x = 0; x < 2100; x++)
+                {
+                    for (var y = 0; y < 900; y++)
+                    {
+                        img[x, y] = x < 500 ? new Rgba32(255, 0, 0, 255) : (x > 1600 ? new Rgba32(0, 0, 255, 255) : new Rgba32(0, 255, 0, 255));
+                    }
+                }
+                await img.SaveAsPngAsync(photoPath);
+            }
+
+            using (var overlay = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+            {
+                await overlay.SaveAsPngAsync(overlayPath);
+            }
+
+            var service = new ImageProcessingService();
+
+            // Zoom out to 0.5x ensures both far-left red and far-right blue are visible within the 1200x1000 canvas
+            var crop = new ImageCropSettings { Zoom = 0.5 };
+            var result = await service.ProcessSoloImageAsync(photoPath, overlayPath, "WideTest", 0, 1, crop);
+
+            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+            Assert.Equal(1200, decoded.Width);
+            Assert.Equal(1000, decoded.Height);
+
+            // Assert that content inside the frame contains the red and blue sections
+            var hasRed = false;
+            var hasBlue = false;
+            for (var x = 0; x < 1200; x += 20)
+            {
+                var pixel = decoded[x, 500];
+                if (pixel.R > 200 && pixel.G < 50 && pixel.B < 50) hasRed = true;
+                if (pixel.B > 200 && pixel.R < 50 && pixel.G < 50) hasBlue = true;
+            }
+
+            Assert.True(hasRed, "Zoomed-out image must retain far-left content without excessive crop.");
+            Assert.True(hasBlue, "Zoomed-out image must retain far-right content without excessive crop.");
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public async Task RebrandImageUpdatesSpecificItemWithoutAffectingOtherBatchItems()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var p1 = Path.Combine(tempDir.FullName, "P1.png");
+            var p2 = Path.Combine(tempDir.FullName, "P2.png");
+            var overlayPath = Path.Combine(tempDir.FullName, "overlay.png");
+
+            using (var img1 = new Image<Rgba32>(1200, 1000, new Rgba32(200, 50, 50, 255))) await img1.SaveAsPngAsync(p1);
+            using (var img2 = new Image<Rgba32>(1200, 1000, new Rgba32(50, 200, 50, 255))) await img2.SaveAsPngAsync(p2);
+            using (var ov = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0))) await ov.SaveAsPngAsync(overlayPath);
+
+            var service = new ImageProcessingService();
+            var branded1 = await service.ProcessLandscapeAsync(p1, overlayPath, "Batch", 0, 2);
+            var branded2 = await service.ProcessLandscapeAsync(p2, overlayPath, "Batch", 1, 2);
+
+            var initialBytes2 = (byte[])branded2.ImageBytes.Clone();
+
+            // Rebrand only branded1 with zoom and pan
+            var newCrop = new ImageCropSettings { Zoom = 1.5, PanX = 100, PanY = 50 };
+            var updated1 = await service.RebrandImageAsync(branded1, newCrop, null, overlayPath);
+
+            Assert.Same(branded1, updated1);
+            Assert.Equal(newCrop.Zoom, branded1.CropSettings?.Zoom);
+            Assert.Equal(newCrop.PanX, branded1.CropSettings?.PanX);
+            Assert.True(branded1.HasCustomCrop);
+
+            // Verify branded2 was completely unaffected
+            Assert.Equal(initialBytes2, branded2.ImageBytes);
+            Assert.False(branded2.HasCustomCrop);
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public void CanInstantiateCropEditorWindowWithoutException()
+    {
+        var thread = new System.Threading.Thread(() =>
+        {
+            if (System.Windows.Application.Current == null)
+                _ = new App();
+
+            var tempDir = Directory.CreateTempSubdirectory();
+            try
+            {
+                var p1 = Path.Combine(tempDir.FullName, "P1.png");
+                var p2 = Path.Combine(tempDir.FullName, "P2.png");
+                var ov = Path.Combine(tempDir.FullName, "ov.png");
+
+                using (var img = new Image<Rgba32>(800, 600)) img.SaveAsPng(p1);
+                using (var img = new Image<Rgba32>(800, 600)) img.SaveAsPng(p2);
+                using (var img = new Image<Rgba32>(1200, 1000)) img.SaveAsPng(ov);
+
+                // Single photo editor
+                var singleWindow = new CropEditorWindow(p1, new ImageCropSettings(), ov, "Single Photo");
+                Assert.NotNull(singleWindow);
+                Assert.False(singleWindow.HasMultipleSlots);
+
+                // Pair photo editor
+                var pairWindow = new CropEditorWindow(p1, new ImageCropSettings(), ov, "Pair Photos", p2, new ImageCropSettings());
+                Assert.NotNull(pairWindow);
+                Assert.True(pairWindow.HasMultipleSlots);
+            }
+            finally
+            {
+                tempDir.Delete(true);
+            }
+        });
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+    }
+}

@@ -253,6 +253,48 @@ public partial class MainWindow : Window
         }
     }
 
+    private void CombineImages_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetCombineLayout();
+    }
+
+    private void SeparateImages_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.SetSeparateLayout();
+    }
+
+    private void ResetAllStagedCrops_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ResetAllStagedCrops();
+    }
+
+    private void EditStagedCrop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item } || item.IsVideo) return;
+        var overlay = _viewModel.SelectedTemplate?.FilePath ?? _overlayPath;
+        var editor = new CropEditorWindow(item.FilePath, item.CropSettings, overlay, item.FileName)
+        {
+            Owner = this
+        };
+
+        if (editor.ShowDialog() == true)
+        {
+            item.CropSettings.CopyFrom(editor.LeftCropResult);
+        }
+    }
+
+    private void ToggleStagedLayout_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
+        item.ToggleLayoutPreference();
+    }
+
+    private void ResetStagedCrop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
+        item.ResetCrop();
+    }
+
     private void RemoveSelectedPhoto_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
@@ -396,7 +438,42 @@ public partial class MainWindow : Window
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: BrandedImage image }) return;
         var index = _viewModel.Results.IndexOf(image);
-        if (index >= 0) new PreviewWindow(_viewModel.Results, index) { Owner = this }.ShowDialog();
+        if (index >= 0) new PreviewWindow(_viewModel.Results, index, _viewModel) { Owner = this }.ShowDialog();
+    }
+
+    private async void ResetAllResultCrops_Click(object sender, RoutedEventArgs e)
+    {
+        try { await _viewModel.ResetAllResultCropsAsync(); }
+        catch (Exception ex) { MessageBox.Show(ex.Message, "Reset failed", MessageBoxButton.OK, MessageBoxImage.Error); }
+    }
+
+    private async void EditResultCrop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: BrandedImage image } || !image.CanEdit) return;
+        var overlay = !string.IsNullOrWhiteSpace(image.OverlayPath) ? image.OverlayPath : (_viewModel.SelectedTemplate?.FilePath ?? _overlayPath);
+        var firstPath = image.SourceFilePaths.Count > 0 ? image.SourceFilePaths[0] : null;
+        if (string.IsNullOrWhiteSpace(firstPath) || !File.Exists(firstPath)) return;
+
+        var secondPath = image.SourceFilePaths.Count > 1 ? image.SourceFilePaths[1] : null;
+        var leftCrop = image.CropSettings ?? new ImageCropSettings();
+        var rightCrop = image.RightCropSettings ?? new ImageCropSettings();
+
+        var editor = new CropEditorWindow(firstPath, leftCrop, overlay, image.FileName, secondPath, rightCrop)
+        {
+            Owner = this
+        };
+
+        if (editor.ShowDialog() == true)
+        {
+            await _viewModel.UpdateBrandedImageCropAsync(image, editor.LeftCropResult, secondPath != null ? editor.RightCropResult : null);
+        }
+    }
+
+    private async void ResetResultCrop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: BrandedImage image }) return;
+        try { await _viewModel.ResetBrandedImageCropAsync(image); }
+        catch (Exception ex) { MessageBox.Show(ex.Message, "Reset failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
     private void Window_DragOver(object sender, DragEventArgs e)

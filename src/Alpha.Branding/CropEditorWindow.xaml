@@ -1,0 +1,334 @@
+<Window x:Class="Alpha.Branding.CropEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alpha Premier | Image Crop &amp; Alignment Studio"
+        Icon="Assets/logo_phoenix.png"
+        Width="1020" Height="780"
+        MinWidth="820" MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundDark}"
+        Foreground="{StaticResource TextPrimary}"
+        FontFamily="Segoe UI, Poppins, sans-serif"
+        KeyDown="Window_KeyDown">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <!-- Header Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- Interactive Viewport -->
+            <RowDefinition Height="*"/>
+            <!-- Controls Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- Action Footer -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- TOP BAR -->
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceDark}"
+                BorderBrush="{StaticResource BorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="18,12"
+                Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0"
+                       Source="Assets/logo_phoenix.png"
+                       Height="30" Width="30"
+                       Margin="0,0,12,0"
+                       VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="CROP &amp; ALIGNMENT EDITOR — "
+                                   Foreground="{StaticResource GoldLight}"
+                                   FontSize="13"
+                                   FontWeight="Bold"/>
+                        <TextBlock x:Name="ItemTitleTextBlock"
+                                   AutomationProperties.AutomationId="CropEditorItemTitleTextBlock"
+                                   Text="{Binding Title}"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <TextBlock Text="Drag the image to position • Adjust zoom to prevent unwanted edge cropping • Frame overlay shows final live output"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="11"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <!-- Target Slot Indicator / Pair Switcher -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border x:Name="SlotSelectorContainer"
+                            Visibility="{Binding HasMultipleSlots, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="{StaticResource SurfaceElevated}"
+                            BorderBrush="{StaticResource BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="3"
+                            Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="LeftSlotRadio"
+                                         Content="LEFT PHOTO"
+                                         IsChecked="{Binding IsLeftSlotSelected, Mode=TwoWay}"
+                                         Checked="SlotRadio_Changed"
+                                         Style="{StaticResource {x:Type ToggleButton}}"
+                                         Padding="10,4"
+                                         FontSize="10"
+                                         FontWeight="Bold"
+                                         Margin="0,0,2,0"/>
+                            <RadioButton x:Name="RightSlotRadio"
+                                         Content="RIGHT PHOTO"
+                                         IsChecked="{Binding IsRightSlotSelected, Mode=TwoWay}"
+                                         Checked="SlotRadio_Changed"
+                                         Style="{StaticResource {x:Type ToggleButton}}"
+                                         Padding="10,4"
+                                         FontSize="10"
+                                         FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{StaticResource GoldSubtle}"
+                            BorderBrush="{StaticResource BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="14,4"
+                            VerticalAlignment="Center">
+                        <TextBlock x:Name="CanvasDimensionsTextBlock"
+                                   Text="{Binding TargetDimensionsText}"
+                                   Foreground="{StaticResource GoldLight}"
+                                   FontSize="11"
+                                   FontWeight="Bold"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- INTERACTIVE CROP VIEWPORT -->
+        <Border Grid.Row="1"
+                Background="{StaticResource SurfaceDark}"
+                BorderBrush="{StaticResource BorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="12"
+                Margin="0,0,0,12"
+                ClipToBounds="True">
+            <Grid x:Name="ViewportHost"
+                  ClipToBounds="True"
+                  Background="#080808"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+                <!-- Outer Frame Viewbox keeping exact aspect ratio -->
+                <Viewbox x:Name="AspectViewbox" Stretch="Uniform">
+                    <Grid x:Name="TargetCanvas"
+                          Width="{Binding TargetWidth}"
+                          Height="{Binding TargetHeight}"
+                          Background="#121212"
+                          ClipToBounds="True"
+                          Cursor="SizeAll"
+                          MouseDown="Canvas_MouseDown"
+                          MouseMove="Canvas_MouseMove"
+                          MouseUp="Canvas_MouseUp"
+                          MouseLeave="Canvas_MouseUp"
+                          MouseWheel="Canvas_MouseWheel">
+
+                        <!-- Photo Image with Pan and Zoom RenderTransform -->
+                        <Image x:Name="PhotoImage"
+                               AutomationProperties.AutomationId="CropEditorPhotoImage"
+                               Stretch="Fill"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top"/>
+
+                        <!-- Rule of thirds alignment grid guidelines (subtle) -->
+                        <Canvas x:Name="GridGuidelines" IsHitTestVisible="False" Opacity="0.25">
+                            <!-- Vertical lines -->
+                            <Line X1="400" Y1="0" X2="400" Y2="1000" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                            <Line X1="800" Y1="0" X2="800" Y2="1000" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                            <!-- Horizontal lines -->
+                            <Line X1="0" Y1="333" X2="1200" Y2="333" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                            <Line X1="0" Y1="667" X2="1200" Y2="667" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                        </Canvas>
+
+                        <!-- Live Branding Overlay Layer -->
+                        <Image x:Name="OverlayImage"
+                               AutomationProperties.AutomationId="CropEditorOverlayImage"
+                               Stretch="Fill"
+                               IsHitTestVisible="False"
+                               Opacity="0.95"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Grid>
+                </Viewbox>
+            </Grid>
+        </Border>
+
+        <!-- ADJUSTMENT CONTROLS BAR -->
+        <Border Grid.Row="2"
+                Background="{StaticResource SurfaceDark}"
+                BorderBrush="{StaticResource BorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="16,10"
+                Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Zoom Controls -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="ZOOM:"
+                               Foreground="{StaticResource Gold}"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+
+                    <Button x:Name="ZoomOutButton"
+                            AutomationProperties.AutomationId="ZoomOutButton"
+                            Content="−"
+                            ToolTip="Zoom out to prevent clipping important edges (shows full photo)"
+                            Click="ZoomOut_Click"
+                            Style="{StaticResource SmallActionButton}"
+                            Width="30" Height="28"
+                            FontSize="14"
+                            Padding="0"
+                            Margin="0,0,8,0"/>
+
+                    <Slider x:Name="ZoomSlider"
+                            AutomationProperties.AutomationId="ZoomSlider"
+                            Minimum="0.2"
+                            Maximum="4.0"
+                            SmallChange="0.05"
+                            LargeChange="0.2"
+                            Value="{Binding ActiveCrop.Zoom, Mode=TwoWay}"
+                            ValueChanged="ZoomSlider_ValueChanged"
+                            Width="160"
+                            VerticalAlignment="Center"
+                            Margin="0,0,8,0"/>
+
+                    <Button x:Name="ZoomInButton"
+                            AutomationProperties.AutomationId="ZoomInButton"
+                            Content="+"
+                            ToolTip="Zoom in"
+                            Click="ZoomIn_Click"
+                            Style="{StaticResource SmallActionButton}"
+                            Width="30" Height="28"
+                            FontSize="14"
+                            Padding="0"
+                            Margin="0,0,10,0"/>
+
+                    <Border Background="{StaticResource SurfaceElevated}"
+                            BorderBrush="{StaticResource BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="8,4"
+                            VerticalAlignment="Center">
+                        <TextBlock x:Name="ZoomValueTextBlock"
+                                   AutomationProperties.AutomationId="ZoomValueTextBlock"
+                                   Text="{Binding ActiveCrop.ZoomPercentageText}"
+                                   Foreground="{StaticResource GoldLight}"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Width="42"
+                                   TextAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Presets & Orientation -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button x:Name="FitToFrameButton"
+                            AutomationProperties.AutomationId="FitToFrameButton"
+                            Content="FIT TO FRAME"
+                            ToolTip="Show 100% of the image without any cropping"
+                            Click="FitToFrame_Click"
+                            Style="{StaticResource SmallActionButton}"
+                            Margin="0,0,8,0"/>
+
+                    <Button x:Name="FillFrameButton"
+                            AutomationProperties.AutomationId="FillFrameButton"
+                            Content="FILL FRAME"
+                            ToolTip="Fill the entire frame (centered crop)"
+                            Click="FillFrame_Click"
+                            Style="{StaticResource SmallActionButton}"
+                            Margin="0,0,8,0"/>
+
+                    <Button x:Name="RotateButton"
+                            AutomationProperties.AutomationId="RotateButton"
+                            Content="↻ ROTATE 90°"
+                            ToolTip="Rotate image 90 degrees clockwise"
+                            Click="Rotate_Click"
+                            Style="{StaticResource SmallActionButton}"
+                            Margin="0,0,8,0"/>
+
+                    <Button x:Name="ResetCropButton"
+                            AutomationProperties.AutomationId="ResetCropButton"
+                            Content="RESET CROP"
+                            ToolTip="Reset pan, zoom, and rotation to neutral default"
+                            Click="ResetCrop_Click"
+                            Style="{StaticResource SmallActionButton}"/>
+                </StackPanel>
+
+                <!-- Pan coordinate indicator -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="PAN: " Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                    <TextBlock x:Name="PanCoordinatesTextBlock"
+                               AutomationProperties.AutomationId="PanCoordinatesTextBlock"
+                               Text="{Binding PanCoordinatesText}"
+                               Foreground="{StaticResource GoldLight}"
+                               FontSize="11"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ACTION FOOTER -->
+        <Border Grid.Row="3"
+                Background="{StaticResource SurfaceDark}"
+                BorderBrush="{StaticResource BorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="18,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Scroll mouse wheel to zoom • Click &amp; drag photo to pan • Esc to Cancel"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="11"
+                               FontWeight="Medium"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="CancelButton"
+                            AutomationProperties.AutomationId="CancelCropButton"
+                            Content="CANCEL"
+                            ToolTip="Discard changes and exit (Esc)"
+                            Click="Cancel_Click"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,12,0"/>
+
+                    <Button x:Name="SaveChangesButton"
+                            AutomationProperties.AutomationId="SaveCropButton"
+                            Content="SAVE CHANGES"
+                            ToolTip="Apply crop adjustments to this image (Enter)"
+                            Click="SaveChanges_Click"
+                            Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

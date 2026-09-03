@@ -189,8 +189,14 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="ALPHA PREMIER REALTY" Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="ALPHA PREMIER REALTY" Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                    <Button Content="EDIT CROP"
+                            AutomationProperties.AutomationId="PreviewEditCropButton"
+                            ToolTip="Adjust framing, zoom, and positioning for this image"
+                            Visibility="{Binding CanEditCurrent, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Click="EditCrop_Click"
+                            Style="{StaticResource SmallActionButton}"/>
                 </StackPanel>
 
                 <!-- Centered Navigation Buttons -->

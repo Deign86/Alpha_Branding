@@ -1,5 +1,6 @@
 using Alpha.Branding.Models;
 using Alpha.Branding.Services;
+using Alpha.Branding.ViewModels;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -13,15 +14,17 @@ public partial class PreviewWindow : Window, INotifyPropertyChanged
     private readonly IReadOnlyList<BrandedImage> _results;
     private int _selectedIndex;
     private readonly DispatcherTimer _timer;
+    private readonly MainWindowViewModel? _viewModel;
     private bool _isDraggingSlider;
     private bool _isPlaying;
 
-    public PreviewWindow(IReadOnlyList<BrandedImage> results, int selectedIndex)
+    public PreviewWindow(IReadOnlyList<BrandedImage> results, int selectedIndex, MainWindowViewModel? viewModel = null)
     {
         InitializeComponent();
         WindowThemeHelper.EnableDarkTitleBar(this);
         _results = results;
         _selectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, results.Count - 1));
+        _viewModel = viewModel;
         DataContext = this;
 
         _timer = new DispatcherTimer
@@ -37,6 +40,7 @@ public partial class PreviewWindow : Window, INotifyPropertyChanged
     public string PositionText => _results.Count == 0 ? "0 of 0" : $"{_selectedIndex + 1} of {_results.Count}";
     public bool HasMultiplePhotos => _results.Count > 1;
     public bool IsVideoCurrent => Current?.IsVideo == true;
+    public bool CanEditCurrent => Current?.CanEdit == true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -51,6 +55,41 @@ public partial class PreviewWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new(nameof(Current)));
         PropertyChanged?.Invoke(this, new(nameof(PositionText)));
         PropertyChanged?.Invoke(this, new(nameof(IsVideoCurrent)));
+        PropertyChanged?.Invoke(this, new(nameof(CanEditCurrent)));
+    }
+
+    private async void EditCrop_Click(object sender, RoutedEventArgs e)
+    {
+        if (Current == null || !Current.CanEdit) return;
+        var firstPath = Current.SourceFilePaths.Count > 0 ? Current.SourceFilePaths[0] : null;
+        if (string.IsNullOrWhiteSpace(firstPath) || !File.Exists(firstPath)) return;
+
+        var secondPath = Current.SourceFilePaths.Count > 1 ? Current.SourceFilePaths[1] : null;
+        var leftCrop = Current.CropSettings ?? new ImageCropSettings();
+        var rightCrop = Current.RightCropSettings ?? new ImageCropSettings();
+        var overlay = !string.IsNullOrWhiteSpace(Current.OverlayPath)
+            ? Current.OverlayPath
+            : (_viewModel?.SelectedTemplate?.FilePath ?? Path.Combine(AppContext.BaseDirectory, "Assets", "alpha_branding.png"));
+
+        var editor = new CropEditorWindow(firstPath, leftCrop, overlay, Current.FileName, secondPath, rightCrop)
+        {
+            Owner = this
+        };
+
+        if (editor.ShowDialog() == true)
+        {
+            if (_viewModel != null)
+            {
+                await _viewModel.UpdateBrandedImageCropAsync(Current, editor.LeftCropResult, secondPath != null ? editor.RightCropResult : null);
+            }
+            else
+            {
+                var processor = new ImageProcessingService();
+                await processor.RebrandImageAsync(Current, editor.LeftCropResult, secondPath != null ? editor.RightCropResult : null, overlay);
+            }
+            PreviewImageViewer.Source = Current.Preview;
+            PropertyChanged?.Invoke(this, new(nameof(Current)));
+        }
     }
 
     private void UpdateMediaView()

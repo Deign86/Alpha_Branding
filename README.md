@@ -98,6 +98,27 @@ dotnet publish src/Alpha.Branding/Alpha.Branding.csproj `
   --self-contained false
 ```
 
+## Automatic build artifact cleanup (`Auto-Clean.ps1`)
+
+The repository includes an auto-cleaning script that monitors and cleans build outputs (`bin/`, `obj/`, `artifacts/`, `TestResults/`) whenever disk usage exceeds a configured threshold:
+
+```powershell
+# Check size and clean if artifacts exceed 500 MB (default threshold):
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Auto-Clean.ps1
+
+# Custom threshold (e.g., 250 MB):
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Auto-Clean.ps1 -ThresholdMB 250
+
+# Dry run (inspect sizes without deleting):
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Auto-Clean.ps1 -DryRun
+
+# Force immediate cleanup:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Auto-Clean.ps1 -Force
+
+# Install Git post-commit hook so the repo automatically cleans itself after commits:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Auto-Clean.ps1 -InstallGitHook -ThresholdMB 300
+```
+
 ## Build the packaged installer
 
 The installer build works from any current directory when given its script path:
