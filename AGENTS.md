@@ -39,3 +39,15 @@ Do not add unrequested factories, wrappers, configuration layers, or scaffolding
 
 - Project-wide UI and visual-design work must follow `.agents/skills/design-taste-frontend/SKILL.md` and `.agents/skills/redesign-existing-projects/SKILL.md`.
 - Keep the upstream skill instructions unchanged; translate their guidance into native WPF/XAML patterns for this repository.
+
+## Interface Skills
+
+- Cross-discipline UI quality reviews and improvements follow `.agents/skills/better-interface/SKILL.md` and its domain skills:
+  - UI Polish & Motion: `.agents/skills/better-ui/SKILL.md`
+  - Typography: `.agents/skills/better-typography/SKILL.md`
+  - Colors & Contrast: `.agents/skills/better-colors/SKILL.md`
+  - Layout & Spacing: `.agents/skills/better-layout/SKILL.md`
+  - Writing & Copy: `.agents/skills/better-writing/SKILL.md`
+  - Accessibility & Keyboard Navigation: `.agents/skills/better-accessibility/SKILL.md`
+- Translate all web tokens, CSS measurements, and browser concepts into native C# and WPF/XAML equivalents (e.g. `Typography.NumeralAlignment="Tabular"`, `TextOptions.TextFormattingMode="Display"`, native focus rings, high-contrast states, and system brushes).
+

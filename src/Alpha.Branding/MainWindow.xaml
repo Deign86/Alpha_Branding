@@ -10,7 +10,9 @@
         Foreground="{StaticResource TextPrimary}"
         FontFamily="Segoe UI, Poppins, sans-serif"
         AllowDrop="True"
+        DragEnter="Window_DragEnter"
         DragOver="Window_DragOver"
+        DragLeave="Window_DragLeave"
         Drop="Window_Drop"
         KeyDown="Window_KeyDown">
 
@@ -370,32 +372,93 @@
         <Grid Grid.Row="2">
             <!-- Empty State Display -->
             <Border Visibility="{Binding IsEmptyState, Converter={StaticResource BooleanToVisibilityConverter}}"
-                    Background="{StaticResource SurfaceDark}"
-                    BorderBrush="{StaticResource BorderSubtle}"
-                    BorderThickness="1"
+                    AutomationProperties.AutomationId="EmptyStateBorder"
+                    AllowDrop="True"
                     CornerRadius="12"
                     Padding="40">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                <Setter Property="Background" Value="#251E14"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#C5A059" BlurRadius="28" ShadowDepth="0" Opacity="0.55"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="540">
                     <Image Source="Assets/logo_phoenix.png"
                            Height="100"
                            Width="100"
-                           Opacity="0.85"
                            Margin="0,0,0,22"
                            HorizontalAlignment="Center"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                           RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Setter Property="Opacity" Value="0.85"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                        <Setter Property="Opacity" Value="1.0"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+
+                    <!-- Drag-Over Visual Callout Badge: Appears when videos or photos are dragged over the box -->
+                    <Border AutomationProperties.AutomationId="DragDropReactionBadge"
+                            Visibility="{Binding IsDragOver, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="#382C17"
+                            BorderBrush="{StaticResource GoldLight}"
+                            BorderThickness="1.5"
+                            CornerRadius="8"
+                            Padding="20,10"
+                            Margin="0,0,0,18"
+                            HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Width="16" Height="16" Fill="{StaticResource GoldLight}" Stretch="Uniform" Margin="0,0,10,0"
+                                  Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+                            <TextBlock Text="DROP VIDEOS &amp; PHOTOS HERE TO IMPORT"
+                                       Foreground="{StaticResource GoldLight}"
+                                       FontSize="13"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <TextBlock Text="Alpha Premier Property Branding"
                                Foreground="{StaticResource GoldLight}"
                                FontSize="22"
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
-                    <TextBlock Text="Import property photography and walkthrough video clips to apply official Alpha Premier Realty watermarks and generate publication-ready high-resolution assets."
-                               Foreground="{StaticResource TextSecondary}"
+                    <TextBlock Foreground="{StaticResource TextSecondary}"
                                FontSize="13"
                                TextAlignment="Center"
                                TextWrapping="Wrap"
                                LineHeight="21"
-                               Margin="0,0,0,26"/>
+                               Margin="0,0,0,26">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Import property photography and walkthrough video clips to apply official Alpha Premier Realty watermarks and generate publication-ready high-resolution assets."/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                        <Setter Property="Text" Value="Release mouse button to import property videos and photography into your branding session."/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <Button Content="SELECT MEDIA TO BEGIN"
                             AutomationProperties.AutomationId="EmptyStateSelectButton"
                             ToolTip="Choose photos and videos from your computer to start (Ctrl+O)"
@@ -813,6 +876,54 @@
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>
+
+            <!-- Drop Indicator Overlay for Staged / Results View -->
+            <Border IsHitTestVisible="False"
+                    Background="#401B160C"
+                    BorderBrush="{StaticResource Gold}"
+                    BorderThickness="2"
+                    CornerRadius="12"
+                    Panel.ZIndex="100">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDragOver}" Value="True"/>
+                                    <Condition Binding="{Binding IsEmptyState}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Border.Effect>
+                    <DropShadowEffect Color="#C5A059" BlurRadius="28" ShadowDepth="0" Opacity="0.55"/>
+                </Border.Effect>
+                <Border Background="#2A2013"
+                        BorderBrush="{StaticResource GoldLight}"
+                        BorderThickness="1.5"
+                        CornerRadius="10"
+                        Padding="28,14"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path Width="20" Height="20" Fill="{StaticResource GoldLight}" Stretch="Uniform" Margin="0,0,12,0"
+                              Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="DROP VIDEOS &amp; PHOTOS TO ADD TO SESSION"
+                                       Foreground="{StaticResource GoldLight}"
+                                       FontSize="14"
+                                       FontWeight="Bold"/>
+                            <TextBlock Text="Release files here to stage additional property media"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       FontSize="12"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Border>
         </Grid>
     </Grid>
 </Window>

@@ -24,6 +24,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private double _progress;
     private IReadOnlyList<string> _selectedFiles = [];
     private LayoutMode _globalLayoutMode = LayoutMode.Combine;
+    private bool _isDragOver;
 
     public LayoutMode GlobalLayoutMode
     {
@@ -97,6 +98,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool HasSelectedPhotos => SelectedPhotos.Count > 0 && Results.Count == 0;
     public bool IsEmptyState => SelectedPhotos.Count == 0 && Results.Count == 0;
 
+    public bool IsDragOver
+    {
+        get => _isDragOver;
+        set
+        {
+            if (_isDragOver != value)
+            {
+                _isDragOver = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public string Prefix
     {
         get => _prefix;
@@ -128,6 +142,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             if (_isBusy != value)
             {
                 _isBusy = value;
+                if (value) _isDragOver = false;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanApply));
                 OnPropertyChanged(nameof(CanExport));

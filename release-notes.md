@@ -1,3 +1,19 @@
+## Alpha Premier Property Branding Studio v2.1.0
+
+Native .NET 8 WPF desktop application with an Authenticode code-signed self-contained win-x64 installer.
+
+### Major Features & UI/UX Improvements
+- **Interactive Drag & Drop Visual Reaction**:
+  - Empty state drop box illuminates with a 2px Gold accent border (`#C5A059`), warm surface elevation (`#251E14`), and soft golden glow (`DropShadowEffect`) when hovering files over the app.
+  - Phoenix emblem shifts to 100% opacity with an illuminated center callout badge (`DROP VIDEOS & PHOTOS HERE TO IMPORT`).
+  - Active drag-over state banner on staged and results galleries for seamless additional file imports.
+  - Hierarchical drag-depth tracking prevents flickering when mouse crosses nested UI controls.
+- **Project-Wide UI/UX Polish (Applied from `jakubkrehel/skills`)**:
+  - **Accessibility**: Custom dark-gold accessible slider styling with high-contrast keyboard focus borders, 32×32px minimum touch target floors, and screen-reader `AutomationProperties.Name` coverage across all controls.
+  - **Typography**: Display formatting mode, ClearType rendering, and tabular numeral alignment (`Typography.NumeralAlignment="Tabular"`) across all numbers, counters, timestamps, and coordinates.
+  - **Colors & Contrast**: Increased `TextMuted` contrast to >5.5:1 (WCAG AA compliant) and distinct crimson destructive action buttons.
+  - **Surface Depth & Motion**: Concentric corner radii, 1px subtle image depth outlines, and layered elevation shadows.
+
 ## Alpha Premier Property Branding Studio v2.0.0
 
 Native .NET 8 WPF desktop application with an Authenticode code-signed self-contained win-x64 installer.

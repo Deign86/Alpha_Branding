@@ -80,7 +80,7 @@
                         AutomationProperties.AutomationId="ConfirmationDiscardButton"
                         ToolTip="Discard unsaved edits and begin branding the newly selected photos"
                         Click="Discard_Click"
-                        Style="{StaticResource SecondaryButton}"
+                        Style="{StaticResource DestructiveActionButton}"
                         Margin="0,0,10,0"/>
 
                 <Button Content="SAVE &amp; CONTINUE"

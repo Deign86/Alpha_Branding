@@ -121,6 +121,8 @@ public static class MarkdownRenderer
             TextWrapping = TextWrapping.Wrap,
             Margin = margin
         };
+        TextOptions.SetTextFormattingMode(tb, TextFormattingMode.Display);
+        TextOptions.SetTextRenderingMode(tb, TextRenderingMode.ClearType);
 
         PopulateInlines(tb.Inlines, text, defaultForeground, accentForeground);
         return tb;

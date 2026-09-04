@@ -61,6 +61,7 @@
                                 VerticalAlignment="Center">
                             <TextBlock x:Name="VersionBadgeTextBlock"
                                        AutomationProperties.AutomationId="VersionBadgeTextBlock"
+                                       Typography.NumeralAlignment="Tabular"
                                        Text="v1.8.0"
                                        Foreground="{StaticResource GoldLight}"
                                        FontSize="11"
@@ -87,6 +88,7 @@
                     <StackPanel>
                         <TextBlock x:Name="CurrentVersionTextBlock"
                                    AutomationProperties.AutomationId="CurrentVersionTextBlock"
+                                    Typography.NumeralAlignment="Tabular"
                                    Text="Current: v1.7.0"
                                    Foreground="{StaticResource TextMuted}"
                                    FontSize="11"
@@ -149,6 +151,7 @@
                                    FontWeight="SemiBold"/>
                         <TextBlock x:Name="DownloadPercentTextBlock"
                                    AutomationProperties.AutomationId="DownloadPercentTextBlock"
+                                    Typography.NumeralAlignment="Tabular"
                                    Text="0%"
                                    Foreground="{StaticResource GoldLight}"
                                    FontSize="12"

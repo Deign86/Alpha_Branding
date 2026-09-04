@@ -196,17 +196,19 @@
 
                     <Button x:Name="ZoomOutButton"
                             AutomationProperties.AutomationId="ZoomOutButton"
+                            AutomationProperties.Name="Zoom out"
                             Content="−"
                             ToolTip="Zoom out to prevent clipping important edges (shows full photo)"
                             Click="ZoomOut_Click"
                             Style="{StaticResource SmallActionButton}"
-                            Width="30" Height="28"
+                            Width="32" Height="32"
                             FontSize="14"
                             Padding="0"
                             Margin="0,0,8,0"/>
 
                     <Slider x:Name="ZoomSlider"
                             AutomationProperties.AutomationId="ZoomSlider"
+                            AutomationProperties.Name="Zoom level"
                             Minimum="0.2"
                             Maximum="4.0"
                             SmallChange="0.05"
@@ -219,11 +221,12 @@
 
                     <Button x:Name="ZoomInButton"
                             AutomationProperties.AutomationId="ZoomInButton"
+                            AutomationProperties.Name="Zoom in"
                             Content="+"
                             ToolTip="Zoom in"
                             Click="ZoomIn_Click"
                             Style="{StaticResource SmallActionButton}"
-                            Width="30" Height="28"
+                            Width="32" Height="32"
                             FontSize="14"
                             Padding="0"
                             Margin="0,0,10,0"/>
@@ -236,6 +239,7 @@
                             VerticalAlignment="Center">
                         <TextBlock x:Name="ZoomValueTextBlock"
                                    AutomationProperties.AutomationId="ZoomValueTextBlock"
+                                   Typography.NumeralAlignment="Tabular"
                                    Text="{Binding ActiveCrop.ZoomPercentageText}"
                                    Foreground="{StaticResource GoldLight}"
                                    FontSize="11"
@@ -284,6 +288,7 @@
                     <TextBlock Text="PAN: " Foreground="{StaticResource TextMuted}" FontSize="11"/>
                     <TextBlock x:Name="PanCoordinatesTextBlock"
                                AutomationProperties.AutomationId="PanCoordinatesTextBlock"
+                               Typography.NumeralAlignment="Tabular"
                                Text="{Binding PanCoordinatesText}"
                                Foreground="{StaticResource GoldLight}"
                                FontSize="11"

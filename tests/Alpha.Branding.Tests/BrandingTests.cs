@@ -176,6 +176,34 @@ public class UiInitializationTests
     }
 
     [Fact]
+    public void MainWindowViewModel_IsDragOver_StateAndNotifications()
+    {
+        var vm = new MainWindowViewModel(new ImageProcessingService());
+        Assert.False(vm.IsDragOver);
+
+        var propertyChangedFired = false;
+        vm.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsDragOver))
+            {
+                propertyChangedFired = true;
+            }
+        };
+
+        vm.IsDragOver = true;
+        Assert.True(vm.IsDragOver);
+        Assert.True(propertyChangedFired);
+
+        propertyChangedFired = false;
+        vm.IsDragOver = true;
+        Assert.False(propertyChangedFired);
+
+        vm.IsDragOver = false;
+        Assert.False(vm.IsDragOver);
+        Assert.True(propertyChangedFired);
+    }
+
+    [Fact]
     public void PreviewWindowHasMultiplePhotosReflectsResultsCount()
     {
         var thread = new System.Threading.Thread(() =>

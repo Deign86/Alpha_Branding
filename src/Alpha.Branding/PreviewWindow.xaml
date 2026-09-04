@@ -76,6 +76,7 @@
                         VerticalAlignment="Center">
                     <TextBlock Text="{Binding PositionText}"
                                AutomationProperties.AutomationId="PreviewPositionBadgeTextBlock"
+                               Typography.NumeralAlignment="Tabular"
                                Foreground="{StaticResource GoldLight}"
                                FontSize="12"
                                FontWeight="Bold"/>
@@ -93,12 +94,18 @@
                 Margin="0,0,0,14">
             <Grid>
                 <!-- Image Viewer -->
-                <Image x:Name="PreviewImageViewer"
-                       Source="{Binding Current.Preview}"
-                       AutomationProperties.AutomationId="PreviewImage"
-                       Stretch="Uniform"
-                       RenderOptions.BitmapScalingMode="HighQuality"
-                       Visibility="{Binding IsVideoCurrent, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                <Border CornerRadius="8"
+                        ClipToBounds="True"
+                        BorderBrush="#26FFFFFF"
+                        BorderThickness="1"
+                        Background="{StaticResource BackgroundDark}"
+                        Visibility="{Binding IsVideoCurrent, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <Image x:Name="PreviewImageViewer"
+                           Source="{Binding Current.Preview}"
+                           AutomationProperties.AutomationId="PreviewImage"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
 
                 <!-- Video Player Container -->
                 <Grid x:Name="VideoPlayerContainer"
@@ -137,6 +144,7 @@
                                     Grid.Column="0"
                                     Content="▶ PLAY"
                                     AutomationProperties.AutomationId="VideoPlayPauseButton"
+                                    AutomationProperties.Name="Play or pause video playback"
                                     Click="PlayPause_Click"
                                     Style="{StaticResource SmallGoldButton}"
                                     Margin="0,0,14,0"/>
@@ -145,6 +153,7 @@
                             <Slider x:Name="TimelineSlider"
                                     Grid.Column="1"
                                     AutomationProperties.AutomationId="VideoTimelineSlider"
+                                    AutomationProperties.Name="Video timeline"
                                     VerticalAlignment="Center"
                                     Margin="0,0,14,0"
                                     PreviewMouseDown="TimelineSlider_PreviewMouseDown"
@@ -155,6 +164,7 @@
                             <TextBlock x:Name="TimeTextBlock"
                                        Grid.Column="2"
                                        AutomationProperties.AutomationId="VideoTimeTextBlock"
+                                       Typography.NumeralAlignment="Tabular"
                                        Text="0:00 / 0:00"
                                        Foreground="{StaticResource GoldLight}"
                                        FontSize="12"
@@ -167,6 +177,8 @@
                                     Grid.Column="3"
                                     Content="🔊"
                                     AutomationProperties.AutomationId="VideoMuteButton"
+                                    AutomationProperties.Name="Toggle video mute"
+                                    ToolTip="Mute or unmute video audio"
                                     Click="Mute_Click"
                                     Style="{StaticResource SmallActionButton}"/>
                         </Grid>

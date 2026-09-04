@@ -476,10 +476,20 @@ public partial class MainWindow : Window
         catch (Exception ex) { MessageBox.Show(ex.Message, "Reset failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
-    private void Window_DragOver(object sender, DragEventArgs e)
+    private int _dragDepth;
+
+    private void Window_DragEnter(object sender, DragEventArgs e)
     {
+        if (_viewModel.IsBusy)
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
+            _dragDepth++;
+            _viewModel.IsDragOver = true;
             e.Effects = DragDropEffects.Copy;
             e.Handled = true;
         }
@@ -489,8 +499,43 @@ public partial class MainWindow : Window
         }
     }
 
+    private void Window_DragOver(object sender, DragEventArgs e)
+    {
+        if (_viewModel.IsBusy)
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+            if (!_viewModel.IsDragOver)
+            {
+                _viewModel.IsDragOver = true;
+            }
+            e.Handled = true;
+        }
+        else
+        {
+            e.Effects = DragDropEffects.None;
+        }
+    }
+
+    private void Window_DragLeave(object sender, DragEventArgs e)
+    {
+        _dragDepth--;
+        if (_dragDepth <= 0)
+        {
+            _dragDepth = 0;
+            _viewModel.IsDragOver = false;
+        }
+    }
+
     private async void Window_Drop(object sender, DragEventArgs e)
     {
+        _dragDepth = 0;
+        _viewModel.IsDragOver = false;
         if (_viewModel.IsBusy) return;
         if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files)
         {
