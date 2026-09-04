@@ -10,6 +10,19 @@ permissions:
   contents: read
 
 jobs:
+  lint-workflows:
+    # Guards the release pipeline: an unparseable workflow fails silently at
+    # trigger time (no jobs, instant failure). actionlint reproduces GitHub's
+    # own expression/context checks, e.g. `secrets` is not allowed in step `if:`.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run actionlint
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color -verbose
+
   build-test:
     runs-on: windows-latest
     steps:
