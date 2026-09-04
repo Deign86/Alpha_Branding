@@ -59,11 +59,16 @@ jobs:
         run: dotnet test Alpha_Branding.sln --configuration Release --no-build --verbosity normal
 
       - name: Decode code signing certificate
-        if: ${{ secrets.CODE_SIGNING_CERT_BASE64 != '' }}
+        # NOTE: the `secrets` context is not allowed in step `if:` expressions
+        # (workflow fails to parse), so the empty-cert check happens at runtime.
         shell: pwsh
         env:
           CERT_B64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
         run: |
+          if ([string]::IsNullOrEmpty($env:CERT_B64)) {
+            Write-Host "No code signing certificate configured; building unsigned."
+            exit 0
+          }
           $certDir = "installer\certs"
           New-Item -ItemType Directory -Path $certDir -Force | Out-Null
           $certPath = Join-Path $certDir "CodeSigningCert.pfx"
