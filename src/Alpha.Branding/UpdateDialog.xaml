@@ -4,7 +4,7 @@
         Title="Software Update Available"
         Icon="Assets/logo_phoenix.png"
         Width="680" Height="580"
-        MinWidth="600" MinHeight="500"
+        MinWidth="600" MinHeight="460"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
         Background="{StaticResource BackgroundDark}"

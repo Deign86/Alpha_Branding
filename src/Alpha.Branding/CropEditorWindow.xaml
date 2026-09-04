@@ -4,7 +4,7 @@
         Title="Alpha Premier | Image Crop &amp; Alignment Studio"
         Icon="Assets/logo_phoenix.png"
         Width="1020" Height="780"
-        MinWidth="820" MinHeight="620"
+        MinWidth="700" MinHeight="520"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BackgroundDark}"
         Foreground="{StaticResource TextPrimary}"
@@ -62,7 +62,8 @@
                     <TextBlock Text="Drag the image to position • Adjust zoom to prevent unwanted edge cropping • Frame overlay shows final live output"
                                Foreground="{StaticResource TextMuted}"
                                FontSize="11"
-                               Margin="0,2,0,0"/>
+                               Margin="0,2,0,0"
+                               TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <!-- Target Slot Indicator / Pair Switcher -->
@@ -249,8 +250,8 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Presets & Orientation -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Presets & Orientation (wraps to a second line on narrow windows instead of colliding) -->
+                <WrapPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Button x:Name="FitToFrameButton"
                             AutomationProperties.AutomationId="FitToFrameButton"
                             Content="FIT TO FRAME"
@@ -281,7 +282,7 @@
                             ToolTip="Reset pan, zoom, and rotation to neutral default"
                             Click="ResetCrop_Click"
                             Style="{StaticResource SmallActionButton}"/>
-                </StackPanel>
+                </WrapPanel>
 
                 <!-- Pan coordinate indicator -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -310,12 +311,13 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Scroll mouse wheel to zoom • Click &amp; drag photo to pan • Esc to Cancel"
-                               Foreground="{StaticResource TextMuted}"
-                               FontSize="11"
-                               FontWeight="Medium"/>
-                </StackPanel>
+                <TextBlock Grid.Column="0"
+                           Text="Scroll mouse wheel to zoom • Click &amp; drag photo to pan • Esc to Cancel"
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="11"
+                           FontWeight="Medium"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="CancelButton"

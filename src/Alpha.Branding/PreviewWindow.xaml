@@ -4,7 +4,7 @@
         Title="Alpha Premier | Photo Preview"
         Icon="Assets/logo_phoenix.png"
         Width="1080" Height="820"
-        MinWidth="800" MinHeight="600"
+        MinWidth="720" MinHeight="480"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BackgroundDark}"
         Foreground="{StaticResource TextPrimary}"
@@ -231,13 +231,16 @@
                             Padding="22,9"/>
                 </StackPanel>
 
-                <!-- Keyboard Hint -->
-                <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="← / → to navigate • Space to Play/Pause • Esc to close"
-                               Foreground="{StaticResource TextMuted}"
-                               FontSize="11"
-                               FontWeight="SemiBold"/>
-                </StackPanel>
+                <!-- Keyboard Hint (wraps instead of colliding with the nav buttons) -->
+                <TextBlock Grid.Column="2"
+                           Text="← / → to navigate • Space to Play/Pause • Esc to close"
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           TextAlignment="Right"
+                           TextWrapping="Wrap"/>
             </Grid>
         </Border>
     </Grid>

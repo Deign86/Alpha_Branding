@@ -4,7 +4,7 @@
         Title="Alpha Premier | Property Branding Studio"
         Icon="Assets/logo_phoenix.png"
         Width="1220" Height="840"
-        MinWidth="980" MinHeight="700"
+        MinWidth="840" MinHeight="480"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundDark}"
         Foreground="{StaticResource TextPrimary}"
@@ -81,15 +81,8 @@
                                Margin="0,3,0,0"/>
                 </StackPanel>
 
-                <!-- Actions & Selection Status in Header -->
+                <!-- Selection Status in Header -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="CHECK FOR UPDATES"
-                            AutomationProperties.AutomationId="CheckForUpdatesButton"
-                            ToolTip="Check GitHub Releases for new updates"
-                            Click="CheckForUpdates_Click"
-                            Style="{StaticResource SmallActionButton}"
-                            Margin="0,0,12,0"/>
-
                     <Border Background="{StaticResource SurfaceElevated}"
                             BorderBrush="{StaticResource BorderSubtle}"
                             BorderThickness="1"
@@ -120,14 +113,17 @@
                 Margin="0,0,0,16">
             <StackPanel>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Row 0: selection + template groups wrap to a second line on narrow
+                         windows instead of clipping the action buttons (150%+ DPI). -->
+                    <WrapPanel Grid.Row="0" Orientation="Horizontal">
 
                     <!-- File Selection & Prefix Input -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,10">
                         <Button Content="SELECT MEDIA"
                                 AutomationProperties.AutomationId="SelectPhotosButton"
                                 ToolTip="Select property photography and video clips to brand (Ctrl+O)"
@@ -146,7 +142,7 @@
                                 <TextBox Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
                                          AutomationProperties.AutomationId="PrefixTextBox"
                                          ToolTip="Custom filename prefix for output assets. Special characters are automatically sanitized."
-                                         Width="180"
+                                         Width="160"
                                          IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"/>
                                 <Border Background="{StaticResource GoldSubtle}"
                                         BorderBrush="{StaticResource BorderSubtle}"
@@ -154,6 +150,7 @@
                                         CornerRadius="8"
                                         Padding="10,7"
                                         Margin="8,0,0,0"
+                                        MaxWidth="260"
                                         VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Preview: " Foreground="{StaticResource TextMuted}" FontSize="11"/>
@@ -161,7 +158,8 @@
                                                    AutomationProperties.AutomationId="PatternPreviewTextBlock"
                                                    Foreground="{StaticResource GoldLight}"
                                                    FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -169,7 +167,7 @@
                     </StackPanel>
 
                     <!-- Branding Template Selector & Aspect Ratio Indicator -->
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="22,0,16,0">
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,0,10">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="BRANDING TEMPLATE"
                                        Foreground="{StaticResource Gold}"
@@ -195,7 +193,7 @@
                                       SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
                                       AutomationProperties.AutomationId="TemplateComboBox"
                                       ToolTip="Select branding template overlay. Templates maintain strict aspect ratios to prevent distortion."
-                                      Width="180"
+                                      Width="160"
                                       IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
@@ -233,17 +231,27 @@
                         </StackPanel>
                     </StackPanel>
 
+                    </WrapPanel>
+
+                    <!-- Row 1: session notice (left) + action buttons (right).
+                         Both stay reachable on narrow windows instead of clipping. -->
+                    <Grid Grid.Row="1" Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
                     <!-- Action Buttons & Pre-apply Session Indicator -->
-                    <StackPanel Grid.Column="2" VerticalAlignment="Bottom" HorizontalAlignment="Right">
                         <!-- Session notice / Unsaved edits warning indicator -->
                         <Border x:Name="SessionNoticeBorder"
+                                Grid.Column="0"
                                 AutomationProperties.AutomationId="SessionStatusIndicatorBorder"
                                 Visibility="{Binding HasApplyHint, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="1"
                                 CornerRadius="8"
                                 Padding="12,6"
-                                Margin="0,0,0,10"
-                                HorizontalAlignment="Right">
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
@@ -256,8 +264,12 @@
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Ellipse Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
+                            <Grid VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Grid.Column="0" Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
                                             <Setter Property="Fill" Value="{StaticResource Gold}"/>
@@ -270,10 +282,12 @@
                                     </Ellipse.Style>
                                 </Ellipse>
                                 <TextBlock x:Name="ApplyStatusHintTextBlock"
+                                           Grid.Column="1"
                                            Text="{Binding ApplyStatusHint}"
                                            AutomationProperties.AutomationId="ApplyStatusHintTextBlock"
                                            FontSize="11"
                                            FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"
                                            VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -286,10 +300,10 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                            </StackPanel>
+                            </Grid>
                         </Border>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="APPLY BRANDING"
                                     AutomationProperties.AutomationId="ApplyBrandingButton"
                                     ToolTip="Process and watermark selected property photos and videos (Ctrl+B / F5)"
@@ -303,7 +317,8 @@
                                     ToolTip="Export branded photos and videos as ZIP archive or individual files (Ctrl+E / Ctrl+Shift+E)"
                                     Click="ExportDropdown_Click"
                                     IsEnabled="{Binding CanExport}"
-                                    Style="{StaticResource SecondaryButton}">
+                                    Style="{StaticResource SecondaryButton}"
+                                    Margin="0,0,12,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="EXPORT" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <Path Data="M 0 0 L 3.5 3.5 L 7 0 Z"
@@ -337,8 +352,13 @@
                                     </ContextMenu>
                                 </Button.ContextMenu>
                             </Button>
+                            <Button Content="CHECK FOR UPDATES"
+                                    AutomationProperties.AutomationId="CheckForUpdatesButton"
+                                    ToolTip="Check GitHub Releases for new updates"
+                                    Click="CheckForUpdates_Click"
+                                    Style="{StaticResource SmallActionButton}"/>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </Grid>
 
                 <!-- Divider & Progress / Status Row -->
@@ -350,14 +370,19 @@
                         <ColumnDefinition Width="280"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="STATUS: " Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold" Margin="0,0,6,0"/>
-                        <TextBlock Text="{Binding Status}"
+                    <Grid Grid.Column="0" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="STATUS: " Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold" Margin="0,0,6,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Status}"
                                    AutomationProperties.AutomationId="StatusTextBlock"
                                    Foreground="{StaticResource TextPrimary}"
                                    FontSize="12"
-                                   FontWeight="Medium"/>
-                    </StackPanel>
+                                   FontWeight="Medium"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </Grid>
 
                     <ProgressBar Grid.Column="1"
                                  AutomationProperties.AutomationId="ProgressBar"
@@ -491,12 +516,14 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="SELECTED MEDIA (" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding SelectedFiles.Count}" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock Text=") — Ready to process. Click 'APPLY BRANDING' to watermark." Foreground="{StaticResource TextSecondary}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"><Run Text="SELECTED MEDIA (" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text="{Binding SelectedFiles.Count, Mode=OneWay}" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text=") — Ready to process. Click 'APPLY BRANDING' to watermark." Foreground="{StaticResource TextSecondary}" FontWeight="Medium"/></TextBlock>
+                        </Grid>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <!-- Layout Mode Options -->
@@ -714,12 +741,14 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="BRANDED ASSETS (" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Results.Count}" Foreground="{StaticResource GoldLight}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock Text=") — Production-ready branded output. Click 'EDIT CROP' on any image to adjust framing without restarting." Foreground="{StaticResource TextSecondary}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"><Run Text="BRANDED ASSETS (" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text="{Binding Results.Count, Mode=OneWay}" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text=") — Production-ready branded output. Click 'EDIT CROP' on any image to adjust framing without restarting." Foreground="{StaticResource TextSecondary}" FontWeight="Medium"/></TextBlock>
+                        </Grid>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Content="RESET ALL CROPS"

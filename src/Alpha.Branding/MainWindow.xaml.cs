@@ -37,9 +37,17 @@ public partial class MainWindow : Window
 
     private bool _isExiting;
 
+    /// <summary>
+    /// Test hook: when true, <see cref="OnClosing"/> skips the unsaved-edits
+    /// exit confirmation so in-process tests (e.g. the scaling screenshot
+    /// generator) can close windows without a modal dialog blocking the STA
+    /// thread. Production default is false.
+    /// </summary>
+    public bool SuppressExitConfirmation { get; set; }
+
     protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (_isExiting)
+        if (_isExiting || SuppressExitConfirmation)
         {
             base.OnClosing(e);
             return;

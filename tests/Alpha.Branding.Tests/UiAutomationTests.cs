@@ -77,6 +77,44 @@ public class UiAutomationTests
         return (landscape, p1, p2);
     }
 
+    /// <summary>
+    /// Closes the app without hanging on the "Unsaved edits in current session"
+    /// exit guard. When branded results or unsaved edits exist, MainWindow.OnClosing
+    /// shows a modal SessionConfirmationDialog that stops Close() from completing,
+    /// leaving the app alive and the test run stuck. Dismiss the dialog via
+    /// DISCARD EDITS &amp; CONTINUE (AutomationId ConfirmationDiscardButton),
+    /// then fall back to Kill().
+    /// </summary>
+    private static void CloseAppSafely(Application app, UIA3Automation automation)
+    {
+        try
+        {
+            if (!app.HasExited)
+            {
+                try { app.Close(); } catch { }
+                var deadline = DateTime.UtcNow.AddSeconds(5);
+                while (!app.HasExited && DateTime.UtcNow < deadline)
+                {
+                    try
+                    {
+                        var discard = automation.GetDesktop()
+                            .FindFirstDescendant(cf => cf.ByAutomationId("ConfirmationDiscardButton"))?.AsButton();
+                        if (discard != null)
+                        {
+                            discard.Invoke();
+                            Thread.Sleep(400);
+                            continue;
+                        }
+                    }
+                    catch { }
+                    Thread.Sleep(250);
+                }
+            }
+        }
+        catch { }
+        try { if (!app.HasExited) app.Kill(); } catch { }
+    }
+
     [Fact]
     public void AppLaunchesAndPresentsEmptyStateWithAccessibleAutomationIds()
     {
@@ -129,8 +167,7 @@ public class UiAutomationTests
         }
         finally
         {
-            try { app.Close(); } catch { }
-            try { if (!app.HasExited) app.Kill(); } catch { }
+            CloseAppSafely(app, automation);
         }
     }
 
@@ -158,8 +195,7 @@ public class UiAutomationTests
         }
         finally
         {
-            try { app.Close(); } catch { }
-            try { if (!app.HasExited) app.Kill(); } catch { }
+            CloseAppSafely(app, automation);
         }
     }
 
@@ -245,8 +281,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally
@@ -288,8 +323,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally
@@ -367,8 +401,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally
@@ -422,8 +455,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally
@@ -478,8 +510,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally
@@ -523,8 +554,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally
@@ -563,8 +593,7 @@ public class UiAutomationTests
             }
             finally
             {
-                try { app.Close(); } catch { }
-                try { if (!app.HasExited) app.Kill(); } catch { }
+                CloseAppSafely(app, automation);
             }
         }
         finally

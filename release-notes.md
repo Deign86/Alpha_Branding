@@ -1,3 +1,14 @@
+## Alpha Premier Property Branding Studio v2.2.0
+
+High-DPI responsive layout: the app now fits and stays fully usable on displays scaled beyond 100% (125%/150%/175%/200%), verified with rendered audit screenshots in `scaling_audit_issues/`.
+
+### Fixes & Changes
+- **Responsive control workspace**: selection/template groups wrap to a second line on narrow windows instead of clipping APPLY/EXPORT; CHECK FOR UPDATES moved into the action row (same automation IDs).
+- **No more clipped buttons**: staged/results/status/session-notice headers trim with ellipsis while keeping every action button reachable.
+- **Lower minimum window sizes** so windows physically fit scaled screens: Main 840x480, Crop Editor 700x520, Preview 720x480, Update dialog min-height 460.
+- **Crop Editor preset bar** wraps to a 2x2 grid on narrow windows (fixes FIT/FILL/ROTATE/RESET overlap); footer hint and Preview footer hint wrap instead of colliding.
+- **Test hardening**: exit-confirmation dialog no longer hangs UI automation (safe-dismiss teardown) or the in-process scaling screenshot generator (suppress-confirmation hook).
+
 ## Alpha Premier Property Branding Studio v2.1.0
 
 Native .NET 8 WPF desktop application with an Authenticode code-signed self-contained win-x64 installer.
