@@ -61,15 +61,6 @@
 
 <br/>
 
-<p align="center">
-  <img src="docs/assets/system_desktop.png" alt="Live Desktop Capture" width="800" />
-</p>
-
-<p align="center">
-  <em>Live system desktop capture verified with Nuphus MCP</em>
-</p>
-
-<br/>
 
 ## What is Alpha Branding Studio?
 
