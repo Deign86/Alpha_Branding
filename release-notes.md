@@ -1,3 +1,9 @@
+## Alpha Premier Property Branding Studio v2.2.1
+
+### Fixes & Improvements
+- **UI & Automation**: Removed redundant duplicate `APPLY BRANDING` button (`StagedApplyButton`) from the staged media gallery header, ensuring a single canonical `ApplyBrandingButton` in the main action bar and eliminating UI automation / accessibility tree ambiguities.
+- **Skill System**: Integrated `i-have-adhd` skill repo-wide (`.agents/skills/i-have-adhd/` and `AGENTS.md`) for concise, ADHD-friendly agent output formatting.
+
 ## Alpha Premier Property Branding Studio v2.2.0
 
 High-DPI responsive layout: the app now fits and stays fully usable on displays scaled beyond 100% (125%/150%/175%/200%), verified with rendered audit screenshots in `scaling_audit_issues/`.

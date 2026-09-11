@@ -557,13 +557,7 @@
                                     Click="AddMorePhotos_Click"
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                     Style="{StaticResource SmallActionButton}"
-                                    Margin="0,0,10,0"/>
-                            <Button Content="APPLY BRANDING"
-                                    AutomationProperties.AutomationId="StagedApplyButton"
-                                    ToolTip="Process and watermark selected property photos and videos (Ctrl+B / F5)"
-                                    Click="Apply_Click"
-                                    IsEnabled="{Binding CanApply}"
-                                    Style="{StaticResource SmallGoldButton}"/>
+                                    Margin="0"/>
                         </StackPanel>
                     </Grid>
                 </Border>

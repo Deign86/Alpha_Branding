@@ -51,3 +51,17 @@ Do not add unrequested factories, wrappers, configuration layers, or scaffolding
   - Accessibility & Keyboard Navigation: `.agents/skills/better-accessibility/SKILL.md`
 - Translate all web tokens, CSS measurements, and browser concepts into native C# and WPF/XAML equivalents (e.g. `Typography.NumeralAlignment="Tabular"`, `TextOptions.TextFormattingMode="Display"`, native focus rings, high-contrast states, and system brushes).
 
+## ADHD-Friendly Output Style
+
+- Response formatting across this repository follows `.agents/skills/i-have-adhd/SKILL.md`.
+- Lead with the answer or next action: command, path, or snippet first.
+- Number multi-step work; one bounded action per step.
+- End with one concrete next action doable in under two minutes.
+- Finish the current issue before raising a new one (suppress tangents).
+- Restate progress each turn ("step X of Y done").
+- Give time estimates in concrete units, never "a bit".
+- After a change, show what now works.
+- Errors: state location, cause, and fix. No drama.
+- Cap lists to 5 items.
+- No preamble, no recaps, no closing pleasantries.
+
