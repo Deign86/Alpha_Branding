@@ -78,14 +78,16 @@ public partial class PreviewWindow : Window, INotifyPropertyChanged
 
         if (editor.ShowDialog() == true)
         {
+            var savedLeftCrop = editor.LeftCropResult.Clone();
+            var savedRightCrop = secondPath != null ? editor.RightCropResult.Clone() : null;
             if (_viewModel != null)
             {
-                await _viewModel.UpdateBrandedImageCropAsync(Current, editor.LeftCropResult, secondPath != null ? editor.RightCropResult : null);
+                await _viewModel.UpdateBrandedImageCropAsync(Current, savedLeftCrop, savedRightCrop);
             }
             else
             {
                 var processor = new ImageProcessingService();
-                await processor.RebrandImageAsync(Current, editor.LeftCropResult, secondPath != null ? editor.RightCropResult : null, overlay);
+                await processor.RebrandImageAsync(Current, savedLeftCrop, savedRightCrop, overlay);
             }
             PreviewImageViewer.Source = Current.Preview;
             PropertyChanged?.Invoke(this, new(nameof(Current)));

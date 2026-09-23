@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Polyline = System.Windows.Shapes.Polyline;
 
 namespace Alpha.Branding;
 
@@ -24,6 +25,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private Point _dragStartPoint;
     private double _dragStartPanX;
     private double _dragStartPanY;
+    private RedactStroke? _activeStroke;
 
     private BitmapSource? _leftBitmap;
     private BitmapSource? _rightBitmap;
@@ -48,9 +50,16 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
         _leftCrop = initialCrop.Clone();
         _rightCrop = secondCrop?.Clone() ?? new ImageCropSettings();
 
-        ItemTitle = title ?? Path.GetFileName(filePath);
+        ItemTitle = title ?? System.IO.Path.GetFileName(filePath);
 
         DataContext = this;
+        PanModeToggle.Checked += ModeToggle_Checked;
+        PanModeToggle.Unchecked += ModeToggle_Unchecked;
+        RedactModeToggle.Checked += ModeToggle_Checked;
+        RedactModeToggle.Unchecked += ModeToggle_Unchecked;
+        UndoRedactButton.Click += UndoRedact_Click;
+        ClearRedactButton.Click += ClearRedact_Click;
+        PanModeToggle.IsChecked = true;
         Loaded += CropEditorWindow_Loaded;
     }
 
@@ -66,6 +75,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
         {
             if (_isLeftSlotSelected != value)
             {
+                FinishRedactStroke();
                 _isLeftSlotSelected = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsRightSlotSelected));
@@ -161,7 +171,11 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private void UpdatePreview()
     {
         var bmp = GetActiveBitmap();
-        if (bmp == null) return;
+        if (bmp == null)
+        {
+            RedactOverlay.Children.Clear();
+            return;
+        }
 
         var rot = ActiveCrop.Rotation;
         BitmapSource source = bmp;
@@ -177,38 +191,148 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
         var srcH = source.PixelHeight;
         if (srcW <= 0 || srcH <= 0) return;
 
-        var targetW = (double)TargetWidth;
-        var targetH = (double)TargetHeight;
-
-        var scaleFit = Math.Min(targetW / srcW, targetH / srcH);
-        var scaleFill = Math.Max(targetW / srcW, targetH / srcH);
-
-        // Portrait photo solo in landscape frame fits by default to avoid aggressive cropping
-        var isSoloPortrait = !_isPair && srcH > srcW && targetW > targetH;
-        var baseScale = isSoloPortrait ? scaleFit : scaleFill;
-
-        var effectiveScale = baseScale * ActiveCrop.Zoom;
+        var (effectiveScale, drawX, drawY) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
         var scaledW = Math.Max(1.0, srcW * effectiveScale);
         var scaledH = Math.Max(1.0, srcH * effectiveScale);
-
-        var centerX = (targetW - scaledW) / 2.0;
-        var centerY = (targetH - scaledH) / 2.0;
-
-        var drawX = centerX + ActiveCrop.PanX;
-        var drawY = centerY + ActiveCrop.PanY;
 
         PhotoImage.Width = scaledW;
         PhotoImage.Height = scaledH;
         PhotoImage.Margin = new Thickness(drawX, drawY, 0, 0);
 
+        RedrawRedactOverlay();
         OnPropertyChanged(nameof(PanCoordinatesText));
         OnPropertyChanged(nameof(ActiveCrop));
+    }
+
+    private static (double Scale, double DrawX, double DrawY) GetPreviewGeometry(
+        ImageCropSettings crop, int srcW, int srcH, int targetW, int targetH)
+    {
+        var quarterTurn = crop.Rotation == 90 || crop.Rotation == 270;
+        var rotatedW = quarterTurn ? srcH : srcW;
+        var rotatedH = quarterTurn ? srcW : srcH;
+        var scaleFit = Math.Min((double)targetW / rotatedW, (double)targetH / rotatedH);
+        var scaleFill = Math.Max((double)targetW / rotatedW, (double)targetH / rotatedH);
+        var isSoloPortrait = targetW != ImageProcessingService.HalfWidth && rotatedH > rotatedW && targetW > targetH;
+        var baseScale = isSoloPortrait ? scaleFit : scaleFill;
+        var scale = baseScale * crop.Zoom;
+        return (scale,
+            (targetW - Math.Max(1.0, rotatedW * scale)) / 2.0 + crop.PanX,
+            (targetH - Math.Max(1.0, rotatedH * scale)) / 2.0 + crop.PanY);
+    }
+
+    public static Point MapNormalizedToSourcePx(
+        double nx, double ny, ImageCropSettings crop, int srcW, int srcH, int targetW, int targetH)
+    {
+        return ImageProcessingService.MapNormalizedToSourcePx(nx, ny, crop, srcW, srcH, targetW, targetH);
+    }
+
+    private void RedrawRedactOverlay()
+    {
+        RedactOverlay.Children.Clear();
+        var bmp = GetActiveBitmap();
+        if (bmp == null) return;
+
+        var (scale, drawX, drawY) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
+        foreach (var stroke in ActiveCrop.RedactStrokes.Concat(_activeStroke is null ? [] : [_activeStroke]))
+        {
+            if (stroke.Points.Count == 0) continue;
+            var line = new Polyline
+            {
+                Stroke = new SolidColorBrush(Color.FromRgb(stroke.R, stroke.G, stroke.B)),
+                StrokeThickness = stroke.BrushSizeNormalized * Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+                StrokeLineJoin = PenLineJoin.Round
+            };
+            foreach (var point in stroke.Points)
+            {
+                var x = point.X * bmp.PixelWidth;
+                var y = point.Y * bmp.PixelHeight;
+                var (rotatedX, rotatedY) = ActiveCrop.Rotation switch
+                {
+                    90 => (bmp.PixelHeight - y, x),
+                    180 => (bmp.PixelWidth - x, bmp.PixelHeight - y),
+                    270 => (y, bmp.PixelWidth - x),
+                    _ => (x, y)
+                };
+                line.Points.Add(new Point(drawX + rotatedX * scale, drawY + rotatedY * scale));
+            }
+            if (line.Points.Count == 1) line.Points.Add(line.Points[0]);
+            RedactOverlay.Children.Add(line);
+        }
+    }
+
+    private void ModeToggle_Checked(object sender, RoutedEventArgs e)
+    {
+        var redact = ReferenceEquals(sender, RedactModeToggle);
+        if (!redact) FinishRedactStroke();
+        RedactModeToggle.IsChecked = redact;
+        PanModeToggle.IsChecked = !redact;
+        TargetCanvas.Cursor = redact ? Cursors.Cross : Cursors.SizeAll;
+    }
+
+    private void ModeToggle_Unchecked(object sender, RoutedEventArgs e)
+    {
+        if (PanModeToggle.IsChecked != true && RedactModeToggle.IsChecked != true)
+            PanModeToggle.IsChecked = true;
+    }
+
+    private void AddRedactPoint(Point position)
+    {
+        var bmp = GetActiveBitmap();
+        if (_activeStroke == null || bmp == null) return;
+        var source = MapNormalizedToSourcePx(position.X / TargetWidth, position.Y / TargetHeight,
+            ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
+        var normalized = new Point(source.X / bmp.PixelWidth, source.Y / bmp.PixelHeight);
+        if (_activeStroke.Points.Count == 0 || _activeStroke.Points[^1] != normalized)
+        {
+            _activeStroke.AddPoint(normalized);
+            RedrawRedactOverlay();
+        }
+    }
+
+    private void FinishRedactStroke()
+    {
+        if (_activeStroke == null) return;
+        if (_activeStroke.Points.Count >= 2) ActiveCrop.RedactStrokes.Add(_activeStroke);
+        _activeStroke = null;
+        TargetCanvas.ReleaseMouseCapture();
+        RedrawRedactOverlay();
+    }
+
+    private void UndoRedact_Click(object sender, RoutedEventArgs e)
+    {
+        FinishRedactStroke();
+        if (ActiveCrop.RedactStrokes.Count == 0) return;
+        ActiveCrop.RedactStrokes.RemoveAt(ActiveCrop.RedactStrokes.Count - 1);
+        RedrawRedactOverlay();
+    }
+
+    private void ClearRedact_Click(object sender, RoutedEventArgs e)
+    {
+        FinishRedactStroke();
+        ActiveCrop.RedactStrokes.Clear();
+        RedrawRedactOverlay();
     }
 
     private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
+            if (RedactModeToggle.IsChecked == true)
+            {
+                var bmp = GetActiveBitmap();
+                if (bmp == null) return;
+                var (scale, _, _) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
+                _activeStroke = new RedactStroke
+                {
+                    BrushSizeNormalized = BrushSizeSlider.Value / (Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale)
+                };
+                AddRedactPoint(e.GetPosition(TargetCanvas));
+                TargetCanvas.CaptureMouse();
+                e.Handled = true;
+                return;
+            }
             _isDragging = true;
             _dragStartPoint = e.GetPosition(TargetCanvas);
             _dragStartPanX = ActiveCrop.PanX;
@@ -220,6 +344,12 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
 
     private void Canvas_MouseMove(object sender, MouseEventArgs e)
     {
+        if (_activeStroke != null && e.LeftButton == MouseButtonState.Pressed)
+        {
+            AddRedactPoint(e.GetPosition(TargetCanvas));
+            e.Handled = true;
+            return;
+        }
         if (_isDragging && e.LeftButton == MouseButtonState.Pressed)
         {
             var current = e.GetPosition(TargetCanvas);
@@ -236,6 +366,13 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
 
     private void Canvas_MouseUp(object sender, MouseEventArgs e)
     {
+        if (_activeStroke != null)
+        {
+            AddRedactPoint(e.GetPosition(TargetCanvas));
+            FinishRedactStroke();
+            e.Handled = true;
+            return;
+        }
         if (_isDragging)
         {
             _isDragging = false;
@@ -354,7 +491,17 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
 
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            UndoRedact_Click(sender, e);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && RedactModeToggle.IsChecked == true)
+        {
+            PanModeToggle.IsChecked = true;
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
         {
             DialogResult = false;
             Close();

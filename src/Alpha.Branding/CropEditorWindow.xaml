@@ -9,6 +9,7 @@
         Background="{StaticResource BackgroundDark}"
         Foreground="{StaticResource TextPrimary}"
         FontFamily="Segoe UI, Poppins, sans-serif"
+        TextOptions.TextFormattingMode="Display"
         KeyDown="Window_KeyDown">
 
     <Grid Margin="20">
@@ -149,6 +150,20 @@
                                HorizontalAlignment="Left"
                                VerticalAlignment="Top"/>
 
+                        <Canvas x:Name="RedactOverlay" IsHitTestVisible="False">
+                            <Polyline Stroke="{StaticResource GoldLight}"
+                                      StrokeThickness="12"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
+                        </Canvas>
+                        <TextBlock AutomationProperties.AutomationId="RedactOverlay"
+                                   AutomationProperties.Name="Redaction overlay"
+                                   Text="Redaction overlay"
+                                   Foreground="Transparent"
+                                   IsHitTestVisible="False"
+                                   Focusable="False"/>
+
                         <!-- Rule of thirds alignment grid guidelines (subtle) -->
                         <Canvas x:Name="GridGuidelines" IsHitTestVisible="False" Opacity="0.25">
                             <!-- Vertical lines -->
@@ -252,6 +267,59 @@
 
                 <!-- Presets & Orientation (wraps to a second line on narrow windows instead of colliding) -->
                 <WrapPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ToggleButton x:Name="PanModeToggle"
+                                  AutomationProperties.AutomationId="PanModeToggle"
+                                  AutomationProperties.Name="Pan mode"
+                                  Content="PAN"
+                                  ToolTip="Pan the photo within the frame"
+                                  Style="{StaticResource {x:Type ToggleButton}}"
+                                  MinWidth="64" MinHeight="32"
+                                  Padding="10,4"
+                                  Margin="0,0,8,0"
+                                  TabIndex="0"/>
+
+                    <ToggleButton x:Name="RedactModeToggle"
+                                  AutomationProperties.AutomationId="RedactModeToggle"
+                                  AutomationProperties.Name="Pen mode"
+                                  Content="PEN"
+                                  ToolTip="Draw pen marks over the photo"
+                                  Style="{StaticResource {x:Type ToggleButton}}"
+                                  MinWidth="76" MinHeight="32"
+                                  Padding="10,4"
+                                  Margin="0,0,8,0"
+                                  TabIndex="1"/>
+
+                    <Slider x:Name="BrushSizeSlider"
+                            AutomationProperties.AutomationId="BrushSizeSlider"
+                            AutomationProperties.Name="Redaction brush size"
+                            Minimum="2" Maximum="60" Value="12"
+                            Width="100"
+                            MinHeight="32"
+                            VerticalAlignment="Center"
+                            ToolTip="Redaction brush size"
+                            Margin="0,0,8,0"
+                            TabIndex="2"/>
+
+                    <Button x:Name="UndoRedactButton"
+                            AutomationProperties.AutomationId="UndoRedactButton"
+                            AutomationProperties.Name="Undo redaction"
+                            Content="UNDO"
+                            ToolTip="Undo the most recent redaction mark"
+                            Style="{StaticResource SmallActionButton}"
+                            MinWidth="56" MinHeight="32"
+                            Margin="0,0,8,0"
+                            TabIndex="3"/>
+
+                    <Button x:Name="ClearRedactButton"
+                            AutomationProperties.AutomationId="ClearRedactButton"
+                            AutomationProperties.Name="Clear redactions"
+                            Content="CLEAR"
+                            ToolTip="Clear all redaction marks"
+                            Style="{StaticResource SmallActionButton}"
+                            MinWidth="56" MinHeight="32"
+                            Margin="0,0,8,0"
+                            TabIndex="4"/>
+
                     <Button x:Name="FitToFrameButton"
                             AutomationProperties.AutomationId="FitToFrameButton"
                             Content="FIT TO FRAME"
