@@ -131,6 +131,18 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private static BitmapImage LoadBitmapFromFile(string path)
     {
         var bytes = File.ReadAllBytes(path);
+        try
+        {
+            return LoadBitmapFromBytes(bytes);
+        }
+        catch when (HeicDecodeService.IsHeic(path))
+        {
+            return LoadBitmapFromBytes(Task.Run(() => HeicDecodeService.TranscodeToJpegBytesAsync(path)).GetAwaiter().GetResult());
+        }
+    }
+
+    private static BitmapImage LoadBitmapFromBytes(byte[] bytes)
+    {
         using var ms = new MemoryStream(bytes);
         var bmp = new BitmapImage();
         bmp.BeginInit();

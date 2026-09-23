@@ -209,7 +209,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private const string MediaFilter = "All Supported Media|*.jpg;*.jpeg;*.jfif;*.png;*.bmp;*.webp;*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|Photos (*.jpg;*.jpeg;*.jfif;*.png;*.bmp;*.webp)|*.jpg;*.jpeg;*.jfif;*.png;*.bmp;*.webp|Videos (*.mp4;*.mov;*.wmv)|*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|All files|*.*";
+    private const string MediaFilter = "All Supported Media|*.jpg;*.jpeg;*.jfif;*.png;*.bmp;*.webp;*.heic;*.heif;*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|Photos (*.jpg;*.jpeg;*.jfif;*.png;*.bmp;*.webp;*.heic;*.heif)|*.jpg;*.jpeg;*.jfif;*.png;*.bmp;*.webp;*.heic;*.heif|Videos (*.mp4;*.mov;*.wmv)|*.mp4;*.mov;*.wmv;*.avi;*.m4v;*.mkv;*.webm|All files|*.*";
 
     public async Task<bool> LoadFilesAsync(IEnumerable<string> filePaths)
     {
@@ -217,7 +217,7 @@ public partial class MainWindow : Window
         {
             if (!File.Exists(f)) return false;
             var ext = Path.GetExtension(f).ToLowerInvariant();
-            return ext is ".jpg" or ".jpeg" or ".jfif" or ".png" or ".bmp" or ".webp" or ".mp4" or ".mov" or ".wmv" or ".avi" or ".m4v" or ".mkv" or ".webm";
+            return ext is ".jpg" or ".jpeg" or ".jfif" or ".png" or ".bmp" or ".webp" or ".heic" or ".heif" or ".mp4" or ".mov" or ".wmv" or ".avi" or ".m4v" or ".mkv" or ".webm";
         }).ToArray();
 
         if (supported.Length > 0)

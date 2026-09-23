@@ -299,15 +299,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     try
                     {
                         var bytes = File.ReadAllBytes(file);
-                        using var ms = new MemoryStream(bytes);
-                        var bmp = new BitmapImage();
-                        bmp.BeginInit();
-                        bmp.StreamSource = ms;
-                        bmp.DecodePixelWidth = 270;
-                        bmp.CacheOption = BitmapCacheOption.OnLoad;
-                        bmp.EndInit();
-                        bmp.Freeze();
-                        thumb = bmp;
+                        try
+                        {
+                            thumb = LoadThumbnail(bytes);
+                        }
+                        catch when (HeicDecodeService.IsHeic(file))
+                        {
+                            thumb = LoadThumbnail(Task.Run(() => HeicDecodeService.TranscodeToJpegBytesAsync(file)).GetAwaiter().GetResult());
+                        }
                     }
                     catch { }
                 }
@@ -325,6 +324,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertyChanged(nameof(HasSelectedPhotos));
         OnPropertyChanged(nameof(IsEmptyState));
+    }
+
+    private static BitmapImage LoadThumbnail(byte[] bytes)
+    {
+        using var stream = new MemoryStream(bytes);
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.StreamSource = stream;
+        bitmap.DecodePixelWidth = 270;
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.EndInit();
+        bitmap.Freeze();
+        return bitmap;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
