@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -9,6 +10,7 @@ public sealed class SelectedPhotoItem : INotifyPropertyChanged
 {
     private PhotoLayoutPreference _layoutPreference = PhotoLayoutPreference.Auto;
     private ImageSource? _thumbnail;
+    private string? _pairedPartnerPath;
 
     public SelectedPhotoItem()
     {
@@ -66,6 +68,48 @@ public sealed class SelectedPhotoItem : INotifyPropertyChanged
     public void ToggleLayoutPreference()
     {
         LayoutPreference = IsSolo ? PhotoLayoutPreference.Auto : PhotoLayoutPreference.Solo;
+    }
+
+    public string? PairedPartnerPath
+    {
+        get => _pairedPartnerPath;
+        private set
+        {
+            if (_pairedPartnerPath != value)
+            {
+                _pairedPartnerPath = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasExplicitPair));
+            }
+        }
+    }
+
+    public bool HasExplicitPair => !string.IsNullOrEmpty(_pairedPartnerPath);
+
+    public void SetPair(string? partnerPath)
+    {
+        if (string.IsNullOrWhiteSpace(partnerPath))
+        {
+            return;
+        }
+
+        var trimmed = partnerPath.Trim();
+        if (trimmed.Length == 0)
+        {
+            return;
+        }
+
+        if (string.Equals(trimmed, FilePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        PairedPartnerPath = trimmed;
+    }
+
+    public void ClearPair()
+    {
+        PairedPartnerPath = null;
     }
 
     public void ResetCrop()

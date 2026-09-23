@@ -244,9 +244,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool HasApplyWarning => HasUnsavedEdits && SelectedFiles.Count > 0;
     public bool HasApplyHint => SelectedFiles.Count > 0 && Results.Count > 0;
 
+    public void PairWith(SelectedPhotoItem? item, string? partnerPath)
+    {
+        if (item == null || !SelectedPhotos.Contains(item) || string.IsNullOrWhiteSpace(partnerPath)) return;
+
+        var partner = SelectedPhotos.FirstOrDefault(photo =>
+            string.Equals(photo.FilePath, partnerPath, StringComparison.OrdinalIgnoreCase));
+        if (partner == null || ReferenceEquals(item, partner) || item.IsSolo || partner.IsSolo ||
+            item.IsVideo || partner.IsVideo ||
+            VideoProcessingService.IsVideoFile(item.FilePath) || VideoProcessingService.IsVideoFile(partner.FilePath)) return;
+
+        Unpair(item);
+        Unpair(partner);
+        item.SetPair(partner.FilePath);
+        partner.SetPair(item.FilePath);
+    }
+
+    public void Unpair(SelectedPhotoItem? item)
+    {
+        if (item == null || !SelectedPhotos.Contains(item)) return;
+
+        foreach (var photo in SelectedPhotos)
+        {
+            if (ReferenceEquals(photo, item) ||
+                string.Equals(photo.PairedPartnerPath, item.FilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                photo.ClearPair();
+            }
+        }
+    }
+
+    public void ClearAllPairs()
+    {
+        foreach (var photo in SelectedPhotos)
+        {
+            photo.ClearPair();
+        }
+    }
+
     public void RemoveSelectedFile(string filePath)
     {
         if (IsBusy) return;
+        var removed = SelectedPhotos.FirstOrDefault(photo =>
+            string.Equals(photo.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+        if (removed != null) Unpair(removed);
         var updated = _selectedFiles.Where(f => !string.Equals(f, filePath, StringComparison.OrdinalIgnoreCase)).ToArray();
         SelectedFiles = updated;
     }
@@ -320,6 +361,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 MediaType = isVideo ? MediaType.Video : MediaType.Image,
                 DurationText = durationText
             });
+        }
+
+        var selectedPaths = new HashSet<string>(SelectedPhotos.Select(photo => photo.FilePath), StringComparer.OrdinalIgnoreCase);
+        foreach (var photo in SelectedPhotos)
+        {
+            if (photo.PairedPartnerPath is { } partnerPath && !selectedPaths.Contains(partnerPath))
+            {
+                photo.ClearPair();
+            }
         }
 
         OnPropertyChanged(nameof(HasSelectedPhotos));
@@ -635,7 +685,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         try
         {
             var overlay = SelectedTemplate?.FilePath;
-            await _processor.RebrandImageAsync(image, newCrop, newRightCrop, overlay, token);
+            await _processor.RebrandImageAsync(image, newCrop.Clone(), newRightCrop?.Clone(), overlay, token);
             HasUnsavedEdits = true;
             Status = $"Updated crop for {image.FileName}.";
         }
