@@ -1,3 +1,9 @@
+## Alpha Premier Property Branding Studio v2.3.0
+
+### New Features
+- **PEN redaction tool**: crop editor gains a `PEN` mode with freehand opaque strokes, brush-size slider, Undo/Clear per photo slot, and `Esc`/`Ctrl+Z` shortcuts; marks bake into branded exports and survive rebrand, zoom, pan, and rotation.
+- **Manual pair matching**: drag one staged photo onto another to pair them explicitly (fixes wrong auto-matches), plus per-card `PAIR`/`UNPAIR` buttons; per-photo `SOLO` choice unchanged; explicit pairs flow through Apply and Rebrand.
+
 ## Alpha Premier Property Branding Studio v2.2.2
 
 ### Fixes & Improvements
