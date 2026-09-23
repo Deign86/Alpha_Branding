@@ -9,6 +9,7 @@ public sealed class ImageCropSettings : INotifyPropertyChanged
     private double _panY;
     private double _zoom = 1.0;
     private int _rotation;
+    private List<RedactStroke> _redactStrokes = new();
 
     public double PanX
     {
@@ -71,6 +72,19 @@ public sealed class ImageCropSettings : INotifyPropertyChanged
 
     public string ZoomPercentageText => $"{Math.Round(Zoom * 100):0}%";
 
+    public List<RedactStroke> RedactStrokes
+    {
+        get => _redactStrokes;
+        set
+        {
+            _redactStrokes = RedactStrokeCollection.Clone(value);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasRedactions));
+        }
+    }
+
+    public bool HasRedactions => _redactStrokes.Count > 0;
+
     public bool IsDefault =>
         Math.Abs(PanX) < 0.001 &&
         Math.Abs(PanY) < 0.001 &&
@@ -83,6 +97,9 @@ public sealed class ImageCropSettings : INotifyPropertyChanged
         PanY = 0;
         Zoom = 1.0;
         Rotation = 0;
+        _redactStrokes.Clear();
+        OnPropertyChanged(nameof(RedactStrokes));
+        OnPropertyChanged(nameof(HasRedactions));
     }
 
     public ImageCropSettings Clone() => new()
@@ -90,7 +107,8 @@ public sealed class ImageCropSettings : INotifyPropertyChanged
         PanX = PanX,
         PanY = PanY,
         Zoom = Zoom,
-        Rotation = Rotation
+        Rotation = Rotation,
+        RedactStrokes = RedactStrokeCollection.Clone(RedactStrokes)
     };
 
     public void CopyFrom(ImageCropSettings source)
@@ -99,6 +117,7 @@ public sealed class ImageCropSettings : INotifyPropertyChanged
         PanY = source.PanY;
         Zoom = source.Zoom;
         Rotation = source.Rotation;
+        RedactStrokes = RedactStrokeCollection.Clone(source.RedactStrokes);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
