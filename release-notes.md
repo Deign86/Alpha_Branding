@@ -1,3 +1,9 @@
+## Alpha Premier Property Branding Studio v2.2.2
+
+### Fixes & Improvements
+- **HEIC/HEIF photo input**: drag-drop + file dialog accept `.heic`/`.heif`; thumbnails, crop editor, and branding pipeline transcode via bundled Magick.NET (JPEG output unchanged).
+- **Scope note**: templates untouched; corrupt HEIC surfaces a meaningful error instead of silent drop.
+
 ## Alpha Premier Property Branding Studio v2.2.1
 
 ### Fixes & Improvements
