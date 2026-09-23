@@ -33,8 +33,22 @@ public sealed class ImageProcessingService
 
     public static async Task<bool> IsPortraitAsync(string filePath, CancellationToken cancellationToken = default)
     {
-        await using var stream = File.OpenRead(filePath);
-        var info = await Image.IdentifyAsync(stream, cancellationToken);
+        ImageInfo? info;
+        try
+        {
+            await using var stream = File.OpenRead(filePath);
+            info = await Image.IdentifyAsync(stream, cancellationToken);
+        }
+        catch (Exception ex) when (HeicDecodeService.IsHeic(filePath) && ex is not OperationCanceledException)
+        {
+            info = null;
+        }
+
+        if (info == null && HeicDecodeService.IsHeic(filePath))
+        {
+            await using var jpeg = new MemoryStream(await HeicDecodeService.TranscodeToJpegBytesAsync(filePath, cancellationToken));
+            info = await Image.IdentifyAsync(jpeg, cancellationToken);
+        }
         if (info == null) return false;
 
         var width = info.Width;
@@ -233,7 +247,7 @@ public sealed class ImageProcessingService
         ImageCropSettings? cropSettings = null,
         CancellationToken cancellationToken = default)
     {
-        await using var input = File.OpenRead(inputPath);
+        await using var input = await OpenPhotoAsync(inputPath, cancellationToken);
         await using var overlay = File.OpenRead(overlayPath);
         using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
         using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
@@ -270,7 +284,7 @@ public sealed class ImageProcessingService
             // Fallback
         }
 
-        await using var input = File.OpenRead(inputPath);
+        await using var input = await OpenPhotoAsync(inputPath, cancellationToken);
         await using var overlay = File.OpenRead(overlayPath);
         using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
         using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
@@ -299,8 +313,8 @@ public sealed class ImageProcessingService
         ImageCropSettings? rightCrop = null,
         CancellationToken cancellationToken = default)
     {
-        await using var leftStream = File.OpenRead(leftPath);
-        await using var rightStream = File.OpenRead(rightPath);
+        await using var leftStream = await OpenPhotoAsync(leftPath, cancellationToken);
+        await using var rightStream = await OpenPhotoAsync(rightPath, cancellationToken);
         await using var overlayStream = File.OpenRead(overlayPath);
 
         using var leftPhoto = await Image.LoadAsync<Rgba32>(leftStream, cancellationToken);
@@ -338,7 +352,7 @@ public sealed class ImageProcessingService
         ImageCropSettings? cropSettings = null,
         CancellationToken cancellationToken = default)
     {
-        await using var input = File.OpenRead(inputPath);
+        await using var input = await OpenPhotoAsync(inputPath, cancellationToken);
         await using var overlay = File.OpenRead(overlayPath);
 
         using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
@@ -439,6 +453,11 @@ public sealed class ImageProcessingService
 
         return brandedImage;
     }
+
+    private static async Task<Stream> OpenPhotoAsync(string path, CancellationToken cancellationToken) =>
+        HeicDecodeService.IsHeic(path)
+            ? new MemoryStream(await HeicDecodeService.TranscodeToJpegBytesAsync(path, cancellationToken))
+            : File.OpenRead(path);
 
     private static async Task<BrandedImage> CreateBrandedImageAsync(Image<Rgba32> image, string? prefix, int index, int total, CancellationToken cancellationToken)
     {
