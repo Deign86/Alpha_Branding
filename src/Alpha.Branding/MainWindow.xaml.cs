@@ -4,6 +4,7 @@ using Alpha.Branding.ViewModels;
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 
 namespace Alpha.Branding;
 
@@ -287,7 +288,7 @@ public partial class MainWindow : Window
 
         if (editor.ShowDialog() == true)
         {
-            item.CropSettings.CopyFrom(editor.LeftCropResult);
+            item.CropSettings.CopyFrom(editor.LeftCropResult.Clone());
         }
     }
 
@@ -307,6 +308,35 @@ public partial class MainWindow : Window
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
         _viewModel.RemoveSelectedFile(item.FilePath);
+    }
+
+    private void PairButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
+        if (!CanPair(item)) return;
+        var partner = FindNextPairCandidate(item);
+        if (partner == null) return;
+        _viewModel.PairWith(item, partner.FilePath);
+    }
+
+    private void UnpairButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
+        _viewModel.Unpair(item);
+    }
+
+    private SelectedPhotoItem? FindNextPairCandidate(SelectedPhotoItem item)
+    {
+        var photos = _viewModel.SelectedPhotos;
+        int start = photos.IndexOf(item);
+        for (int offset = 1; offset <= photos.Count; offset++)
+        {
+            var candidate = photos[(start + offset) % photos.Count];
+            if (!ReferenceEquals(candidate, item) && CanPair(candidate) && !candidate.HasExplicitPair)
+                return candidate;
+        }
+
+        return null;
     }
 
     private async void ImportTemplate_Click(object sender, RoutedEventArgs e)
@@ -473,7 +503,7 @@ public partial class MainWindow : Window
 
         if (editor.ShowDialog() == true)
         {
-            await _viewModel.UpdateBrandedImageCropAsync(image, editor.LeftCropResult, secondPath != null ? editor.RightCropResult : null);
+            await _viewModel.UpdateBrandedImageCropAsync(image, editor.LeftCropResult.Clone(), secondPath != null ? editor.RightCropResult.Clone() : null);
         }
     }
 
@@ -483,6 +513,76 @@ public partial class MainWindow : Window
         try { await _viewModel.ResetBrandedImageCropAsync(image); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Reset failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
+
+    private const string StagedPhotoDragFormat = "Alpha.Branding.StagedPhoto";
+    private Point? _stagedCardDragStart;
+
+    private void StagedCard_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _stagedCardDragStart = e.GetPosition(this);
+    }
+
+    private void StagedCard_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (_viewModel.IsBusy || e.LeftButton != MouseButtonState.Pressed ||
+            _stagedCardDragStart is not Point dragStart ||
+            sender is not FrameworkElement { DataContext: SelectedPhotoItem source } ||
+            !CanPair(source)) return;
+
+        var current = e.GetPosition(this);
+        if (Math.Abs(current.X - dragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(current.Y - dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+
+        _stagedCardDragStart = null;
+        var data = new DataObject(StagedPhotoDragFormat, source.FilePath);
+        DragDrop.DoDragDrop((DependencyObject)sender, data, DragDropEffects.Move);
+    }
+
+    private void StagedCard_DragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(StagedPhotoDragFormat)) return;
+
+        e.Handled = true;
+        var sourcePath = e.Data.GetData(StagedPhotoDragFormat) as string;
+        var source = _viewModel.SelectedPhotos.FirstOrDefault(photo =>
+            string.Equals(photo.FilePath, sourcePath, StringComparison.OrdinalIgnoreCase));
+        var target = (sender as FrameworkElement)?.DataContext as SelectedPhotoItem;
+        var canDrop = !_viewModel.IsBusy && source != null && target != null &&
+            !ReferenceEquals(source, target) && CanPair(source) && CanPair(target);
+
+        e.Effects = canDrop ? DragDropEffects.Move : DragDropEffects.None;
+        if (sender is FrameworkElement card) card.Tag = canDrop;
+    }
+
+    private void StagedCard_DragLeave(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(StagedPhotoDragFormat) && sender is FrameworkElement card)
+        {
+            card.Tag = false;
+        }
+    }
+
+    private void StagedCard_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(StagedPhotoDragFormat)) return;
+
+        e.Handled = true;
+        if (sender is FrameworkElement { DataContext: SelectedPhotoItem target } &&
+            e.Data.GetData(StagedPhotoDragFormat) is string sourcePath && !_viewModel.IsBusy)
+        {
+            var source = _viewModel.SelectedPhotos.FirstOrDefault(photo =>
+                string.Equals(photo.FilePath, sourcePath, StringComparison.OrdinalIgnoreCase));
+            if (source != null && !ReferenceEquals(source, target) && CanPair(source) && CanPair(target))
+            {
+                _viewModel.PairWith(target, sourcePath);
+            }
+        }
+
+        if (sender is FrameworkElement card) card.Tag = false;
+    }
+
+    private static bool CanPair(SelectedPhotoItem item) =>
+        !item.IsSolo && !item.IsVideo && !VideoProcessingService.IsVideoFile(item.FilePath);
 
     private int _dragDepth;
 

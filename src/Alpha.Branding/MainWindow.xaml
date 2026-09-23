@@ -578,6 +578,12 @@
                             <DataTemplate>
                                 <Border Width="270"
                                         Margin="0,0,16,16"
+                                        AllowDrop="True"
+                                        PreviewMouseLeftButtonDown="StagedCard_PreviewMouseLeftButtonDown"
+                                        PreviewMouseMove="StagedCard_PreviewMouseMove"
+                                        DragOver="StagedCard_DragOver"
+                                        DragLeave="StagedCard_DragLeave"
+                                        Drop="StagedCard_Drop"
                                         Background="{StaticResource SurfaceDark}"
                                         BorderBrush="{StaticResource BorderSubtle}"
                                         BorderThickness="1"
@@ -591,6 +597,10 @@
                                                     <Setter Property="BorderBrush" Value="{StaticResource Gold}"/>
                                                     <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
                                                 </Trigger>
+                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                    <Setter Property="BorderThickness" Value="2"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
@@ -682,6 +692,50 @@
                                                     IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
                                                     Style="{StaticResource SmallActionButton}"/>
                                         </Grid>
+
+                                        <!-- Explicit pairing actions are named for the existing ViewModel method wiring. -->
+                                        <Grid Margin="0,0,0,8" Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="PairButton"
+                                                    Grid.Column="0"
+                                                    Content="PAIR"
+                                                    AutomationProperties.AutomationId="PairButton"
+                                                    AutomationProperties.Name="Pair with partner"
+                                                     ToolTip="Pair this photo with another staged photo"
+                                                     Click="PairButton_Click"
+                                                     CommandParameter="{Binding}"
+                                                    MinHeight="32"
+                                                    Style="{StaticResource SmallActionButton}"
+                                                    Margin="0,0,4,0"/>
+                                            <Button x:Name="UnpairButton"
+                                                    Grid.Column="1"
+                                                    Content="UNPAIR"
+                                                    AutomationProperties.AutomationId="UnpairButton"
+                                                    AutomationProperties.Name="Unpair photo"
+                                                     ToolTip="Remove this photo's explicit pair"
+                                                     Click="UnpairButton_Click"
+                                                     CommandParameter="{Binding}"
+                                                    MinHeight="32"
+                                                    Visibility="{Binding HasExplicitPair, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Style="{StaticResource SmallActionButton}"/>
+                                        </Grid>
+
+                                        <Border Visibility="{Binding HasExplicitPair, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+                                                BorderThickness="1"
+                                                CornerRadius="4"
+                                                Padding="8,4"
+                                                Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding PairedPartnerPath}"
+                                                       Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding PairedPartnerPath}"/>
+                                        </Border>
 
                                         <!-- Secondary Actions: Reset & Remove -->
                                         <Grid>

@@ -1,7 +1,9 @@
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
+using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
+using FlaUI.Core.WindowsAPI;
 using FlaUI.UIA3;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -15,6 +17,82 @@ namespace Alpha.Branding.Tests;
 
 public class UiAutomationTests
 {
+    [Fact]
+    public void CropEditorExposesRedactionControlsAndKeyboardNavigation()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var (landscape, _, _) = CreateTestImages(tempDir.FullName);
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(GetAppExecutablePath(), $"\"{landscape}\"");
+            try
+            {
+                var mainWindow = GetAppMainWindow(app, automation);
+                var editButton = Retry.WhileNull(
+                    () => mainWindow.FindFirstDescendant(cf => cf.ByAutomationId("EditCropButton"))?.AsButton(),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(editButton);
+                editButton.Invoke();
+
+                var editor = automation.GetDesktop();
+                Assert.NotNull(Retry.WhileNull(
+                    () => editor.FindFirstDescendant(cf => cf.ByAutomationId("RedactModeToggle")),
+                    TimeSpan.FromSeconds(5)).Result);
+
+                var controlIds = new[]
+                {
+                    "RedactModeToggle", "PanModeToggle", "BrushSizeSlider",
+                    "UndoRedactButton", "ClearRedactButton", "RedactOverlay"
+                };
+                foreach (var id in controlIds)
+                {
+                    var control = editor.FindFirstDescendant(cf => cf.ByAutomationId(id));
+                    Assert.NotNull(control);
+                    Assert.False(string.IsNullOrWhiteSpace(control.Name), $"{id} must expose an accessible name.");
+                    if (id != "RedactOverlay")
+                    {
+                        Assert.True(control.Properties.IsKeyboardFocusable.Value, $"{id} must be keyboard-focusable.");
+                        Assert.True(control.BoundingRectangle.Width >= 32 && control.BoundingRectangle.Height >= 32,
+                            $"{id} must expose a minimum 32x32 hit area.");
+                    }
+                }
+
+                var pan = editor.FindFirstDescendant(cf => cf.ByAutomationId("PanModeToggle"))!.AsToggleButton();
+                var redact = editor.FindFirstDescendant(cf => cf.ByAutomationId("RedactModeToggle"))!.AsToggleButton();
+                redact.Click();
+                Keyboard.Press(VirtualKeyShort.ESC);
+                Assert.True(pan.IsToggled);
+
+                var undoRedactButton = editor.FindFirstDescendant(cf => cf.ByAutomationId("UndoRedactButton"))!;
+                var clearRedactButton = editor.FindFirstDescendant(cf => cf.ByAutomationId("ClearRedactButton"))!;
+                undoRedactButton.Focus();
+                Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_Z);
+
+                pan.Focus();
+                Keyboard.Press(VirtualKeyShort.TAB);
+                Assert.Equal("RedactModeToggle", automation.FocusedElement()?.AutomationId);
+                Keyboard.Press(VirtualKeyShort.TAB);
+                Assert.Equal("BrushSizeSlider", automation.FocusedElement()?.AutomationId);
+                Keyboard.Press(VirtualKeyShort.TAB);
+                Assert.Equal("UndoRedactButton", automation.FocusedElement()?.AutomationId);
+                Keyboard.Press(VirtualKeyShort.TAB);
+                Assert.Equal("ClearRedactButton", automation.FocusedElement()?.AutomationId);
+
+                clearRedactButton.Focus();
+                Assert.Equal("ClearRedactButton", automation.FocusedElement()?.AutomationId);
+            }
+            finally
+            {
+                CloseAppSafely(app, automation);
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
     private static string GetAppExecutablePath()
     {
         var baseDir = AppContext.BaseDirectory;
