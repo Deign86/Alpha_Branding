@@ -558,6 +558,14 @@
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                     Style="{StaticResource SmallActionButton}"
                                     Margin="0"/>
+
+                            <Button Content="Clear queue"
+                                    AutomationProperties.AutomationId="ClearQueueButton"
+                                    ToolTip="Remove all staged photos"
+                                    Click="ClearQueue_Click"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                    Style="{StaticResource SmallActionButton}"
+                                    Margin="0"/>
                         </StackPanel>
                     </Grid>
                 </Border>

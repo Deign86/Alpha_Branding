@@ -310,6 +310,12 @@ public partial class MainWindow : Window
         _viewModel.RemoveSelectedFile(item.FilePath);
     }
 
+    private void ClearQueue_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.IsBusy) return;
+        _viewModel.ClearSelectedPhotos();
+    }
+
     private void PairButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;

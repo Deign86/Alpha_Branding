@@ -96,6 +96,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool HasResults => Results.Count > 0;
     public bool HasSelectedPhotos => SelectedPhotos.Count > 0 && Results.Count == 0;
+    public bool CanClear => !IsBusy && SelectedPhotos.Count > 0;
     public bool IsEmptyState => SelectedPhotos.Count == 0 && Results.Count == 0;
 
     public bool IsDragOver
@@ -146,6 +147,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanApply));
                 OnPropertyChanged(nameof(CanExport));
+                OnPropertyChanged(nameof(CanClear));
                 OnPropertyChanged(nameof(CanDeleteActiveTemplate));
             }
         }
@@ -196,6 +198,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(SelectionSummary));
             OnPropertyChanged(nameof(CanApply));
             OnPropertyChanged(nameof(HasSelectedPhotos));
+            OnPropertyChanged(nameof(CanClear));
             OnPropertyChanged(nameof(IsEmptyState));
             UpdateApplyStatus();
         }
@@ -292,6 +295,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         SelectedFiles = updated;
     }
 
+    public void ClearSelectedPhotos()
+    {
+        if (IsBusy) return;
+
+        foreach (var photo in SelectedPhotos)
+        {
+            photo.ClearPair();
+            photo.ResetCrop();
+            photo.LayoutPreference = PhotoLayoutPreference.Auto;
+        }
+
+        SelectedFiles = Array.Empty<string>();
+        OnPropertyChanged(nameof(SelectedPhotos));
+        OnPropertyChanged(nameof(HasSelectedPhotos));
+        OnPropertyChanged(nameof(CanClear));
+        UpdateApplyStatus();
+    }
+
     private void UpdateSelectedPhotos()
     {
         var existingMap = SelectedPhotos.ToDictionary(p => p.FilePath, StringComparer.OrdinalIgnoreCase);
@@ -373,6 +394,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         OnPropertyChanged(nameof(HasSelectedPhotos));
+        OnPropertyChanged(nameof(CanClear));
         OnPropertyChanged(nameof(IsEmptyState));
     }
 
