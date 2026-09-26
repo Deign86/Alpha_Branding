@@ -203,6 +203,57 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
         </Style>
 
+        <!-- Small Action Toggle Button Style (mode toggles match SmallActionButton) -->
+        <Style x:Key="SmallActionToggleButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#22242B"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldLight}"/>
+                                <Setter TargetName="border" Property="Background" Value="#252730"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#121316"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#2A2418"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Destructive Action Button Style (e.g. Delete Template) -->
         <Style x:Key="DestructiveActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Padding" Value="10,5"/>
