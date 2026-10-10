@@ -58,11 +58,30 @@ public class UiAutomationTests
                     }
                 }
 
-                var pan = editor.FindFirstDescendant(cf => cf.ByAutomationId("PanModeToggle"))!.AsToggleButton();
-                var redact = editor.FindFirstDescendant(cf => cf.ByAutomationId("RedactModeToggle"))!.AsToggleButton();
-                redact.Click();
+                var title = editor.FindFirstDescendant(cf => cf.ByAutomationId("CropEditorItemTitleTextBlock"));
+                Assert.NotNull(title);
+                Assert.Equal("L1.png", title.Name);
+
+                // PAN/PEN are one radio group: checking one unchecks the other.
+                var pan = editor.FindFirstDescendant(cf => cf.ByAutomationId("PanModeToggle"))!.AsRadioButton();
+                var redact = editor.FindFirstDescendant(cf => cf.ByAutomationId("RedactModeToggle"))!.AsRadioButton();
+                Assert.True(pan.IsChecked);
+                // Select through UIA rather than a real mouse click: the modal editor is not guaranteed to be
+                // the foreground window on a shared desktop, so a synthesized click can land on another window.
+                redact.IsChecked = true;
+                Assert.True(Retry.WhileFalse(() => redact.IsChecked && !pan.IsChecked, TimeSpan.FromSeconds(2)).Result);
+                redact.Focus();
                 Keyboard.Press(VirtualKeyShort.ESC);
-                Assert.True(pan.IsToggled);
+                Assert.True(Retry.WhileFalse(() => pan.IsChecked && !redact.IsChecked, TimeSpan.FromSeconds(2)).Result);
+
+                // Arrow keys on the focused viewport move the photo.
+                var viewport = editor.FindFirstDescendant(cf => cf.ByAutomationId("CropViewport"));
+                Assert.NotNull(viewport);
+                viewport.Focus();
+                Keyboard.Press(VirtualKeyShort.RIGHT);
+                Assert.True(Retry.WhileFalse(
+                    () => editor.FindFirstDescendant(cf => cf.ByAutomationId("PanCoordinatesTextBlock"))?.Name?.StartsWith("X: 10 px") == true,
+                    TimeSpan.FromSeconds(2)).Result);
 
                 var undoRedactButton = editor.FindFirstDescendant(cf => cf.ByAutomationId("UndoRedactButton"))!;
                 var clearRedactButton = editor.FindFirstDescendant(cf => cf.ByAutomationId("ClearRedactButton"))!;
@@ -629,6 +648,51 @@ public class UiAutomationTests
 
                 var removeBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("RemoveSelectedPhotoButton"));
                 Assert.NotNull(removeBtn);
+            }
+            finally
+            {
+                CloseAppSafely(app, automation);
+            }
+        }
+        finally
+        {
+            tempDir.Delete(true);
+        }
+    }
+
+    [Fact]
+    public void ClearAllReturnsStagedMediaToEmptyState()
+    {
+        var tempDir = Directory.CreateTempSubdirectory();
+        try
+        {
+            var (landscape, p1, _) = CreateTestImages(tempDir.FullName);
+            using var automation = new UIA3Automation();
+            var app = Application.Launch(GetAppExecutablePath(), $"\"{landscape}\" \"{p1}\"");
+
+            try
+            {
+                var window = GetAppMainWindow(app, automation);
+                var clearButton = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("ClearQueueButton"))?.AsButton(),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(clearButton);
+                Assert.Equal("Clear all selected media", clearButton.Name);
+                Assert.True(clearButton.IsEnabled);
+
+                // No crop, pen or pairing edits yet, so clearing does not prompt.
+                clearButton.Invoke();
+
+                var emptyState = Retry.WhileNull(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("EmptyStateSelectButton")),
+                    TimeSpan.FromSeconds(5)).Result;
+                Assert.NotNull(emptyState);
+                Assert.True(Retry.WhileFalse(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("SelectionSummaryTextBlock"))?.Name == "No photos selected",
+                    TimeSpan.FromSeconds(5)).Result);
+                Assert.True(Retry.WhileFalse(
+                    () => window.FindFirstDescendant(cf => cf.ByAutomationId("StatusTextBlock"))?.Name == "Removed 2 items from the selection.",
+                    TimeSpan.FromSeconds(5)).Result);
             }
             finally
             {

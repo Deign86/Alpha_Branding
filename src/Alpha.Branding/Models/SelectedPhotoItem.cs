@@ -55,14 +55,12 @@ public sealed class SelectedPhotoItem : INotifyPropertyChanged
                 _layoutPreference = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsSolo));
-                OnPropertyChanged(nameof(LayoutModeText));
             }
         }
     }
 
     public bool IsSolo => LayoutPreference == PhotoLayoutPreference.Solo;
     public bool HasCustomCrop => !CropSettings.IsDefault;
-    public string LayoutModeText => IsSolo ? "SOLO" : "AUTO/COMBINE";
     public string CropStatusText => HasCustomCrop ? $"CROPPED ({CropSettings.ZoomPercentageText})" : string.Empty;
 
     public void ToggleLayoutPreference()
@@ -79,10 +77,13 @@ public sealed class SelectedPhotoItem : INotifyPropertyChanged
             {
                 _pairedPartnerPath = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(PairedPartnerName));
                 OnPropertyChanged(nameof(HasExplicitPair));
             }
         }
     }
+
+    public string? PairedPartnerName => _pairedPartnerPath is null ? null : Path.GetFileName(_pairedPartnerPath);
 
     public bool HasExplicitPair => !string.IsNullOrEmpty(_pairedPartnerPath);
 

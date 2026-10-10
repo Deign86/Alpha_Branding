@@ -1157,6 +1157,211 @@ public class SessionWorkflowSafetyTests
             File.Delete(overlay);
         }
     }
+
+    [Fact]
+    public async Task ClearSelectedPhotosReturnsToEmptyStateAndReportsCount()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService()) { SelectedFiles = new[] { p1, p2 } };
+            Assert.True(vm.CanClear);
+            Assert.True(vm.HasSelectedPhotos);
+
+            vm.ClearSelectedPhotos();
+
+            Assert.Empty(vm.SelectedPhotos);
+            Assert.True(vm.IsEmptyState);
+            Assert.False(vm.HasSelectedPhotos);
+            Assert.False(vm.CanClear);
+            Assert.Equal("No photos selected", vm.SelectionSummary);
+            Assert.Equal("Removed 2 items from the selection.", vm.Status);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task HasStagedEditsDetectsCropPenPairAndSolo()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService()) { SelectedFiles = new[] { p1, p2 } };
+            Assert.False(vm.HasStagedEdits);
+
+            var first = vm.SelectedPhotos[0];
+            first.CropSettings.Zoom = 1.5;
+            Assert.True(vm.HasStagedEdits);
+            first.ResetCrop();
+            Assert.False(vm.HasStagedEdits);
+
+            var stroke = new RedactStroke();
+            stroke.AddPoint(new System.Windows.Point(0.1, 0.1));
+            stroke.AddPoint(new System.Windows.Point(0.2, 0.2));
+            first.CropSettings.RedactStrokes = [stroke];
+            Assert.True(vm.HasStagedEdits);
+            first.CropSettings.RedactStrokes = [];
+            Assert.False(vm.HasStagedEdits);
+
+            vm.PairWith(first, p2);
+            Assert.True(vm.HasStagedEdits);
+            vm.Unpair(first);
+            Assert.False(vm.HasStagedEdits);
+
+            first.ToggleLayoutPreference();
+            Assert.True(vm.HasStagedEdits);
+
+            // Once branded results exist, the session prompt protects the work instead.
+            await vm.ApplyAsync(overlay);
+            Assert.False(vm.HasStagedEdits);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task AddFilesAppendsDedupesKeepsEditsAndIgnoresUnsupported()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        var text = Path.GetTempFileName() + ".txt";
+        File.WriteAllText(text, "not media");
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService()) { SelectedFiles = new[] { p1 } };
+            vm.SelectedPhotos[0].CropSettings.Zoom = 1.5;
+
+            vm.AddFiles(new[] { p1, p2, text, Path.Combine(Path.GetTempPath(), "missing-photo.png") });
+
+            Assert.Equal(new[] { p1, p2 }, vm.SelectedFiles);
+            Assert.Equal(1.5, vm.SelectedPhotos[0].CropSettings.Zoom);
+            Assert.Equal("Added 1 item to the selection.", vm.Status);
+
+            vm.AddFiles(new[] { p2 });
+            Assert.Equal(2, vm.SelectedFiles.Count);
+            Assert.Equal("No new supported files to add.", vm.Status);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+            File.Delete(text);
+        }
+    }
+
+    [Fact]
+    public async Task ApplyingBrandingDoesNotClaimTheBrandedFilesAreANewSelection()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService()) { SelectedFiles = new[] { p1 } };
+            await vm.ApplyAsync(overlay);
+
+            Assert.Single(vm.Results);
+            Assert.False(vm.HasApplyHint);
+            Assert.Empty(vm.ApplyStatusHint);
+
+            // A genuinely new selection still shows the hint.
+            vm.SelectedFiles = new[] { p2 };
+            Assert.True(vm.HasApplyHint);
+            Assert.Equal("1 new photo(s) selected — applying branding will start a new session.", vm.ApplyStatusHint);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task PairWithNextPairsAndReportsWhenNoCandidateRemains()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var vm = new MainWindowViewModel(new ImageProcessingService()) { SelectedFiles = new[] { p1, p2 } };
+            var first = vm.SelectedPhotos[0];
+            var second = vm.SelectedPhotos[1];
+
+            vm.PairWithNext(first);
+            Assert.Equal(second.FilePath, first.PairedPartnerPath);
+            Assert.Equal(first.FilePath, second.PairedPartnerPath);
+            Assert.Equal(Path.GetFileName(p2), first.PairedPartnerName);
+            Assert.Equal($"Paired {first.FileName} with {second.FileName}.", vm.Status);
+
+            vm.Unpair(first);
+            second.ToggleLayoutPreference(); // SOLO photos are never pair candidates
+            vm.PairWithNext(first);
+            Assert.False(first.HasExplicitPair);
+            Assert.Equal($"No other unpaired photo is available to pair with {first.FileName}.", vm.Status);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task ClearSessionPromptsAndCancelKeepsBrandedResults()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService { DesiredPromptResult = SessionPromptResult.Cancel };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService) { SelectedFiles = new[] { p1 } };
+            await vm.ApplyAsync(overlay);
+
+            Assert.False(await vm.ClearSessionAsync());
+            Assert.True(promptService.PromptCalled);
+            Assert.Equal("Clear all branded items?", promptService.LastPromptTitle);
+            Assert.Single(vm.Results);
+            Assert.Contains("canceled", vm.Status, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
+
+    [Fact]
+    public async Task ClearSessionDiscardReturnsToEmptyState()
+    {
+        var (p1, p2, overlay) = await CreateSampleImagesAsync();
+        try
+        {
+            var promptService = new TestSessionConfirmationService { DesiredPromptResult = SessionPromptResult.DiscardAndContinue };
+            var vm = new MainWindowViewModel(new ImageProcessingService(), promptService) { SelectedFiles = new[] { p1 } };
+            await vm.ApplyAsync(overlay);
+
+            Assert.True(await vm.ClearSessionAsync());
+            Assert.Empty(vm.Results);
+            Assert.Empty(vm.SelectedFiles);
+            Assert.True(vm.IsEmptyState);
+            Assert.False(vm.HasUnsavedEdits);
+            Assert.Equal("No photos selected", vm.SelectionSummary);
+        }
+        finally
+        {
+            File.Delete(p1);
+            File.Delete(p2);
+            File.Delete(overlay);
+        }
+    }
 }
 
 public class IndividualFilesExportTests
@@ -2311,15 +2516,19 @@ public class ImageEditingWorkflowTests
                 using (var img = new Image<Rgba32>(800, 600)) img.SaveAsPng(p2);
                 using (var img = new Image<Rgba32>(1200, 1000)) img.SaveAsPng(ov);
 
-                // Single photo editor
+                // Single photo editor: the header item and window title name the photo being edited
                 var singleWindow = new CropEditorWindow(p1, new ImageCropSettings(), ov, "Single Photo");
                 Assert.NotNull(singleWindow);
                 Assert.False(singleWindow.HasMultipleSlots);
+                Assert.Equal("Single Photo", singleWindow.ItemTitle);
+                Assert.StartsWith("Single Photo | ", singleWindow.Title);
 
                 // Pair photo editor
                 var pairWindow = new CropEditorWindow(p1, new ImageCropSettings(), ov, "Pair Photos", p2, new ImageCropSettings());
                 Assert.NotNull(pairWindow);
                 Assert.True(pairWindow.HasMultipleSlots);
+                Assert.Equal("P1.png", pairWindow.LeftFileName);
+                Assert.Equal("P2.png", pairWindow.RightFileName);
             }
             finally
             {

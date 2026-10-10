@@ -91,15 +91,14 @@ public sealed class ImageCropSettings : INotifyPropertyChanged
         Math.Abs(Zoom - 1.0) < 0.001 &&
         Rotation == 0;
 
+    /// <summary>Resets framing (pan, zoom, rotation). Pen marks are kept: they hide private details, and
+    /// strokes are stored in source-image coordinates so they stay valid under any framing.</summary>
     public void Reset()
     {
         PanX = 0;
         PanY = 0;
         Zoom = 1.0;
         Rotation = 0;
-        _redactStrokes.Clear();
-        OnPropertyChanged(nameof(RedactStrokes));
-        OnPropertyChanged(nameof(HasRedactions));
     }
 
     public ImageCropSettings Clone() => new()
