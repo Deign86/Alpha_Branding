@@ -26,6 +26,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private double _dragStartPanX;
     private double _dragStartPanY;
     private RedactStroke? _activeStroke;
+    private (ImageCropSettings Crop, RedactStroke[] Strokes)? _clearedStrokes;
 
     private BitmapSource? _leftBitmap;
     private BitmapSource? _rightBitmap;
@@ -51,12 +52,11 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
         _rightCrop = secondCrop?.Clone() ?? new ImageCropSettings();
 
         ItemTitle = title ?? System.IO.Path.GetFileName(filePath);
+        Title = $"{ItemTitle} | Crop & Alignment Editor | Alpha Premier";
 
         DataContext = this;
         PanModeToggle.Checked += ModeToggle_Checked;
-        PanModeToggle.Unchecked += ModeToggle_Unchecked;
         RedactModeToggle.Checked += ModeToggle_Checked;
-        RedactModeToggle.Unchecked += ModeToggle_Unchecked;
         UndoRedactButton.Click += UndoRedact_Click;
         ClearRedactButton.Click += ClearRedact_Click;
         PanModeToggle.IsChecked = true;
@@ -64,7 +64,9 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     }
 
     public string ItemTitle { get; }
-    public new string Title => ItemTitle;
+
+    public string LeftFileName => Path.GetFileName(_filePath);
+    public string RightFileName => Path.GetFileName(_secondFilePath ?? string.Empty);
 
     public bool HasMultipleSlots => _isPair;
 
@@ -104,7 +106,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
 
     public string TargetDimensionsText => $"{TargetWidth} × {TargetHeight} px";
 
-    public string PanCoordinatesText => $"X: {Math.Round(ActiveCrop.PanX):0} px  Y: {Math.Round(ActiveCrop.PanY):0} px";
+    public string PanCoordinatesText => $"X: {(int)Math.Round(ActiveCrop.PanX)} px  Y: {(int)Math.Round(ActiveCrop.PanY)} px";
 
     private void CropEditorWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -266,15 +268,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     {
         var redact = ReferenceEquals(sender, RedactModeToggle);
         if (!redact) FinishRedactStroke();
-        RedactModeToggle.IsChecked = redact;
-        PanModeToggle.IsChecked = !redact;
         TargetCanvas.Cursor = redact ? Cursors.Cross : Cursors.SizeAll;
-    }
-
-    private void ModeToggle_Unchecked(object sender, RoutedEventArgs e)
-    {
-        if (PanModeToggle.IsChecked != true && RedactModeToggle.IsChecked != true)
-            PanModeToggle.IsChecked = true;
     }
 
     private void AddRedactPoint(Point position)
@@ -294,7 +288,11 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private void FinishRedactStroke()
     {
         if (_activeStroke == null) return;
-        if (_activeStroke.Points.Count >= 2) ActiveCrop.RedactStrokes.Add(_activeStroke);
+        if (_activeStroke.Points.Count >= 2)
+        {
+            ActiveCrop.RedactStrokes.Add(_activeStroke);
+            _clearedStrokes = null;
+        }
         _activeStroke = null;
         TargetCanvas.ReleaseMouseCapture();
         RedrawRedactOverlay();
@@ -303,7 +301,17 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private void UndoRedact_Click(object sender, RoutedEventArgs e)
     {
         FinishRedactStroke();
-        if (ActiveCrop.RedactStrokes.Count == 0) return;
+        if (ActiveCrop.RedactStrokes.Count == 0)
+        {
+            // One-level undo of CLEAR MARKS, restored only onto the slot it was cleared from.
+            if (_clearedStrokes is { } cleared && ReferenceEquals(cleared.Crop, ActiveCrop))
+            {
+                ActiveCrop.RedactStrokes.AddRange(cleared.Strokes);
+                _clearedStrokes = null;
+                RedrawRedactOverlay();
+            }
+            return;
+        }
         ActiveCrop.RedactStrokes.RemoveAt(ActiveCrop.RedactStrokes.Count - 1);
         RedrawRedactOverlay();
     }
@@ -311,6 +319,8 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private void ClearRedact_Click(object sender, RoutedEventArgs e)
     {
         FinishRedactStroke();
+        if (ActiveCrop.RedactStrokes.Count == 0) return;
+        _clearedStrokes = (ActiveCrop, ActiveCrop.RedactStrokes.ToArray());
         ActiveCrop.RedactStrokes.Clear();
         RedrawRedactOverlay();
     }
@@ -385,6 +395,21 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     {
         var delta = e.Delta > 0 ? 0.08 : -0.08;
         ActiveCrop.Zoom = Math.Clamp(ActiveCrop.Zoom + delta, 0.2, 4.0);
+        UpdatePreview();
+        e.Handled = true;
+    }
+
+    private void Viewport_KeyDown(object sender, KeyEventArgs e)
+    {
+        var step = Keyboard.Modifiers == ModifierKeys.Shift ? 50 : 10;
+        switch (e.Key)
+        {
+            case Key.Left: ActiveCrop.PanX -= step; break;
+            case Key.Right: ActiveCrop.PanX += step; break;
+            case Key.Up: ActiveCrop.PanY -= step; break;
+            case Key.Down: ActiveCrop.PanY += step; break;
+            default: return;
+        }
         UpdatePreview();
         e.Handled = true;
     }

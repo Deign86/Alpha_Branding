@@ -70,7 +70,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="CANCEL"
                         AutomationProperties.AutomationId="ConfirmationCancelButton"
-                        ToolTip="Keep the current session and cancel starting a new session"
+                        ToolTip="Keep the current session unchanged"
                         Click="Cancel_Click"
                         IsCancel="True"
                         Style="{StaticResource SecondaryButton}"
@@ -78,14 +78,14 @@
 
                 <Button Content="DISCARD EDITS &amp; CONTINUE"
                         AutomationProperties.AutomationId="ConfirmationDiscardButton"
-                        ToolTip="Discard unsaved edits and begin branding the newly selected photos"
+                        ToolTip="Discard the current branded items and continue"
                         Click="Discard_Click"
                         Style="{StaticResource DestructiveActionButton}"
                         Margin="0,0,10,0"/>
 
                 <Button Content="SAVE &amp; CONTINUE"
                         AutomationProperties.AutomationId="ConfirmationSaveButton"
-                        ToolTip="Export current session first, then begin branding newly selected photos"
+                        ToolTip="Export the current session as a ZIP first, then continue"
                         Click="Save_Click"
                         Style="{StaticResource PrimaryButton}"/>
             </StackPanel>

@@ -64,6 +64,21 @@
         <local:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
         <local:EmptyToVisibilityConverter x:Key="EmptyToVisibilityConverter"/>
 
+        <!-- Keyboard-only focus ring, drawn outside the control so it never collides with hover/checked states -->
+        <Style x:Key="FocusRing">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Border Margin="-3"
+                                CornerRadius="11"
+                                BorderThickness="2"
+                                BorderBrush="{StaticResource GoldLight}"
+                                SnapsToDevicePixels="True"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Default Button Style -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
@@ -75,6 +90,7 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -92,10 +108,6 @@
                                 <Setter TargetName="border" Property="Background" Value="#22242B"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldLight}"/>
-                                <Setter TargetName="border" Property="Background" Value="#252730"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#121316"/>
@@ -122,6 +134,7 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -139,10 +152,6 @@
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldGradientHover}"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
                                 <Setter Property="Foreground" Value="#000000"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource GoldGradientHover}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldDark}"/>
@@ -197,23 +206,28 @@
         <!-- Small Action Button Style -->
         <Style x:Key="SmallActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="MinHeight" Value="32"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
         </Style>
 
-        <!-- Small Action Toggle Button Style (mode toggles match SmallActionButton) -->
+        <!-- Small Action Toggle Button Style: segmented mode toggles and radios (PAN/PEN, LEFT/RIGHT PHOTO,
+             COMBINE/KEEP SEPARATE). Checked mirrors the DarkComboBoxItem "selected" idiom and adds a bold
+             weight so the state never relies on colour alone. -->
         <Style x:Key="SmallActionToggleButton" TargetType="ToggleButton">
             <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="MinHeight" Value="32"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
@@ -229,24 +243,21 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#22242B"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
-                                <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldLight}"/>
-                                <Setter TargetName="border" Property="Background" Value="#252730"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BorderHover}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#121316"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#2A2418"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource GoldSubtle}"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -255,12 +266,7 @@
         </Style>
 
         <!-- Destructive Action Button Style (e.g. Delete Template) -->
-        <Style x:Key="DestructiveActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+        <Style x:Key="DestructiveActionButton" TargetType="Button" BasedOn="{StaticResource SmallActionButton}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -277,11 +283,6 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#2D1414"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="#EF4444"/>
-                                <Setter Property="Foreground" Value="#FCA5A5"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#EF4444"/>
-                                <Setter TargetName="border" Property="Background" Value="#381818"/>
                                 <Setter Property="Foreground" Value="#FCA5A5"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
@@ -330,8 +331,7 @@
                             <ScrollViewer x:Name="PART_ContentHost"
                                           Focusable="False"
                                           HorizontalScrollBarVisibility="Hidden"
-                                          VerticalScrollBarVisibility="Hidden"
-                                          Margin="{TemplateBinding Padding}"/>
+                                          VerticalScrollBarVisibility="Hidden"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -464,6 +464,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource Gold}"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Slider">
@@ -488,9 +489,6 @@
                             </Track>
                         </Grid>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="TrackBackground" Property="BorderBrush" Value="{StaticResource Gold}"/>
-                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.35"/>
                             </Trigger>
@@ -643,6 +641,7 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItem}"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">

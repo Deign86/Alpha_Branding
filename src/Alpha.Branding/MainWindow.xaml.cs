@@ -33,8 +33,20 @@ public partial class MainWindow : Window
         InitializeComponent();
         WindowThemeHelper.EnableDarkTitleBar(this);
         DataContext = _viewModel;
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            // Announce outcomes (cleared, completed, skipped, failed), not every per-item progress update.
+            if (!_viewModel.IsBusy && e.PropertyName is nameof(MainWindowViewModel.Status) or nameof(MainWindowViewModel.IsBusy))
+            {
+                Dispatcher.InvokeAsync(AnnounceStatus, System.Windows.Threading.DispatcherPriority.Background);
+            }
+        };
         Loaded += MainWindow_Loaded;
     }
+
+    private void AnnounceStatus() =>
+        System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(StatusTextBlock)
+            ?.RaiseAutomationEvent(System.Windows.Automation.Peers.AutomationEvents.LiveRegionChanged);
 
     private bool _isExiting;
 
@@ -214,12 +226,7 @@ public partial class MainWindow : Window
 
     public async Task<bool> LoadFilesAsync(IEnumerable<string> filePaths)
     {
-        var supported = filePaths.Where(f =>
-        {
-            if (!File.Exists(f)) return false;
-            var ext = Path.GetExtension(f).ToLowerInvariant();
-            return ext is ".jpg" or ".jpeg" or ".jfif" or ".png" or ".bmp" or ".webp" or ".heic" or ".heif" or ".mp4" or ".mov" or ".wmv" or ".avi" or ".m4v" or ".mkv" or ".webm";
-        }).ToArray();
+        var supported = filePaths.Where(MainWindowViewModel.IsSupportedMedia).ToArray();
 
         if (supported.Length > 0)
         {
@@ -234,12 +241,23 @@ public partial class MainWindow : Window
         _ = LoadFilesAsync(filePaths);
     }
 
+    /// <summary>Yes/No guard for actions that drop staged crops, pen marks or pairs. Defaults to No.</summary>
+    private bool ConfirmDiscardStagedEdits(string message) =>
+        MessageBox.Show(this, message, "Discard edits?", MessageBoxButton.YesNo,
+            MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
+
     private async void SelectPhotos_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy) return;
         var dialog = new OpenFileDialog { Multiselect = true, Filter = MediaFilter };
         if (dialog.ShowDialog() == true)
         {
+            if (_viewModel.HasStagedEdits && !ConfirmDiscardStagedEdits(
+                    $"Replace the {_viewModel.SelectedPhotos.Count} selected items? Their crop, pen and pairing edits will be lost. Use ADD MORE to keep them."))
+            {
+                return;
+            }
+
             await LoadFilesAsync(dialog.FileNames);
         }
     }
@@ -250,15 +268,7 @@ public partial class MainWindow : Window
         var dialog = new OpenFileDialog { Multiselect = true, Filter = MediaFilter };
         if (dialog.ShowDialog() == true)
         {
-            var combined = _viewModel.SelectedFiles.ToList();
-            foreach (var file in dialog.FileNames)
-            {
-                if (!combined.Contains(file, StringComparer.OrdinalIgnoreCase))
-                {
-                    combined.Add(file);
-                }
-            }
-            _viewModel.SelectedFiles = combined;
+            _viewModel.AddFiles(dialog.FileNames);
         }
     }
 
@@ -308,41 +318,43 @@ public partial class MainWindow : Window
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
         _viewModel.RemoveSelectedFile(item.FilePath);
+        // The clicked card is gone; keep keyboard focus inside the view instead of dropping it.
+        FocusAfterLayout(_viewModel.HasSelectedPhotos ? AddMoreButton : EmptyStateSelectButton);
     }
 
     private void ClearQueue_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.IsBusy) return;
+        if (!_viewModel.CanClear) return;
+        if (_viewModel.HasStagedEdits && !ConfirmDiscardStagedEdits(
+                $"Remove all {_viewModel.SelectedPhotos.Count} selected items? Their crop, pen and pairing edits will be lost."))
+        {
+            return;
+        }
+
         _viewModel.ClearSelectedPhotos();
+        FocusAfterLayout(EmptyStateSelectButton);
     }
+
+    private async void ClearSession_Click(object sender, RoutedEventArgs e)
+    {
+        if (await _viewModel.ClearSessionAsync())
+        {
+            FocusAfterLayout(EmptyStateSelectButton);
+        }
+    }
+
+    private void FocusAfterLayout(UIElement target) =>
+        Dispatcher.InvokeAsync(() => target.Focus(), System.Windows.Threading.DispatcherPriority.Loaded);
 
     private void PairButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
-        if (!CanPair(item)) return;
-        var partner = FindNextPairCandidate(item);
-        if (partner == null) return;
-        _viewModel.PairWith(item, partner.FilePath);
+        if (sender is FrameworkElement { DataContext: SelectedPhotoItem item }) _viewModel.PairWithNext(item);
     }
 
     private void UnpairButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.IsBusy || sender is not FrameworkElement { DataContext: SelectedPhotoItem item }) return;
         _viewModel.Unpair(item);
-    }
-
-    private SelectedPhotoItem? FindNextPairCandidate(SelectedPhotoItem item)
-    {
-        var photos = _viewModel.SelectedPhotos;
-        int start = photos.IndexOf(item);
-        for (int offset = 1; offset <= photos.Count; offset++)
-        {
-            var candidate = photos[(start + offset) % photos.Count];
-            if (!ReferenceEquals(candidate, item) && CanPair(candidate) && !candidate.HasExplicitPair)
-                return candidate;
-        }
-
-        return null;
     }
 
     private async void ImportTemplate_Click(object sender, RoutedEventArgs e)
@@ -381,10 +393,12 @@ public partial class MainWindow : Window
         if (template == null || template.IsBuiltIn) return;
 
         var result = MessageBox.Show(
-            $"Are you sure you want to delete the branding template '{template.Name}'?",
-            "Delete Template",
+            this,
+            $"Delete the branding template \"{template.Name}\"? This can't be undone.",
+            "Delete template?",
             MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
 
         if (result == MessageBoxResult.Yes)
         {
@@ -533,7 +547,7 @@ public partial class MainWindow : Window
         if (_viewModel.IsBusy || e.LeftButton != MouseButtonState.Pressed ||
             _stagedCardDragStart is not Point dragStart ||
             sender is not FrameworkElement { DataContext: SelectedPhotoItem source } ||
-            !CanPair(source)) return;
+            !MainWindowViewModel.CanPair(source)) return;
 
         var current = e.GetPosition(this);
         if (Math.Abs(current.X - dragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
@@ -554,7 +568,7 @@ public partial class MainWindow : Window
             string.Equals(photo.FilePath, sourcePath, StringComparison.OrdinalIgnoreCase));
         var target = (sender as FrameworkElement)?.DataContext as SelectedPhotoItem;
         var canDrop = !_viewModel.IsBusy && source != null && target != null &&
-            !ReferenceEquals(source, target) && CanPair(source) && CanPair(target);
+            !ReferenceEquals(source, target) && MainWindowViewModel.CanPair(source) && MainWindowViewModel.CanPair(target);
 
         e.Effects = canDrop ? DragDropEffects.Move : DragDropEffects.None;
         if (sender is FrameworkElement card) card.Tag = canDrop;
@@ -578,17 +592,15 @@ public partial class MainWindow : Window
         {
             var source = _viewModel.SelectedPhotos.FirstOrDefault(photo =>
                 string.Equals(photo.FilePath, sourcePath, StringComparison.OrdinalIgnoreCase));
-            if (source != null && !ReferenceEquals(source, target) && CanPair(source) && CanPair(target))
+            if (source != null && !ReferenceEquals(source, target))
             {
+                // PairWith re-checks CanPair for both items.
                 _viewModel.PairWith(target, sourcePath);
             }
         }
 
         if (sender is FrameworkElement card) card.Tag = false;
     }
-
-    private static bool CanPair(SelectedPhotoItem item) =>
-        !item.IsSolo && !item.IsVideo && !VideoProcessingService.IsVideoFile(item.FilePath);
 
     private int _dragDepth;
 
@@ -653,7 +665,16 @@ public partial class MainWindow : Window
         if (_viewModel.IsBusy) return;
         if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files)
         {
-            await LoadFilesAsync(files);
+            // Dropping onto staged media adds to the selection (like ADD MORE) so existing edits survive;
+            // otherwise it starts a new selection through the usual session prompt.
+            if (_viewModel.HasSelectedPhotos)
+            {
+                _viewModel.AddFiles(files);
+            }
+            else
+            {
+                await LoadFilesAsync(files);
+            }
         }
     }
 

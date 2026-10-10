@@ -149,4 +149,20 @@ public class RedactTests
         Assert.Single(branded.RightCropSettings.RedactStrokes);
         Assert.NotSame(branded.CropSettings.RedactStrokes[0], branded.RightCropSettings.RedactStrokes[0]);
     }
+
+    [Fact]
+    public void Redact_ResetCrop_KeepsPenMarks()
+    {
+        var stroke = new RedactStroke();
+        stroke.AddPoint(new System.Windows.Point(0.25, 0.5));
+        stroke.AddPoint(new System.Windows.Point(0.75, 0.5));
+        var crop = new ImageCropSettings { PanX = 40, Zoom = 1.8, Rotation = 90, RedactStrokes = [stroke] };
+
+        crop.Reset();
+
+        // Reset is framing-only; silently dropping pen marks would un-hide private details.
+        Assert.True(crop.IsDefault);
+        Assert.True(crop.HasRedactions);
+        Assert.Single(crop.RedactStrokes);
+    }
 }
