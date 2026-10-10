@@ -1,3 +1,17 @@
+## Alpha Premier Property Branding Studio v2.4.0
+
+### New Features
+- **CLEAR ALL**: empty the selected media in one click (asks first only when crops, pen marks or pairs would be lost); the branded results view gets its own CLEAR ALL that offers to export before clearing.
+- **Drop to add**: dropping files onto the selected media now adds them instead of replacing the selection; SELECT MEDIA asks before replacing edited items.
+- **Crop editor keyboard panning**: focus the photo and use the arrow keys (Shift for bigger steps); CLEAR MARKS can be undone with UNDO or `Ctrl+Z`.
+
+### Fixes & Improvements
+- **Consistent controls**: PAN/PEN, LEFT/RIGHT PHOTO and COMBINE IMAGES/KEEP SEPARATE use one dark-gold segmented style (no more default Windows chrome); the active choice is gold and bold, and keyboard focus shows a gold ring.
+- **Crop editor**: header names the photo being edited; toolbar grouped into mode/pen, zoom and framing; labelled pen SIZE; rule-of-thirds guides fit the pair slots.
+- **Pen marks are kept** when a crop is reset.
+- **No false notice** that branded photos are a "new selection" right after APPLY BRANDING; skipped files are named in the status line.
+- **Layout & accessibility**: filename prefix no longer clipped; staged card hover/drop highlights work; pairing shows the partner's file name; screen readers announce status results; at 200% scaling the page scrolls instead of squeezing the gallery.
+
 ## Alpha Premier Property Branding Studio v2.3.0
 
 ### New Features
