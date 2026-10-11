@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Branding Studio User Manual</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-left { content: "Alpha Premier Property Branding Studio · User Manual · v2.3.0"; font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
+    @bottom-right { content: "Page " counter(page); font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
+  }
+  @page cover { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+
+  :root {
+    --gold: #b8913f;
+    --gold-dark: #8c6a24;
+    --gold-soft: #f6efe0;
+    --ink: #1d1b17;
+    --muted: #5d5850;
+    --line: #e4ddcf;
+    --note: #eef4fb;
+    --note-line: #6a9bd1;
+    --warn: #fdf1ec;
+    --warn-line: #d0714c;
+    --tip: #eff7ee;
+    --tip-line: #5e9e5a;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 10pt/1.45 "Segoe UI", Arial, sans-serif; color: var(--ink); background: #fff; }
+
+  /* Cover */
+  .cover { page: cover; height: 297mm; width: 210mm; background: #0d0d0f; color: #f3ead8; position: relative; overflow: hidden; break-after: page; }
+  .cover .band { position: absolute; left: 0; right: 0; top: 0; height: 6mm; background: linear-gradient(90deg, #8c6a24, #e2c27a, #8c6a24); }
+  .cover .logo { position: absolute; top: 34mm; left: 50%; transform: translateX(-50%); width: 92mm; }
+  .cover .titles { position: absolute; top: 132mm; left: 20mm; right: 20mm; text-align: center; }
+  .cover .kicker { letter-spacing: .32em; font-size: 9pt; color: #d6b46a; text-transform: uppercase; }
+  .cover h1 { font-size: 30pt; line-height: 1.15; margin: 4mm 0 3mm; color: #fff; font-weight: 600; }
+  .cover .sub { font-size: 13pt; color: #cfc5b1; }
+  .cover .shot { position: absolute; bottom: 30mm; left: 50%; transform: translateX(-50%); width: 150mm; border: 1px solid #4a3f27; border-radius: 3mm; box-shadow: 0 6mm 16mm rgba(0,0,0,.6); }
+  .cover .meta { position: absolute; bottom: 12mm; left: 20mm; right: 20mm; display: flex; justify-content: space-between; font-size: 9pt; color: #a99f8a; border-top: 1px solid #3a3222; padding-top: 3mm; }
+
+  /* Typography */
+  h1.chapter { font-size: 21pt; margin: 0 0 2mm; color: var(--ink); font-weight: 600; }
+  .chapter-no { font-size: 9pt; letter-spacing: .25em; color: var(--gold-dark); text-transform: uppercase; font-weight: 600; }
+  .chapter-rule { height: 1.2mm; width: 26mm; background: var(--gold); margin: 2.5mm 0 4.5mm; border-radius: 1mm; }
+  section.chap { break-before: page; }
+  h2 { font-size: 13pt; margin: 5mm 0 1.6mm; color: var(--ink); break-after: avoid; }
+  h3 { font-size: 11pt; margin: 5mm 0 1.5mm; color: var(--gold-dark); break-after: avoid; }
+  p { margin: 0 0 2.6mm; }
+  .lead { font-size: 11.5pt; color: var(--muted); }
+  ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin: 0 0 1.2mm; }
+  .ui { font-weight: 700; font-size: 9pt; letter-spacing: .03em; background: #f1ece2; border: 1px solid #d9cfba; border-radius: 1mm; padding: .2mm 1.4mm; white-space: nowrap; }
+  kbd { font: 600 8.5pt "Consolas", monospace; background: #fff; border: 1px solid #c9c2b4; border-bottom-width: 2px; border-radius: 1mm; padding: .2mm 1.4mm; white-space: nowrap; }
+  code { font: 9pt "Consolas", monospace; background: #f4f2ee; padding: .2mm 1mm; border-radius: .8mm; }
+
+  /* Steps */
+  ol.steps { list-style: none; counter-reset: step; padding-left: 0; }
+  ol.steps > li { counter-increment: step; position: relative; padding-left: 10mm; margin-bottom: 2.4mm; }
+  ol.steps > li::before { content: counter(step); position: absolute; left: 0; top: .2mm; width: 6.4mm; height: 6.4mm; border-radius: 50%; background: var(--gold); color: #fff; font-weight: 700; font-size: 9pt; display: flex; align-items: center; justify-content: center; }
+
+  /* Callout boxes */
+  .box { border-left: 1.2mm solid; border-radius: 1.2mm; padding: 2mm 3.6mm; margin: 2.4mm 0 3mm; break-inside: avoid; }
+  .box b.t { display: block; font-size: 8.5pt; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1mm; }
+  .note { background: var(--note); border-color: var(--note-line); } .note b.t { color: #2f6aa8; }
+  .tip { background: var(--tip); border-color: var(--tip-line); } .tip b.t { color: #3c7a39; }
+  .warn { background: var(--warn); border-color: var(--warn-line); } .warn b.t { color: #b24f2a; }
+  .box p:last-child, .box ul:last-child { margin-bottom: 0; }
+
+  /* Figures with numbered pins */
+  figure { margin: 2.5mm auto 4mm; break-inside: avoid; }
+  .w88 { width: 88%; } .w80 { width: 80%; }
+  .shotwrap { position: relative; display: block; border: 1px solid #2b2620; border-radius: 1.6mm; overflow: hidden; }
+  .shotwrap img { display: block; width: 100%; }
+  .pin { position: absolute; transform: translate(-50%, -50%); width: 6.2mm; height: 6.2mm; border-radius: 50%; background: #e2463b; color: #fff; font-weight: 700; font-size: 8.5pt; display: flex; align-items: center; justify-content: center; border: .5mm solid #fff; box-shadow: 0 .6mm 1.6mm rgba(0,0,0,.5); }
+  figcaption { font-size: 8.8pt; color: var(--muted); margin-top: 1.6mm; }
+  figcaption b { color: var(--ink); }
+  .narrow { width: 72%; margin-left: auto; margin-right: auto; }
+  .half { width: 55%; margin-left: auto; margin-right: auto; }
+
+  /* Legend + tables */
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.6pt; break-inside: auto; }
+  th { text-align: left; background: var(--gold-soft); color: var(--ink); font-weight: 600; padding: 1.4mm 2.4mm; border-bottom: 1px solid #d9cba8; }
+  td { padding: 1.3mm 2.4mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr { break-inside: avoid; }
+  table.legend td:first-child { width: 9mm; }
+  .num { display: inline-flex; width: 5.4mm; height: 5.4mm; border-radius: 50%; background: #e2463b; color: #fff; font-weight: 700; font-size: 8pt; align-items: center; justify-content: center; }
+
+  /* Two-column comparisons */
+  .cols { width: 86%; margin: 2mm auto 3mm; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; break-inside: avoid; }
+  .cols figure { margin: 0; }
+  .cols img { width: 100%; display: block; border-radius: 1.2mm; border: 1px solid #2b2620; }
+  .arrow-row { width: 82%; margin-left: auto !important; margin-right: auto !important; display: grid; grid-template-columns: 1fr 9mm 1fr; align-items: center; gap: 2mm; margin: 3mm 0 4mm; break-inside: avoid; }
+  .arrow-row img { width: 100%; display: block; border-radius: 1.2mm; border: 1px solid #2b2620; }
+  .arrow-row .arr { text-align: center; font-size: 18pt; color: var(--gold); }
+
+  /* TOC */
+  .toc { list-style: none; padding: 0; margin: 0; }
+  .toc li { display: flex; align-items: baseline; margin: 0 0 2.2mm; font-size: 11pt; }
+  .toc li .n { width: 10mm; color: var(--gold-dark); font-weight: 700; }
+  .toc li .dots { flex: 1; border-bottom: 1px dotted #bdb4a2; margin: 0 2mm; transform: translateY(-1mm); }
+  .toc li .pg { font-weight: 600; min-width: 6mm; text-align: right; }
+  .toc li.sub { font-size: 9.6pt; margin-left: 10mm; color: var(--muted); }
+
+  /* Workflow strip */
+  .flow { display: flex; gap: 2mm; margin: 4mm 0 5mm; break-inside: avoid; }
+  .flow .stage { flex: 1; border: 1px solid #d9cba8; background: var(--gold-soft); border-radius: 2mm; padding: 2.6mm 2.4mm; text-align: center; position: relative; }
+  .flow .stage .k { display: block; font-size: 7.5pt; letter-spacing: .14em; color: var(--gold-dark); font-weight: 700; }
+  .flow .stage b { display: block; font-size: 10pt; margin: .6mm 0; }
+  .flow .stage span.d { font-size: 8pt; color: var(--muted); line-height: 1.3; display: block; }
+  .flow .stage:not(:last-child)::after { content: "›"; position: absolute; right: -2.4mm; top: 50%; transform: translateY(-55%); font-size: 15pt; color: var(--gold); font-weight: 700; }
+
+  .keep { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="band"></div>
+  <img class="logo" src="../../src/Alpha.Branding/Assets/logo w name.png" alt="Alpha Premier Group of Companies logo">
+  <div class="titles">
+    <div class="kicker">User Manual</div>
+    <h1>Alpha Premier Property<br>Branding Studio</h1>
+    <div class="sub">Watermark, crop, and export listing photos and videos for Windows</div>
+  </div>
+  <img class="shot" src="images/04_main_results.png" alt="Branding Studio main window with branded results">
+  <div class="meta"><span>Software version 2.3.0</span><span>Windows 10 / 11 (64-bit)</span><span>Edition: October 2026</span></div>
+</div>
+
+<!-- ============ ABOUT / TOC ============ -->
+<section>
+  <div class="chapter-no">Before you begin</div>
+  <h1 class="chapter">About this manual</h1>
+  <div class="chapter-rule"></div>
+  <p>This manual explains how to install and use <b>Alpha Premier Property Branding Studio</b> (called “Branding Studio” in this manual). It is written for listing agents, marketing staff, and photographers who prepare property media for Alpha Premier Realty listings. No technical background is needed.</p>
+  <p>The chapters follow the order of a normal working session. If you only want to brand a batch of photos quickly, read <b>Chapter 3, Quick start</b>, which takes about five minutes.</p>
+
+  <h2>Conventions used in this manual</h2>
+  <table>
+    <tr><th style="width:38mm">Convention</th><th>Meaning</th></tr>
+    <tr><td><span class="ui">APPLY BRANDING</span></td><td>A button, menu item, or label exactly as it appears on screen.</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>O</kbd></td><td>A keyboard shortcut. Hold the first key and press the second.</td></tr>
+    <tr><td><span class="num">1</span></td><td>A numbered marker on a screenshot. The table under each figure explains what each number points to.</td></tr>
+    <tr><td><code>%LOCALAPPDATA%</code></td><td>A file path, file name, or text you type.</td></tr>
+  </table>
+  <div class="box note"><b class="t">Note</b><p>Gives extra information that helps you understand a feature.</p></div>
+  <div class="box tip"><b class="t">Tip</b><p>Suggests a faster or better way to do something.</p></div>
+  <div class="box warn"><b class="t">Caution</b><p>Warns you about something that can lose work or produce an unexpected result.</p></div>
+  <p style="font-size:9pt;color:var(--muted)">Screenshots in this manual use sample illustrations in place of real listing photos. Your screen will show your own media. Screenshots were taken at 100% display scaling; at higher scaling, some button rows wrap onto a second line.</p>
+</section>
+
+<section class="chap">
+  <div class="chapter-no">Contents</div>
+  <h1 class="chapter">Table of contents</h1>
+  <div class="chapter-rule"></div>
+  <ul class="toc">
+    <li><span class="n">1</span>Introduction<span class="dots"></span><span class="pg" data-toc="ch1"></span></li>
+    <li><span class="n">2</span>Installation<span class="dots"></span><span class="pg" data-toc="ch2"></span></li>
+    <li><span class="n">3</span>Quick start: brand your first batch<span class="dots"></span><span class="pg" data-toc="ch3"></span></li>
+    <li><span class="n">4</span>The main window<span class="dots"></span><span class="pg" data-toc="ch4"></span></li>
+    <li><span class="n">5</span>Adding and managing media<span class="dots"></span><span class="pg" data-toc="ch5"></span></li>
+    <li><span class="n">6</span>Photo layouts and pairing<span class="dots"></span><span class="pg" data-toc="ch6"></span></li>
+    <li><span class="n">7</span>The Crop &amp; Alignment Editor<span class="dots"></span><span class="pg" data-toc="ch7"></span></li>
+    <li class="sub">Hiding details with the PEN tool<span class="dots"></span><span class="pg" data-toc="ch7pen"></span></li>
+    <li><span class="n">8</span>File names and branding templates<span class="dots"></span><span class="pg" data-toc="ch8"></span></li>
+    <li><span class="n">9</span>Applying branding<span class="dots"></span><span class="pg" data-toc="ch9"></span></li>
+    <li><span class="n">10</span>Reviewing and fixing results<span class="dots"></span><span class="pg" data-toc="ch10"></span></li>
+    <li><span class="n">11</span>Saving and exporting<span class="dots"></span><span class="pg" data-toc="ch11"></span></li>
+    <li><span class="n">12</span>Sessions and unsaved work<span class="dots"></span><span class="pg" data-toc="ch12"></span></li>
+    <li><span class="n">13</span>Software updates<span class="dots"></span><span class="pg" data-toc="ch13"></span></li>
+    <li><span class="n">14</span>Keyboard and mouse reference<span class="dots"></span><span class="pg" data-toc="ch14"></span></li>
+    <li><span class="n">15</span>Troubleshooting and FAQ<span class="dots"></span><span class="pg" data-toc="ch15"></span></li>
+    <li><span class="n">16</span>Specifications and glossary<span class="dots"></span><span class="pg" data-toc="ch16"></span></li>
+  </ul>
+</section>
+
+<!-- ============ 1 INTRODUCTION ============ -->
+<section class="chap" id="ch1">
+  <div class="chapter-no">Chapter 1</div>
+  <h1 class="chapter">Introduction</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">Branding Studio applies the official Alpha Premier Realty frame (logo, gold accents, and contact numbers) to property photos and video clips. Every output has the same size and look, ready to post on listing sites and social media.</p>
+
+  <h2>What you can do</h2>
+  <ul>
+    <li><b>Brand photos and videos in batches.</b> Add many files at once and process them with one click.</li>
+    <li><b>Combine portrait photos.</b> Two tall photos are placed side by side in one frame, so nothing is stretched or squashed.</li>
+    <li><b>Adjust framing before or after branding.</b> Pan, zoom, rotate, fit, or fill each photo behind the frame.</li>
+    <li><b>Hide private details.</b> Draw over house numbers, plates, family photos, or documents with the PEN tool.</li>
+    <li><b>Name files consistently.</b> Output files are numbered automatically, for example <code>Maple_Street_128_01.jpg</code>.</li>
+    <li><b>Export in one step.</b> Save everything as one ZIP file or as separate files in a folder.</li>
+    <li><b>Use other templates.</b> Import extra frame images and switch between them.</li>
+  </ul>
+
+  <h2>How a session works</h2>
+  <div class="flow">
+    <div class="stage"><span class="k">STEP 1</span><b>Select</b><span class="d">Add photos and videos</span></div>
+    <div class="stage"><span class="k">STEP 2</span><b>Arrange</b><span class="d">Pair, separate, set the prefix</span></div>
+    <div class="stage"><span class="k">STEP 3</span><b>Crop</b><span class="d">Frame each photo, hide details</span></div>
+    <div class="stage"><span class="k">STEP 4</span><b>Apply</b><span class="d">Add the branding frame</span></div>
+    <div class="stage"><span class="k">STEP 5</span><b>Review</b><span class="d">Preview and fix</span></div>
+    <div class="stage"><span class="k">STEP 6</span><b>Export</b><span class="d">ZIP or files</span></div>
+  </div>
+
+  <h2>Before and after</h2>
+  <p>Branding Studio converts each photo to a 1200 × 1000 pixel image and adds the frame on top. You do not need to resize your photos first.</p>
+  <div class="arrow-row">
+    <img src="sample-photos/01_Exterior_Front.jpg" alt="Original photo">
+    <div class="arr">➜</div>
+    <img src="images/output_01.jpg" alt="Branded photo">
+  </div>
+  <p style="font-size:8.8pt;color:var(--muted);margin-top:-2mm"><b style="color:var(--ink)">Figure 1-1.</b> An original exterior photo (left) and the branded result (right).</p>
+
+  <div class="box note"><b class="t">Note: Your media stays on your computer</b><p>All processing happens on your PC. Branding Studio does not upload your photos or videos anywhere. The only internet connection it makes is to check for software updates (Chapter 13).</p></div>
+</section>
+
+<!-- ============ 2 INSTALLATION ============ -->
+<section class="chap" id="ch2">
+  <div class="chapter-no">Chapter 2</div>
+  <h1 class="chapter">Installation</h1>
+  <div class="chapter-rule"></div>
+
+  <h2>System requirements</h2>
+  <table>
+    <tr><th style="width:45mm">Item</th><th>Requirement</th></tr>
+    <tr><td>Operating system</td><td>Windows 10 (version 1809 or later) or Windows 11, 64-bit</td></tr>
+    <tr><td>Administrator rights</td><td>Not required. The app installs for your Windows user account only.</td></tr>
+    <tr><td>Extra software</td><td>None. Everything the app needs is included in the installer.</td></tr>
+    <tr><td>Internet</td><td>Only needed to download the installer and to check for updates.</td></tr>
+    <tr><td>Display</td><td>Works at 100%, 125%, 150%, 175%, and 200% Windows display scaling. Smallest window size: 840 × 480.</td></tr>
+  </table>
+
+  <h2>Option A: Install with the setup program (recommended)</h2>
+  <ol class="steps">
+    <li>Download <code>Alpha.Branding.Setup.exe</code> from the official release page: <code>github.com/Deign86/Alpha_Branding/releases/latest</code>. Your IT team may also give you the file directly.</li>
+    <li>Double-click <code>Alpha.Branding.Setup.exe</code>.</li>
+    <li>Follow the on-screen steps. No administrator password is needed.</li>
+    <li>When setup finishes, open <b>Start</b> and select <b>Alpha Premier Property Branding Studio</b>.</li>
+  </ol>
+  <p>The app is installed to <code>%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio</code> and a Start menu shortcut is created.</p>
+
+  <h2>Option B: Run the portable version</h2>
+  <ol class="steps">
+    <li>Download the <code>Alpha.Branding-v2.3.0.zip</code> file from the same release page.</li>
+    <li>Right-click the ZIP file and select <b>Extract All</b>.</li>
+    <li>Open the extracted folder and double-click <code>Alpha.Branding.exe</code>.</li>
+  </ol>
+  <p>Use the portable version if you cannot install software on your PC, or to run the app from a USB drive.</p>
+
+  <h2>Uninstalling</h2>
+  <ol class="steps">
+    <li>Open <b>Settings › Apps › Installed apps</b> (Windows 11) or <b>Settings › Apps &amp; features</b> (Windows 10).</li>
+    <li>Find <b>Alpha Premier Property Branding Studio</b>, select <b>⋯</b> or the app name, then select <b>Uninstall</b>.</li>
+  </ol>
+  <p>Uninstalling removes the app. Files you have already exported are not affected.</p>
+
+  <h2>For IT administrators</h2>
+  <p>The repository includes <code>Install.ps1</code> for unattended deployment through tools such as Action1 RMM or Microsoft Intune. It supports <code>-DownloadUrl</code>, <code>-AllUsers</code>, <code>-CreateDesktopShortcut</code>, and <code>-Uninstall</code>. To turn off update checks on a PC, set the machine environment variable <code>ALPHA_BRANDING_DISABLE_AUTO_UPDATE</code> to <code>1</code>. See the project README for full details.</p>
+</section>
+
+<!-- ============ 3 QUICK START ============ -->
+<section class="chap" id="ch3">
+  <div class="chapter-no">Chapter 3</div>
+  <h1 class="chapter">Quick start: brand your first batch</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">Follow these steps to brand a set of listing photos and save them as a ZIP file. It takes about five minutes.</p>
+  <ol class="steps">
+    <li>Open Branding Studio from the <b>Start</b> menu.</li>
+    <li>Select <span class="ui">SELECT MEDIA</span> (or press <kbd>Ctrl</kbd> + <kbd>O</kbd>). Choose your photos and select <b>Open</b>. You can also drag files from File Explorer onto the window.</li>
+    <li>In <span class="ui">FILENAME PREFIX</span>, type a name for this listing, for example <code>Maple_Street_128</code>. The <b>Preview</b> box shows the first file name.</li>
+    <li>Check that <span class="ui">BRANDING TEMPLATE</span> shows <b>Alpha Premier Classic</b>.</li>
+    <li>Optional: select <span class="ui">EDIT CROP</span> on any photo to change its framing (Chapter 7).</li>
+    <li>Select <span class="ui">APPLY BRANDING</span> (or press <kbd>F5</kbd>). Wait until the status reads <b>Completed</b>.</li>
+    <li>Look over the results. Select <span class="ui">PREVIEW</span> on a result to see it full size.</li>
+    <li>Select <span class="ui">EXPORT</span> › <b>Export as ZIP Archive (.zip)</b>, choose where to save, and select <b>Save</b>.</li>
+  </ol>
+  <figure class="w88">
+    <div class="shotwrap">
+      <img src="images/02_main_staged.png" alt="Main window with four photos staged">
+      <span class="pin" style="left:2.1%;top:15.2%">2</span>
+      <span class="pin" style="left:14.9%;top:17.7%">3</span>
+      <span class="pin" style="left:47.4%;top:19.5%">4</span>
+      <span class="pin" style="left:63.2%;top:26.4%">6</span>
+    </div>
+    <figcaption><b>Figure 3-1.</b> Photos are staged and ready. The numbers match the quick-start steps above.</figcaption>
+  </figure>
+  <div class="box tip"><b class="t">Tip</b><p>By default, portrait (tall) photos are combined in pairs. Four photos with two portraits give three results: two single photos and one side-by-side pair. See Chapter 6 to change this.</p></div>
+</section>
+
+<!-- ============ 4 MAIN WINDOW ============ -->
+<section class="chap" id="ch4">
+  <div class="chapter-no">Chapter 4</div>
+  <h1 class="chapter">The main window</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">The main window has three areas: the header at the top, the control panel in the middle, and the workspace below. The workspace shows a welcome screen, your staged media, or your branded results, depending on where you are in the session.</p>
+  <figure>
+    <div class="shotwrap">
+      <img src="images/01_main_empty.png" alt="Main window when first opened">
+      <span class="pin" style="left:84.5%;top:3.4%">1</span>
+      <span class="pin" style="left:2.1%;top:15.2%">2</span>
+      <span class="pin" style="left:14.9%;top:17.7%">3</span>
+      <span class="pin" style="left:29.5%;top:19.1%">4</span>
+      <span class="pin" style="left:48.8%;top:19.5%">5</span>
+      <span class="pin" style="left:63.1%;top:19.5%">6</span>
+      <span class="pin" style="left:63.2%;top:26.4%">7</span>
+      <span class="pin" style="left:77.5%;top:26.4%">8</span>
+      <span class="pin" style="left:86.9%;top:26.4%">9</span>
+      <span class="pin" style="left:2%;top:35.4%">10</span>
+      <span class="pin" style="left:73.8%;top:35.8%">11</span>
+      <span class="pin" style="left:40.9%;top:83.5%">12</span>
+    </div>
+    <figcaption><b>Figure 4-1.</b> The main window when you first open the app.</figcaption>
+  </figure>
+  <table class="legend">
+    <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
+    <tr><td><span class="num">1</span></td><td>Selection counter</td><td>Shows how many photos and videos are in the current batch.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">SELECT MEDIA</span></td><td>Opens a file window so you can choose photos and videos. Starts a new batch.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">FILENAME PREFIX</span></td><td>The start of every output file name. See Chapter 8.</td></tr>
+    <tr><td><span class="num">4</span></td><td>Preview</td><td>Shows what the first output file will be called.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">BRANDING TEMPLATE</span></td><td>Selects which frame is applied. The badge above it shows the frame’s shape.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">+ IMPORT</span> / <span class="ui">DELETE</span></td><td>Adds a new template. <span class="ui">DELETE</span> appears only when a custom template is selected.</td></tr>
+    <tr><td><span class="num">7</span></td><td><span class="ui">APPLY BRANDING</span></td><td>Processes every staged item. Available once media is selected.</td></tr>
+    <tr><td><span class="num">8</span></td><td><span class="ui">EXPORT</span></td><td>Saves all results as a ZIP file or as separate files. Available after branding.</td></tr>
+    <tr><td><span class="num">9</span></td><td><span class="ui">CHECK FOR UPDATES</span></td><td>Checks for a newer version of the app. See Chapter 13.</td></tr>
+    <tr><td><span class="num">10</span></td><td><span class="ui">STATUS</span></td><td>Describes what the app is doing or what just happened. Read this first if something seems wrong.</td></tr>
+    <tr><td><span class="num">11</span></td><td>Progress bar</td><td>Fills up while files are loaded, branded, or exported.</td></tr>
+    <tr><td><span class="num">12</span></td><td>Welcome area</td><td>Select <span class="ui">SELECT MEDIA TO BEGIN</span>, or drop files here.</td></tr>
+  </table>
+  <div class="box note"><b class="t">Note</b><p>Buttons appear faded when they cannot be used yet. For example, <span class="ui">EXPORT</span> stays faded until you have branded results, and most buttons are paused while the progress bar is running.</p></div>
+</section>
+
+<!-- ============ 5 MEDIA ============ -->
+<section class="chap" id="ch5">
+  <div class="chapter-no">Chapter 5</div>
+  <h1 class="chapter">Adding and managing media</h1>
+  <div class="chapter-rule"></div>
+
+  <h2>Supported file types</h2>
+  <table>
+    <tr><th style="width:30mm">Type</th><th>File extensions</th><th style="width:50mm">Output</th></tr>
+    <tr><td>Photos</td><td><code>.jpg</code> <code>.jpeg</code> <code>.jfif</code> <code>.png</code> <code>.bmp</code> <code>.webp</code> <code>.heic</code> <code>.heif</code></td><td>JPG, 1200 × 1000 pixels</td></tr>
+    <tr><td>Videos</td><td><code>.mp4</code> <code>.mov</code> <code>.wmv</code> <code>.avi</code> <code>.m4v</code> <code>.mkv</code> <code>.webm</code></td><td>MP4, 1200 × 1000 pixels</td></tr>
+  </table>
+  <p>Files of other types are ignored. HEIC and HEIF photos (common on iPhones) are converted automatically.</p>
+
+  <h2>Add media</h2>
+  <p>Use any of these methods:</p>
+  <ul>
+    <li>Select <span class="ui">SELECT MEDIA</span> or press <kbd>Ctrl</kbd> + <kbd>O</kbd>. Hold <kbd>Ctrl</kbd> to choose several files.</li>
+    <li>Drag files from File Explorer and drop them anywhere on the window. A message reads <b>DROP VIDEOS &amp; PHOTOS HERE TO IMPORT</b>.</li>
+    <li>To add files to the batch you already have, select <span class="ui">ADD MORE</span>. Files that are already in the batch are not added twice.</li>
+  </ul>
+
+  <h2>The staged media area</h2>
+  <p>After you add files, each one appears as a card. The bar above the cards contains actions for the whole batch.</p>
+  <figure class="w88">
+    <div class="shotwrap">
+      <img src="images/03_main_staged_options.png" alt="Staged media cards with options">
+      <span class="pin" style="left:1.7%;top:45.7%">1</span>
+      <span class="pin" style="left:54.4%;top:44%">2</span>
+      <span class="pin" style="left:64.8%;top:44%">3</span>
+      <span class="pin" style="left:73.9%;top:44%">4</span>
+      <span class="pin" style="left:84.5%;top:44%">5</span>
+      <span class="pin" style="left:91.4%;top:44%">6</span>
+      <span class="pin" style="left:14.2%;top:53.1%">7</span>
+      <span class="pin" style="left:1%;top:82%">8</span>
+      <span class="pin" style="left:36.5%;top:82%">9</span>
+      <span class="pin" style="left:26.5%;top:86.7%">10</span>
+      <span class="pin" style="left:61.2%;top:86.7%">11</span>
+      <span class="pin" style="left:1%;top:91.9%">12</span>
+      <span class="pin" style="left:6%;top:91.9%">13</span>
+    </div>
+    <figcaption><b>Figure 5-1.</b> Staged media. In this example the first photo has a custom crop, the living room photo is set to SOLO, and the kitchen photo is manually paired with the bedroom photo.</figcaption>
+  </figure>
+  <table class="legend">
+    <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
+    <tr><td><span class="num">1</span></td><td><span class="ui">SELECTED MEDIA</span></td><td>Number of staged items and the next step.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">COMBINE IMAGES</span></td><td>Pairs portrait photos automatically (default). Chapter 6.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">KEEP SEPARATE</span></td><td>Brands every photo on its own. Chapter 6.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Removes crop changes and PEN marks from every staged photo.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">ADD MORE</span></td><td>Adds files to the current batch.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">Clear queue</span></td><td>Removes every staged item. Your original files are not deleted.</td></tr>
+    <tr><td><span class="num">7</span></td><td>Crop badge</td><td>Shows that the photo has a custom crop and its zoom level, for example <b>CROPPED (125%)</b>. Videos show a <b>▶ VIDEO</b> badge with their length instead.</td></tr>
+    <tr><td><span class="num">8</span></td><td><span class="ui">EDIT CROP</span></td><td>Opens the Crop &amp; Alignment Editor for this photo. Chapter 7.</td></tr>
+    <tr><td><span class="num">9</span></td><td><span class="ui">AUTO/COMBINE</span> / <span class="ui">SOLO</span></td><td>Switches this photo between automatic pairing and being branded on its own.</td></tr>
+    <tr><td><span class="num">10</span></td><td><span class="ui">PAIR</span></td><td>Pairs this photo with the next available photo.</td></tr>
+    <tr><td><span class="num">11</span></td><td><span class="ui">UNPAIR</span> and partner</td><td>Appears on paired photos. Shows the partner file and removes the pair.</td></tr>
+    <tr><td><span class="num">12</span></td><td><span class="ui">RESET</span></td><td>Appears on cropped photos. Restores the default framing.</td></tr>
+    <tr><td><span class="num">13</span></td><td><span class="ui">REMOVE FROM SELECTION</span></td><td>Takes this item out of the batch. The original file is not deleted.</td></tr>
+  </table>
+  <div class="box note"><b class="t">Note</b><p>Videos cannot be cropped, paired, or set to SOLO. Their cards show only <span class="ui">REMOVE FROM SELECTION</span>.</p></div>
+</section>
+
+<!-- ============ 6 LAYOUTS ============ -->
+<section class="chap" id="ch6">
+  <div class="chapter-no">Chapter 6</div>
+  <h1 class="chapter">Photo layouts and pairing</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">The branding frame is wider than it is tall (6:5). Landscape photos fill it well. A single portrait photo would leave large empty sides, so Branding Studio can place two portrait photos side by side instead.</p>
+
+  <div class="cols">
+    <figure><img src="images/output_02.jpg" alt="Single landscape result"><figcaption><b>Single photo.</b> One landscape photo fills the frame.</figcaption></figure>
+    <figure><img src="images/output_03.jpg" alt="Combined pair result"><figcaption><b>Combined pair.</b> Two portrait photos share the frame, 600 × 1000 pixels each.</figcaption></figure>
+  </div>
+
+  <h2>Choose a layout for the whole batch</h2>
+  <table>
+    <tr><th style="width:42mm">Button</th><th>Result</th><th style="width:48mm">Best for</th></tr>
+    <tr><td><span class="ui">COMBINE IMAGES</span> (default)</td><td>Portrait photos are paired in the order you added them. Landscape photos stay single.</td><td>Mixed batches with tall room shots</td></tr>
+    <tr><td><span class="ui">KEEP SEPARATE</span></td><td>Every photo is branded on its own, including portraits.</td><td>When every photo must appear alone</td></tr>
+  </table>
+
+  <h3>How automatic pairing decides</h3>
+  <ol>
+    <li>Photos you paired by hand are always kept together.</li>
+    <li>The remaining portrait photos are paired in order: first with second, third with fourth, and so on.</li>
+    <li>If one portrait is left over, it is paired with the last landscape photo in the batch.</li>
+    <li>If there is no landscape photo to use, the leftover portrait is placed on both halves of the frame.</li>
+    <li>Results stay in the same order as your original files.</li>
+  </ol>
+
+  <h2>Set a single photo to SOLO</h2>
+  <p>To keep one photo out of pairing while other photos still combine, select its <span class="ui">AUTO/COMBINE</span> button. The button changes to <span class="ui">SOLO</span>. Select it again to switch back.</p>
+
+  <h2>Pair two specific photos</h2>
+  <p>If automatic pairing puts the wrong photos together, pair them yourself. Use either method:</p>
+  <ul>
+    <li><b>Drag and drop:</b> drag one photo card onto another photo card. A highlighted border shows where it will drop.</li>
+    <li><b>PAIR button:</b> select <span class="ui">PAIR</span> on a card. It is paired with the next photo in the list that is not SOLO, not a video, and not already paired.</li>
+  </ul>
+  <p>Paired cards show <span class="ui">UNPAIR</span> and the partner’s file name. Select <span class="ui">UNPAIR</span> to remove the pair. Manual pairs are kept when you apply branding and when you rebrand a result.</p>
+  <div class="box tip"><b class="t">Tip</b><p>In a pair, the photo that comes first in the staged list appears on the left half of the frame.</p></div>
+  <div class="box note"><b class="t">Note</b><p>SOLO photos and videos cannot be paired. Switch a SOLO photo back to <span class="ui">AUTO/COMBINE</span> first.</p></div>
+</section>
+
+<!-- ============ 7 CROP EDITOR ============ -->
+<section class="chap" id="ch7">
+  <div class="chapter-no">Chapter 7</div>
+  <h1 class="chapter">The Crop &amp; Alignment Editor</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">The editor lets you choose exactly which part of a photo shows inside the frame. The branding overlay is shown on top, so what you see is what will be exported.</p>
+  <p>To open it, select <span class="ui">EDIT CROP</span> on a staged photo, on a branded result, or in the Preview window.</p>
+  <figure class="w88">
+    <div class="shotwrap">
+      <img src="images/05_crop_editor.png" alt="Crop and Alignment Editor">
+      <span class="pin" style="left:86.9%;top:2.7%">1</span>
+      <span class="pin" style="left:22.8%;top:11.9%">2</span>
+      <span class="pin" style="left:6.7%;top:81.3%">3</span>
+      <span class="pin" style="left:43%;top:79.5%">4</span>
+      <span class="pin" style="left:50.5%;top:79.5%">5</span>
+      <span class="pin" style="left:43%;top:84.5%">6</span>
+      <span class="pin" style="left:62.7%;top:84.5%">7</span>
+      <span class="pin" style="left:73%;top:84.5%">8</span>
+      <span class="pin" style="left:87.7%;top:82%">9</span>
+      <span class="pin" style="left:74.1%;top:92.8%">10</span>
+    </div>
+    <figcaption><b>Figure 7-1.</b> The Crop &amp; Alignment Editor with a photo zoomed to 115%.</figcaption>
+  </figure>
+  <table class="legend">
+    <tr><th>#</th><th style="width:44mm">Control</th><th>What it does</th></tr>
+    <tr><td><span class="num">1</span></td><td>Output size</td><td>The final size of this image: 1200 × 1000 px, or 600 × 1000 px for each half of a pair.</td></tr>
+    <tr><td><span class="num">2</span></td><td>Canvas</td><td>Drag the photo to move it. Scroll the mouse wheel to zoom.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">ZOOM</span></td><td>Use <span class="ui">−</span>, <span class="ui">+</span>, or the slider. The box shows the zoom level (20% to 400%).</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">PAN</span></td><td>Normal mode. Dragging moves the photo.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">PEN</span></td><td>Drawing mode for hiding details. See the next section.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">FIT TO FRAME</span> / <span class="ui">FILL FRAME</span></td><td>Fit shows the whole photo with no cropping. Fill covers the whole frame and crops the edges evenly.</td></tr>
+    <tr><td><span class="num">7</span></td><td><span class="ui">ROTATE 90°</span></td><td>Turns the photo a quarter turn clockwise. Use it for sideways photos.</td></tr>
+    <tr><td><span class="num">8</span></td><td><span class="ui">RESET CROP</span></td><td>Returns pan, zoom, and rotation to the default.</td></tr>
+    <tr><td><span class="num">9</span></td><td><span class="ui">PAN</span> position</td><td>Shows how far the photo has been moved, in pixels.</td></tr>
+    <tr><td><span class="num">10</span></td><td><span class="ui">CANCEL</span> / <span class="ui">SAVE CHANGES</span></td><td>Cancel (<kbd>Esc</kbd>) closes without changes. Save (<kbd>Enter</kbd>) keeps your changes.</td></tr>
+  </table>
+
+  <h2>Frame a photo</h2>
+  <ol class="steps">
+    <li>Select <span class="ui">EDIT CROP</span> on the photo.</li>
+    <li>If the photo is sideways, select <span class="ui">ROTATE 90°</span> until it is upright.</li>
+    <li>Select <span class="ui">FILL FRAME</span> for a clean, edge-to-edge image, or <span class="ui">FIT TO FRAME</span> to keep the whole photo.</li>
+    <li>Scroll or use the zoom slider to adjust the size, then drag the photo to position it.</li>
+    <li>Keep important parts away from the logo and the contact-number strip at the bottom.</li>
+    <li>Select <span class="ui">SAVE CHANGES</span>. The card now shows a <b>CROPPED</b> badge.</li>
+  </ol>
+
+  <h2>Edit a combined pair</h2>
+  <p>When you edit a combined result, the editor shows <span class="ui">LEFT PHOTO</span> and <span class="ui">RIGHT PHOTO</span> at the top. Select one to adjust it. Each half has its own zoom, position, rotation, and PEN marks.</p>
+  <figure class="narrow">
+    <div class="shotwrap">
+      <img src="images/06_crop_editor_pair.png" alt="Editor showing left and right photo selector">
+      <span class="pin" style="left:67.4%;top:2.7%">1</span>
+    </div>
+    <figcaption><b>Figure 7-2.</b> Editing one half of a pair. <span class="num">1</span> switches between the left and right photo.</figcaption>
+  </figure>
+</section>
+
+<section class="keep" id="ch7pen" style="break-before: page;">
+  <h2 style="margin-top:0">Hiding details with the PEN tool</h2>
+  <p>Use PEN to paint solid marks over things that should not appear in a public listing, such as house numbers, car plates, family photos, mail, or documents. The marks are permanent in the exported image.</p>
+  <figure class="w80">
+    <div class="shotwrap">
+      <img src="images/07_crop_editor_pen.png" alt="PEN mode with a house number covered">
+      <span class="pin" style="left:50.5%;top:79.5%">1</span>
+      <span class="pin" style="left:59.2%;top:79.5%">2</span>
+      <span class="pin" style="left:70.4%;top:79.5%">3</span>
+      <span class="pin" style="left:56%;top:41%">4</span>
+    </div>
+    <figcaption><b>Figure 7-3.</b> PEN mode is on <span class="num">1</span>, the brush size is set with <span class="num">2</span>, and the house number has been covered <span class="num">4</span>. <span class="num">3</span> undoes or clears marks.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>In the editor, select <span class="ui">PEN</span>. The button is highlighted.</li>
+    <li>Drag the brush-size slider. Left is a fine line; right is a thick brush.</li>
+    <li>Click and drag over the area to hide. Draw several strokes until it is fully covered.</li>
+    <li>To remove the last stroke, select <span class="ui">UNDO</span> or press <kbd>Ctrl</kbd> + <kbd>Z</kbd>. To remove all marks on this photo, select <span class="ui">CLEAR</span>.</li>
+    <li>Select <span class="ui">PAN</span> (or press <kbd>Esc</kbd>) to go back to moving the photo.</li>
+    <li>Select <span class="ui">SAVE CHANGES</span>.</li>
+  </ol>
+  <div class="box note"><b class="t">Note</b><p>PEN marks stay attached to the photo. They move, zoom, and rotate with it, and they are kept when you rebrand a result. In a pair, marks belong to the half that was selected when you drew them.</p></div>
+  <div class="box warn"><b class="t">Caution</b><p><span class="ui">RESET</span>, <span class="ui">RESET ALL CROPS</span>, and <span class="ui">CLEAR</span> also remove PEN marks. Check sensitive photos again before you export.</p></div>
+  <div class="box tip"><b class="t">Tip</b><p>In PEN mode, the first press of <kbd>Esc</kbd> returns to PAN mode. A second press of <kbd>Esc</kbd> closes the editor without saving.</p></div>
+</section>
+
+<!-- ============ 8 NAMES & TEMPLATES ============ -->
+<section class="chap" id="ch8">
+  <div class="chapter-no">Chapter 8</div>
+  <h1 class="chapter">File names and branding templates</h1>
+  <div class="chapter-rule"></div>
+
+  <h2>Filename prefix</h2>
+  <p>Every output file is named with the prefix, an underscore, and a number. The default prefix is <code>AlphaPremier_Photo</code>.</p>
+  <table>
+    <tr><th>Prefix you type</th><th>Files created</th></tr>
+    <tr><td><code>Maple_Street_128</code></td><td><code>Maple_Street_128_01.jpg</code>, <code>Maple_Street_128_02.jpg</code>, <code>Maple_Street_128_03.mp4</code> …</td></tr>
+    <tr><td>(left empty)</td><td><code>AlphaPremier_Photo_01.jpg</code>, <code>AlphaPremier_Photo_02.jpg</code> …</td></tr>
+  </table>
+  <ul>
+    <li>Numbers have two digits (01, 02 …). Batches of 100 or more items use three digits (001, 002 …).</li>
+    <li>Characters that Windows does not allow in file names (<code>/ \ : * ? " &lt; &gt; |</code>) are removed automatically.</li>
+    <li>Photos are saved as <code>.jpg</code> and videos as <code>.mp4</code>.</li>
+    <li>The ZIP export is named <code>&lt;prefix&gt;_Export.zip</code> by default.</li>
+  </ul>
+  <div class="box tip"><b class="t">Tip</b><p>Use the property address or listing ID as the prefix. Files from different listings will then never be mixed up.</p></div>
+
+  <h2>Branding templates</h2>
+  <p>A template is the frame image placed over each photo. <b>Alpha Premier Classic</b> is built in and marked <b>OFFICIAL</b>. It cannot be deleted.</p>
+
+  <h3>Import a template</h3>
+  <ol class="steps">
+    <li>Select <span class="ui">+ IMPORT</span> next to <span class="ui">BRANDING TEMPLATE</span>.</li>
+    <li>Choose a PNG, JPG, JFIF, or WEBP image and select <b>Open</b>. Use a PNG with a transparent center so the photo shows through.</li>
+    <li>The app checks the file. If it is valid, the template is saved and selected. If not, a message explains the problem.</li>
+  </ol>
+  <p>The badge beside the label shows the template’s shape, for example <b>6:5 (1.20:1) · Official Ratio</b>. The shape of the template is always kept; it is never stretched.</p>
+
+  <h3>Switch or delete a template</h3>
+  <ul>
+    <li>Choose a template from the <span class="ui">BRANDING TEMPLATE</span> list. It is used the next time you apply branding or edit a crop.</li>
+    <li>To delete a custom template, select it, select <span class="ui">DELETE</span>, then confirm with <b>Yes</b>.</li>
+  </ul>
+  <div class="box note"><b class="t">Note</b><p>Imported templates are stored on your PC in <code>%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio\Templates</code> and are available every time you open the app.</p></div>
+</section>
+
+<!-- ============ 9 APPLY ============ -->
+<section class="chap" id="ch9">
+  <div class="chapter-no">Chapter 9</div>
+  <h1 class="chapter">Applying branding</h1>
+  <div class="chapter-rule"></div>
+  <ol class="steps">
+    <li>Check the staged items, layout, prefix, and template.</li>
+    <li>Select <span class="ui">APPLY BRANDING</span>, or press <kbd>Ctrl</kbd> + <kbd>B</kbd> or <kbd>F5</kbd>.</li>
+    <li>Watch the <span class="ui">STATUS</span> line and progress bar. Videos take longer than photos.</li>
+    <li>When the status reads <b>Completed</b>, the workspace switches to <span class="ui">BRANDED ASSETS</span>.</li>
+  </ol>
+
+  <h2>What happens to each item</h2>
+  <table>
+    <tr><th style="width:40mm">Item</th><th>Result</th></tr>
+    <tr><td>Landscape photo</td><td>Cropped to fill the 1200 × 1000 frame (or framed as you set in the editor), then branded.</td></tr>
+    <tr><td>Portrait pair</td><td>Each photo fills one 600 × 1000 half, then the frame is added.</td></tr>
+    <tr><td>SOLO photo</td><td>Branded on its own in the full frame.</td></tr>
+    <tr><td>Video</td><td>The whole video is fitted and centered in a 1200 × 1000 MP4, and the frame is shown for the full length. Videos are not cropped.</td></tr>
+  </table>
+  <div class="box note"><b class="t">Note</b><p>If one file cannot be processed (for example, it is damaged), the status names that file and the rest of the batch continues.</p></div>
+  <div class="box warn"><b class="t">Caution</b><p>Selecting <span class="ui">APPLY BRANDING</span> again starts a new session and replaces the current results. The app always asks you first, so you can export them (Chapter 12).</p></div>
+</section>
+
+<!-- ============ 10 REVIEW ============ -->
+<section class="chap" id="ch10">
+  <div class="chapter-no">Chapter 10</div>
+  <h1 class="chapter">Reviewing and fixing results</h1>
+  <div class="chapter-rule"></div>
+  <figure>
+    <div class="shotwrap">
+      <img src="images/04_main_results.png" alt="Branded results">
+      <span class="pin" style="left:2.1%;top:27.2%">1</span>
+      <span class="pin" style="left:1.7%;top:45.7%">2</span>
+      <span class="pin" style="left:88.8%;top:44%">3</span>
+      <span class="pin" style="left:1%;top:82%">4</span>
+      <span class="pin" style="left:11.8%;top:82%">5</span>
+      <span class="pin" style="left:1%;top:86.4%">6</span>
+    </div>
+    <figcaption><b>Figure 10-1.</b> Branded results. Four photos produced three results, because the two portrait photos were combined.</figcaption>
+  </figure>
+  <table class="legend">
+    <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
+    <tr><td><span class="num">1</span></td><td>Session hint</td><td>Reminds you that the selected files are still loaded, so selecting <span class="ui">APPLY BRANDING</span> again starts a new session. It reads <b>Unsaved edits in current session</b> after you change a result.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">BRANDED ASSETS</span></td><td>Number of finished items.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Rebrands every result with default framing.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">PREVIEW</span></td><td>Opens the result full size.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">SAVE</span></td><td>Saves this one result to a location you choose.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">EDIT CROP</span></td><td>Opens the editor and rebrands this result when you save. A <span class="ui">RESET</span> button appears on results with a custom crop.</td></tr>
+  </table>
+
+  <h2>Preview window</h2>
+  <figure class="narrow">
+    <div class="shotwrap">
+      <img src="images/08_preview.png" alt="Preview window">
+      <span class="pin" style="left:5.9%;top:3.5%">1</span>
+      <span class="pin" style="left:91.8%;top:3.5%">2</span>
+      <span class="pin" style="left:15.8%;top:93.5%">3</span>
+      <span class="pin" style="left:38.9%;top:92.8%">4</span>
+      <span class="pin" style="left:72%;top:95.4%">5</span>
+    </div>
+    <figcaption><b>Figure 10-2.</b> The Preview window: <span class="num">1</span> file name, <span class="num">2</span> position in the batch, <span class="num">3</span> edit this result, <span class="num">4</span> previous and next, <span class="num">5</span> keyboard hints.</figcaption>
+  </figure>
+  <ul>
+    <li>Press <kbd>←</kbd> and <kbd>→</kbd> or select <span class="ui">◀ PREVIOUS</span> and <span class="ui">NEXT ▶</span> to move between results.</li>
+    <li>For videos, use the play/pause button, the timeline, and the mute button. Press <kbd>Space</kbd> to play or pause.</li>
+    <li>Press <kbd>Esc</kbd> to close the Preview window.</li>
+  </ul>
+
+  <h2>Fix a result without starting over</h2>
+  <ol class="steps">
+    <li>Select <span class="ui">EDIT CROP</span> on the result card or in the Preview window.</li>
+    <li>Adjust the framing or add PEN marks, then select <span class="ui">SAVE CHANGES</span>.</li>
+    <li>Only that result is rebranded. Its name and position in the batch do not change.</li>
+  </ol>
+</section>
+
+<!-- ============ 11 EXPORT ============ -->
+<section class="chap" id="ch11">
+  <div class="chapter-no">Chapter 11</div>
+  <h1 class="chapter">Saving and exporting</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">Branded results exist only inside the app until you save or export them. Choose the method that suits how you will share the files.</p>
+  <table>
+    <tr><th style="width:52mm">Method</th><th>How</th><th style="width:44mm">Result</th></tr>
+    <tr><td><b>Export as ZIP Archive (.zip)</b></td><td><span class="ui">EXPORT</span> › <b>Export as ZIP Archive (.zip)</b>, or <kbd>Ctrl</kbd> + <kbd>E</kbd> (also <kbd>Ctrl</kbd> + <kbd>S</kbd>)</td><td>One ZIP file with every result</td></tr>
+    <tr><td><b>Export as Individual Files…</b></td><td><span class="ui">EXPORT</span> › <b>Export as Individual Files…</b>, or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd></td><td>Every result saved into a folder you choose</td></tr>
+    <tr><td><b>Save one result</b></td><td><span class="ui">SAVE</span> on a result card</td><td>One JPG or MP4 file</td></tr>
+  </table>
+
+  <h2>Export everything as a ZIP file</h2>
+  <ol class="steps">
+    <li>Select <span class="ui">EXPORT</span>. A menu opens below the button.</li>
+    <li>Select <b>Export as ZIP Archive (.zip)</b>.</li>
+    <li>Choose a folder. The file name is filled in as <code>&lt;prefix&gt;_Export.zip</code>; you can change it.</li>
+    <li>Select <b>Save</b>. The status shows progress and then confirms the export.</li>
+  </ol>
+
+  <h2>Export as separate files</h2>
+  <ol class="steps">
+    <li>Select <span class="ui">EXPORT</span> › <b>Export as Individual Files…</b></li>
+    <li>Choose or create a folder and confirm.</li>
+    <li>Each result is saved with its numbered name, for example <code>Maple_Street_128_01.jpg</code>.</li>
+  </ol>
+  <div class="box warn"><b class="t">Caution</b><p>Files in the folder with the same names are replaced without asking. Use an empty folder for each listing.</p></div>
+  <div class="box tip"><b class="t">Tip</b><p>ZIP files are easiest to email or upload in one step. Separate files are easiest to drag into a listing website.</p></div>
+</section>
+
+<!-- ============ 12 SESSIONS ============ -->
+<section class="chap" id="ch12">
+  <div class="chapter-no">Chapter 12</div>
+  <h1 class="chapter">Sessions and unsaved work</h1>
+  <div class="chapter-rule"></div>
+  <p class="lead">A <b>session</b> is one batch of branded results. Branding Studio protects your results so you do not lose them by accident.</p>
+  <p>The app asks before it replaces or closes a session that has results, when you:</p>
+  <ul>
+    <li>apply branding again while you still have results,</li>
+    <li>load a new batch after editing results, or</li>
+    <li>close the app.</li>
+  </ul>
+  <figure class="half">
+    <div class="shotwrap">
+      <img src="images/09_session_dialog.png" alt="Start a new branding session dialog">
+      <span class="pin" style="left:23.9%;top:73.1%">1</span>
+      <span class="pin" style="left:39.4%;top:73.1%">2</span>
+      <span class="pin" style="left:69.6%;top:73.1%">3</span>
+    </div>
+    <figcaption><b>Figure 12-1.</b> The session protection message.</figcaption>
+  </figure>
+  <table class="legend">
+    <tr><th>#</th><th style="width:52mm">Choice</th><th>What happens</th></tr>
+    <tr><td><span class="num">1</span></td><td><span class="ui">CANCEL</span></td><td>Nothing changes. You return to your current session.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">DISCARD EDITS &amp; CONTINUE</span></td><td>The current results are discarded and the app continues.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">SAVE &amp; CONTINUE</span></td><td>You save the current results as a ZIP file first, then the app continues.</td></tr>
+  </table>
+  <div class="box warn"><b class="t">Caution</b><p>Discarded results cannot be recovered. Your original photos and videos are never changed or deleted, so you can brand them again.</p></div>
+</section>
+
+<!-- ============ 13 UPDATES ============ -->
+<section class="chap" id="ch13">
+  <div class="chapter-no">Chapter 13</div>
+  <h1 class="chapter">Software updates</h1>
+  <div class="chapter-rule"></div>
+  <p>Branding Studio checks for a new version:</p>
+  <ul>
+    <li>a few seconds after it opens,</li>
+    <li>every 8 hours while it is running, and</li>
+    <li>when you select <span class="ui">CHECK FOR UPDATES</span>.</li>
+  </ul>
+  <p>When a newer version is available, this window appears:</p>
+  <figure class="narrow" style="width:46%">
+    <div class="shotwrap">
+      <img src="images/10_update_dialog.png" alt="Update available window">
+      <span class="pin" style="left:45.8%;top:5.2%">1</span>
+      <span class="pin" style="left:75.6%;top:4.7%">2</span>
+      <span class="pin" style="left:3.8%;top:16.8%">3</span>
+      <span class="pin" style="left:3.8%;top:87.8%">4</span>
+      <span class="pin" style="left:51.5%;top:87.8%">5</span>
+      <span class="pin" style="left:76.2%;top:87.8%">6</span>
+    </div>
+    <figcaption><b>Figure 13-1.</b> The update window (example version numbers).</figcaption>
+  </figure>
+  <table class="legend">
+    <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
+    <tr><td><span class="num">1</span></td><td>New version</td><td>The version that is available.</td></tr>
+    <tr><td><span class="num">2</span></td><td>Current / Released</td><td>Your current version and the release date of the new one.</td></tr>
+    <tr><td><span class="num">3</span></td><td>Release notes</td><td>What is new or fixed.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">SKIP THIS VERSION</span></td><td>Stops reminders for this version. You are told again when a newer one comes out.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">REMIND ME LATER</span></td><td>Closes the window. You are reminded in about 8 hours.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">UPDATE NOW</span></td><td>Downloads the update, checks its digital signature, and starts the installer. The app closes while the update installs.</td></tr>
+  </table>
+  <div class="box warn"><b class="t">Caution</b><p>Export your results before selecting <span class="ui">UPDATE NOW</span>. The app closes to install the update.</p></div>
+  <div class="box note"><b class="t">Note</b><p>If a download fails, the window shows an error and an <span class="ui">OPEN IN BROWSER</span> button so you can download the installer manually. If your IT team has turned off updates, the check reports that updates are disabled by system policy.</p></div>
+</section>
+
+<!-- ============ 14 SHORTCUTS ============ -->
+<section class="chap" id="ch14">
+  <div class="chapter-no">Chapter 14</div>
+  <h1 class="chapter">Keyboard and mouse reference</h1>
+  <div class="chapter-rule"></div>
+  <h2>Main window</h2>
+  <table>
+    <tr><th style="width:55mm">Shortcut</th><th>Action</th></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>O</kbd></td><td>Select media</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd> or <kbd>F5</kbd></td><td>Apply branding</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>E</kbd> or <kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Export as ZIP archive</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd></td><td>Export as individual files</td></tr>
+    <tr><td>Drag files onto the window</td><td>Add media</td></tr>
+    <tr><td>Drag a photo card onto another card</td><td>Pair the two photos</td></tr>
+  </table>
+  <h2>Crop &amp; Alignment Editor</h2>
+  <table>
+    <tr><th style="width:55mm">Shortcut</th><th>Action</th></tr>
+    <tr><td>Mouse wheel</td><td>Zoom in or out</td></tr>
+    <tr><td>Click and drag (PAN mode)</td><td>Move the photo</td></tr>
+    <tr><td>Click and drag (PEN mode)</td><td>Draw a mark</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last PEN mark</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Leave PEN mode; press again to cancel and close</td></tr>
+    <tr><td><kbd>Enter</kbd></td><td>Save changes</td></tr>
+  </table>
+  <h2>Preview window</h2>
+  <table>
+    <tr><th style="width:55mm">Shortcut</th><th>Action</th></tr>
+    <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Previous or next result</td></tr>
+    <tr><td><kbd>Space</kbd></td><td>Play or pause a video</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Close the preview</td></tr>
+  </table>
+  <div class="box tip"><b class="t">Tip</b><p>Hover over any button to see a short description of what it does.</p></div>
+</section>
+
+<!-- ============ 15 TROUBLESHOOTING ============ -->
+<section class="chap" id="ch15">
+  <div class="chapter-no">Chapter 15</div>
+  <h1 class="chapter">Troubleshooting and FAQ</h1>
+  <div class="chapter-rule"></div>
+  <table>
+    <tr><th style="width:56mm">Problem</th><th>What to do</th></tr>
+    <tr><td>A file I chose does not appear.</td><td>Check that its type is in the supported list (Chapter 5). Files of other types are ignored. Files already in the batch are not added twice.</td></tr>
+    <tr><td><span class="ui">APPLY BRANDING</span> or <span class="ui">EXPORT</span> is faded.</td><td>Apply needs at least one staged item. Export needs branded results. Both wait while the progress bar is running.</td></tr>
+    <tr><td>The wrong photos were combined.</td><td>Drag one photo onto the one it belongs with, or use <span class="ui">UNPAIR</span> and <span class="ui">PAIR</span>. To stop combining, select <span class="ui">KEEP SEPARATE</span> or set photos to <span class="ui">SOLO</span>.</td></tr>
+    <tr><td>Important parts are cut off.</td><td>Open <span class="ui">EDIT CROP</span> and select <span class="ui">FIT TO FRAME</span>, or zoom out and move the photo.</td></tr>
+    <tr><td>A photo is sideways.</td><td>Open <span class="ui">EDIT CROP</span> and select <span class="ui">ROTATE 90°</span>.</td></tr>
+    <tr><td>A status message names a file that was skipped.</td><td>That file could not be read and may be damaged. Open it in the Windows Photos app; if it does not open there, get a new copy of the file.</td></tr>
+    <tr><td>A HEIC photo shows an error.</td><td>The file may be damaged. Export it from your phone again as JPG or HEIC and retry.</td></tr>
+    <tr><td>A video takes a long time.</td><td>This is normal for long or high-resolution clips. Wait for the progress bar to finish.</td></tr>
+    <tr><td>“Invalid Template” appears when importing.</td><td>Use a PNG, JPG, JFIF, or WEBP image that opens normally. PNG with a transparent center is recommended.</td></tr>
+    <tr><td>The update check says the rate limit was exceeded.</td><td>Too many checks were made from your network. Try again later.</td></tr>
+    <tr><td>The update check says updates are disabled.</td><td>Your IT team has turned off updates on this PC. Ask them for the latest version.</td></tr>
+    <tr><td>Buttons look cramped on a laptop.</td><td>Maximize the window. At high display scaling, button rows wrap and the media area scrolls.</td></tr>
+  </table>
+
+  <h2>Frequently asked questions</h2>
+  <h3>Are my original photos changed?</h3>
+  <p>No. Branding Studio only reads your originals. Branded copies are saved only where you export them.</p>
+  <h3>Does the app need the internet?</h3>
+  <p>Only to check for and download updates. Branding, cropping, and exporting work offline.</p>
+  <h3>Can I close the app and continue later?</h3>
+  <p>No. Results are not kept after the app closes. Export your results before closing; the app reminds you if you forget.</p>
+  <h3>Why did four photos give me three results?</h3>
+  <p>Two portrait photos were combined into one frame. Select <span class="ui">KEEP SEPARATE</span> if you want one result per photo.</p>
+  <h3>Can I remove PEN marks after exporting?</h3>
+  <p>Not from the exported file. While the session is still open, select <span class="ui">EDIT CROP</span> on the result, select <span class="ui">CLEAR</span>, save, and export again.</p>
+  <h3>Where do I get help?</h3>
+  <p>Contact your office IT administrator. Releases and release notes are listed at <code>github.com/Deign86/Alpha_Branding/releases</code>.</p>
+</section>
+
+<!-- ============ 16 SPECS ============ -->
+<section class="chap" id="ch16">
+  <div class="chapter-no">Chapter 16</div>
+  <h1 class="chapter">Specifications and glossary</h1>
+  <div class="chapter-rule"></div>
+  <h2>Output specifications</h2>
+  <table>
+    <tr><th style="width:56mm">Item</th><th>Value</th></tr>
+    <tr><td>Photo output</td><td>JPG, 1200 × 1000 pixels (6:5)</td></tr>
+    <tr><td>Each half of a pair</td><td>600 × 1000 pixels</td></tr>
+    <tr><td>Video output</td><td>MP4, 1200 × 1000 pixels, original video fitted and centered</td></tr>
+    <tr><td>Zoom range in the editor</td><td>20% to 400%</td></tr>
+    <tr><td>Rotation</td><td>90° steps, clockwise</td></tr>
+    <tr><td>File numbering</td><td>01–99; 001 and up for batches of 100 or more</td></tr>
+    <tr><td>Default prefix</td><td><code>AlphaPremier_Photo</code></td></tr>
+    <tr><td>Saved templates</td><td><code>%LOCALAPPDATA%\Alpha Premier Realty\Branding Studio\Templates</code></td></tr>
+    <tr><td>Update checks</td><td>At start-up, every 8 hours, and on request</td></tr>
+  </table>
+
+  <h2>Glossary</h2>
+  <table>
+    <tr><th style="width:42mm">Term</th><th>Meaning</th></tr>
+    <tr><td>Branding / frame</td><td>The Alpha Premier logo, gold accents, and contact strip placed over each photo.</td></tr>
+    <tr><td>Template</td><td>The image file that contains the frame.</td></tr>
+    <tr><td>Staged media</td><td>Photos and videos you have selected but not yet branded.</td></tr>
+    <tr><td>Result / branded asset</td><td>A finished, branded photo or video.</td></tr>
+    <tr><td>Session</td><td>One batch of results, from applying branding until you start again or close the app.</td></tr>
+    <tr><td>Combine / pair</td><td>Two portrait photos placed side by side in one frame.</td></tr>
+    <tr><td>SOLO</td><td>A photo that is always branded on its own, never paired.</td></tr>
+    <tr><td>Portrait / landscape</td><td>A photo that is taller than it is wide / wider than it is tall.</td></tr>
+    <tr><td>Pan</td><td>Moving the photo inside the frame.</td></tr>
+    <tr><td>Fit / Fill</td><td>Show the whole photo / cover the whole frame.</td></tr>
+    <tr><td>PEN (redaction)</td><td>Painting solid marks to hide details in a photo.</td></tr>
+    <tr><td>Prefix</td><td>The text at the start of every output file name.</td></tr>
+  </table>
+</section>
+
+</body>
+</html>
