@@ -7,7 +7,7 @@
   @page {
     size: A4;
     margin: 18mm 16mm 20mm 16mm;
-    @bottom-left { content: "Alpha Premier Property Branding Studio · User Manual · v2.3.0"; font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
+    @bottom-left { content: "Alpha Premier Property Branding Studio · User Manual · v2.4.0"; font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
     @bottom-right { content: "Page " counter(page); font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
   }
   @page cover { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
@@ -127,7 +127,7 @@
     <div class="sub">Watermark, crop, and export listing photos and videos for Windows</div>
   </div>
   <img class="shot" src="images/04_main_results.png" alt="Branding Studio main window with branded results">
-  <div class="meta"><span>Software version 2.3.0</span><span>Windows 10 / 11 (64-bit)</span><span>Edition: October 2026</span></div>
+  <div class="meta"><span>Software version 2.4.0</span><span>Windows 10 / 11 (64-bit)</span><span>Edition: October 2026</span></div>
 </div>
 
 <!-- ============ ABOUT / TOC ============ -->
@@ -244,7 +244,7 @@
 
   <h2>Option B: Run the portable version</h2>
   <ol class="steps">
-    <li>Download the <code>Alpha.Branding-v2.3.0.zip</code> file from the same release page.</li>
+    <li>Download the <code>Alpha.Branding-v2.4.0.zip</code> file from the same release page.</li>
     <li>Right-click the ZIP file and select <b>Extract All</b>.</li>
     <li>Open the extracted folder and double-click <code>Alpha.Branding.exe</code>.</li>
   </ol>
@@ -281,9 +281,9 @@
     <div class="shotwrap">
       <img src="images/02_main_staged.png" alt="Main window with four photos staged">
       <span class="pin" style="left:2.1%;top:15.2%">2</span>
-      <span class="pin" style="left:14.9%;top:17.7%">3</span>
-      <span class="pin" style="left:47.4%;top:19.5%">4</span>
-      <span class="pin" style="left:63.2%;top:26.4%">6</span>
+      <span class="pin" style="left:14.7%;top:17.7%">3</span>
+      <span class="pin" style="left:48.5%;top:18.1%">4</span>
+      <span class="pin" style="left:63.2%;top:24.2%">6</span>
     </div>
     <figcaption><b>Figure 3-1.</b> Photos are staged and ready. The numbers match the quick-start steps above.</figcaption>
   </figure>
@@ -299,18 +299,18 @@
   <figure>
     <div class="shotwrap">
       <img src="images/01_main_empty.png" alt="Main window when first opened">
-      <span class="pin" style="left:84.5%;top:3.4%">1</span>
+      <span class="pin" style="left:84.4%;top:3.3%">1</span>
       <span class="pin" style="left:2.1%;top:15.2%">2</span>
-      <span class="pin" style="left:14.9%;top:17.7%">3</span>
-      <span class="pin" style="left:29.5%;top:19.1%">4</span>
-      <span class="pin" style="left:48.8%;top:19.5%">5</span>
-      <span class="pin" style="left:63.1%;top:19.5%">6</span>
-      <span class="pin" style="left:63.2%;top:26.4%">7</span>
-      <span class="pin" style="left:77.5%;top:26.4%">8</span>
-      <span class="pin" style="left:86.9%;top:26.4%">9</span>
-      <span class="pin" style="left:2%;top:35.4%">10</span>
-      <span class="pin" style="left:73.8%;top:35.8%">11</span>
-      <span class="pin" style="left:40.9%;top:83.5%">12</span>
+      <span class="pin" style="left:14.7%;top:17.7%">3</span>
+      <span class="pin" style="left:29.2%;top:18.1%">4</span>
+      <span class="pin" style="left:48.5%;top:18.1%">5</span>
+      <span class="pin" style="left:68.9%;top:18.1%">6</span>
+      <span class="pin" style="left:63.2%;top:24.2%">7</span>
+      <span class="pin" style="left:77.5%;top:24.2%">8</span>
+      <span class="pin" style="left:86.9%;top:24.2%">9</span>
+      <span class="pin" style="left:2%;top:33.2%">10</span>
+      <span class="pin" style="left:73.9%;top:33.9%">11</span>
+      <span class="pin" style="left:40.9%;top:82.4%">12</span>
     </div>
     <figcaption><b>Figure 4-1.</b> The main window when you first open the app.</figcaption>
   </figure>
@@ -349,9 +349,9 @@
   <h2>Add media</h2>
   <p>Use any of these methods:</p>
   <ul>
-    <li>Select <span class="ui">SELECT MEDIA</span> or press <kbd>Ctrl</kbd> + <kbd>O</kbd>. Hold <kbd>Ctrl</kbd> to choose several files.</li>
-    <li>Drag files from File Explorer and drop them anywhere on the window. A message reads <b>DROP VIDEOS &amp; PHOTOS HERE TO IMPORT</b>.</li>
-    <li>To add files to the batch you already have, select <span class="ui">ADD MORE</span>. Files that are already in the batch are not added twice.</li>
+    <li>Select <span class="ui">SELECT MEDIA</span> or press <kbd>Ctrl</kbd> + <kbd>O</kbd>. Hold <kbd>Ctrl</kbd> to choose several files. This starts a new selection; if your staged photos have crops, PEN marks, pairs, or SOLO settings, the app asks before replacing them.</li>
+    <li>Drag files from File Explorer and drop them on the window. A message reads <b>DROP VIDEOS &amp; PHOTOS HERE TO IMPORT</b>. Dropping onto photos you have already staged <b>adds</b> the new files; it does not replace them.</li>
+    <li>Select <span class="ui">ADD MORE</span> to add files to the photos you already have. Files that are already staged are not added twice.</li>
   </ul>
 
   <h2>The staged media area</h2>
@@ -359,37 +359,37 @@
   <figure class="w88">
     <div class="shotwrap">
       <img src="images/03_main_staged_options.png" alt="Staged media cards with options">
-      <span class="pin" style="left:1.7%;top:45.7%">1</span>
-      <span class="pin" style="left:54.4%;top:44%">2</span>
-      <span class="pin" style="left:64.8%;top:44%">3</span>
-      <span class="pin" style="left:73.9%;top:44%">4</span>
-      <span class="pin" style="left:84.5%;top:44%">5</span>
-      <span class="pin" style="left:91.4%;top:44%">6</span>
-      <span class="pin" style="left:14.2%;top:53.1%">7</span>
-      <span class="pin" style="left:1%;top:82%">8</span>
-      <span class="pin" style="left:36.5%;top:82%">9</span>
-      <span class="pin" style="left:26.5%;top:86.7%">10</span>
-      <span class="pin" style="left:61.2%;top:86.7%">11</span>
-      <span class="pin" style="left:1%;top:91.9%">12</span>
-      <span class="pin" style="left:6%;top:91.9%">13</span>
+      <span class="pin" style="left:1.7%;top:43.9%">1</span>
+      <span class="pin" style="left:52.4%;top:41.8%">2</span>
+      <span class="pin" style="left:63%;top:41.8%">3</span>
+      <span class="pin" style="left:73.4%;top:41.8%">4</span>
+      <span class="pin" style="left:84%;top:41.8%">5</span>
+      <span class="pin" style="left:91.9%;top:41.8%">6</span>
+      <span class="pin" style="left:14.2%;top:51.7%">7</span>
+      <span class="pin" style="left:1%;top:80.5%">8</span>
+      <span class="pin" style="left:36.5%;top:80.5%">9</span>
+      <span class="pin" style="left:1%;top:85.8%">10</span>
+      <span class="pin" style="left:50.5%;top:85.8%">11</span>
+      <span class="pin" style="left:1%;top:91.2%">12</span>
+      <span class="pin" style="left:6%;top:91.2%">13</span>
     </div>
-    <figcaption><b>Figure 5-1.</b> Staged media. In this example the first photo has a custom crop, the living room photo is set to SOLO, and the kitchen photo is manually paired with the bedroom photo.</figcaption>
+    <figcaption><b>Figure 5-1.</b> Staged media. In this example the first photo has a custom crop, the living room photo is set to SOLO (gold), and the kitchen photo is manually paired with the bedroom photo.</figcaption>
   </figure>
   <table class="legend">
     <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
-    <tr><td><span class="num">1</span></td><td><span class="ui">SELECTED MEDIA</span></td><td>Number of staged items and the next step.</td></tr>
-    <tr><td><span class="num">2</span></td><td><span class="ui">COMBINE IMAGES</span></td><td>Pairs portrait photos automatically (default). Chapter 6.</td></tr>
+    <tr><td><span class="num">1</span></td><td><span class="ui">SELECTED MEDIA</span></td><td>Number of staged items.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">COMBINE IMAGES</span></td><td>Pairs portrait photos automatically (default). The active layout is shown in gold. Chapter 6.</td></tr>
     <tr><td><span class="num">3</span></td><td><span class="ui">KEEP SEPARATE</span></td><td>Brands every photo on its own. Chapter 6.</td></tr>
-    <tr><td><span class="num">4</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Removes crop changes and PEN marks from every staged photo.</td></tr>
-    <tr><td><span class="num">5</span></td><td><span class="ui">ADD MORE</span></td><td>Adds files to the current batch.</td></tr>
-    <tr><td><span class="num">6</span></td><td><span class="ui">Clear queue</span></td><td>Removes every staged item. Your original files are not deleted.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Resets pan, zoom, and rotation on every staged photo. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">ADD MORE</span></td><td>Adds files to the current selection.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">CLEAR ALL</span></td><td>Removes every staged photo and video. If any have crops, PEN marks, pairs, or SOLO settings, the app asks first because those edits are lost. Your original files are not deleted.</td></tr>
     <tr><td><span class="num">7</span></td><td>Crop badge</td><td>Shows that the photo has a custom crop and its zoom level, for example <b>CROPPED (125%)</b>. Videos show a <b>▶ VIDEO</b> badge with their length instead.</td></tr>
     <tr><td><span class="num">8</span></td><td><span class="ui">EDIT CROP</span></td><td>Opens the Crop &amp; Alignment Editor for this photo. Chapter 7.</td></tr>
-    <tr><td><span class="num">9</span></td><td><span class="ui">AUTO/COMBINE</span> / <span class="ui">SOLO</span></td><td>Switches this photo between automatic pairing and being branded on its own.</td></tr>
-    <tr><td><span class="num">10</span></td><td><span class="ui">PAIR</span></td><td>Pairs this photo with the next available photo.</td></tr>
-    <tr><td><span class="num">11</span></td><td><span class="ui">UNPAIR</span> and partner</td><td>Appears on paired photos. Shows the partner file and removes the pair.</td></tr>
-    <tr><td><span class="num">12</span></td><td><span class="ui">RESET</span></td><td>Appears on cropped photos. Restores the default framing.</td></tr>
-    <tr><td><span class="num">13</span></td><td><span class="ui">REMOVE FROM SELECTION</span></td><td>Takes this item out of the batch. The original file is not deleted.</td></tr>
+    <tr><td><span class="num">9</span></td><td><span class="ui">SOLO</span></td><td>Keeps this photo as its own branded image instead of pairing it. Gold means SOLO is on; select again to turn it off.</td></tr>
+    <tr><td><span class="num">10</span></td><td><span class="ui">PAIR</span></td><td>Pairs this photo with the next available photo. Faded while SOLO is on.</td></tr>
+    <tr><td><span class="num">11</span></td><td><span class="ui">UNPAIR</span> and <b>Paired with</b></td><td>Replaces <span class="ui">PAIR</span> on paired photos. The line below names the partner photo. <span class="ui">UNPAIR</span> returns both photos to automatic layout.</td></tr>
+    <tr><td><span class="num">12</span></td><td><span class="ui">RESET</span></td><td>Appears on cropped photos. Resets pan, zoom, and rotation. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">13</span></td><td><span class="ui">REMOVE FROM SELECTION</span></td><td>Takes this item out of the selection. The original file is not deleted.</td></tr>
   </table>
   <div class="box note"><b class="t">Note</b><p>Videos cannot be cropped, paired, or set to SOLO. Their cards show only <span class="ui">REMOVE FROM SELECTION</span>.</p></div>
 </section>
@@ -410,8 +410,9 @@
   <table>
     <tr><th style="width:42mm">Button</th><th>Result</th><th style="width:48mm">Best for</th></tr>
     <tr><td><span class="ui">COMBINE IMAGES</span> (default)</td><td>Portrait photos are paired in the order you added them. Landscape photos stay single.</td><td>Mixed batches with tall room shots</td></tr>
-    <tr><td><span class="ui">KEEP SEPARATE</span></td><td>Every photo is branded on its own, including portraits.</td><td>When every photo must appear alone</td></tr>
+    <tr><td><span class="ui">KEEP SEPARATE</span></td><td>Every photo is branded on its own, including portraits. Manual pairs and SOLO settings are ignored.</td><td>When every photo must appear alone</td></tr>
   </table>
+  <p>The active layout button is shown in gold.</p>
 
   <h3>How automatic pairing decides</h3>
   <ol>
@@ -423,7 +424,7 @@
   </ol>
 
   <h2>Set a single photo to SOLO</h2>
-  <p>To keep one photo out of pairing while other photos still combine, select its <span class="ui">AUTO/COMBINE</span> button. The button changes to <span class="ui">SOLO</span>. Select it again to switch back.</p>
+  <p>To keep one photo out of pairing while other photos still combine, select <span class="ui">SOLO</span> on its card. The button turns gold. Select it again to turn SOLO off.</p>
 
   <h2>Pair two specific photos</h2>
   <p>If automatic pairing puts the wrong photos together, pair them yourself. Use either method:</p>
@@ -431,9 +432,9 @@
     <li><b>Drag and drop:</b> drag one photo card onto another photo card. A highlighted border shows where it will drop.</li>
     <li><b>PAIR button:</b> select <span class="ui">PAIR</span> on a card. It is paired with the next photo in the list that is not SOLO, not a video, and not already paired.</li>
   </ul>
-  <p>Paired cards show <span class="ui">UNPAIR</span> and the partner’s file name. Select <span class="ui">UNPAIR</span> to remove the pair. Manual pairs are kept when you apply branding and when you rebrand a result.</p>
+  <p>Paired cards show <span class="ui">UNPAIR</span> and a <b>Paired with</b> line naming the partner. Select <span class="ui">UNPAIR</span> to remove the pair. Manual pairs are kept when you apply branding and when you rebrand a result.</p>
   <div class="box tip"><b class="t">Tip</b><p>In a pair, the photo that comes first in the staged list appears on the left half of the frame.</p></div>
-  <div class="box note"><b class="t">Note</b><p>SOLO photos and videos cannot be paired. Switch a SOLO photo back to <span class="ui">AUTO/COMBINE</span> first.</p></div>
+  <div class="box note"><b class="t">Note</b><p>SOLO photos and videos cannot be paired, so <span class="ui">PAIR</span> is faded on them. Turn <span class="ui">SOLO</span> off first.</p></div>
 </section>
 
 <!-- ============ 7 CROP EDITOR ============ -->
@@ -446,31 +447,35 @@
   <figure class="w88">
     <div class="shotwrap">
       <img src="images/05_crop_editor.png" alt="Crop and Alignment Editor">
-      <span class="pin" style="left:86.9%;top:2.7%">1</span>
-      <span class="pin" style="left:22.8%;top:11.9%">2</span>
-      <span class="pin" style="left:6.7%;top:81.3%">3</span>
-      <span class="pin" style="left:43%;top:79.5%">4</span>
-      <span class="pin" style="left:50.5%;top:79.5%">5</span>
-      <span class="pin" style="left:43%;top:84.5%">6</span>
-      <span class="pin" style="left:62.7%;top:84.5%">7</span>
-      <span class="pin" style="left:73%;top:84.5%">8</span>
-      <span class="pin" style="left:87.7%;top:82%">9</span>
-      <span class="pin" style="left:74.1%;top:92.8%">10</span>
+      <span class="pin" style="left:86.9%;top:2.6%">1</span>
+      <span class="pin" style="left:23.7%;top:11.6%">2</span>
+      <span class="pin" style="left:1.9%;top:77.3%">3</span>
+      <span class="pin" style="left:9.1%;top:77.3%">4</span>
+      <span class="pin" style="left:17.3%;top:78%">5</span>
+      <span class="pin" style="left:32%;top:77.3%">6</span>
+      <span class="pin" style="left:50.7%;top:78%">7</span>
+      <span class="pin" style="left:1.9%;top:83%">8</span>
+      <span class="pin" style="left:21%;top:83%">9</span>
+      <span class="pin" style="left:31.2%;top:83%">10</span>
+      <span class="pin" style="left:1.9%;top:93.2%">11</span>
+      <span class="pin" style="left:74.1%;top:92.7%">12</span>
     </div>
-    <figcaption><b>Figure 7-1.</b> The Crop &amp; Alignment Editor with a photo zoomed to 115%.</figcaption>
+    <figcaption><b>Figure 7-1.</b> The Crop &amp; Alignment Editor with a photo zoomed to 115%. The header names the photo being edited.</figcaption>
   </figure>
   <table class="legend">
     <tr><th>#</th><th style="width:44mm">Control</th><th>What it does</th></tr>
     <tr><td><span class="num">1</span></td><td>Output size</td><td>The final size of this image: 1200 × 1000 px, or 600 × 1000 px for each half of a pair.</td></tr>
-    <tr><td><span class="num">2</span></td><td>Canvas</td><td>Drag the photo to move it. Scroll the mouse wheel to zoom.</td></tr>
-    <tr><td><span class="num">3</span></td><td><span class="ui">ZOOM</span></td><td>Use <span class="ui">−</span>, <span class="ui">+</span>, or the slider. The box shows the zoom level (20% to 400%).</td></tr>
-    <tr><td><span class="num">4</span></td><td><span class="ui">PAN</span></td><td>Normal mode. Dragging moves the photo.</td></tr>
-    <tr><td><span class="num">5</span></td><td><span class="ui">PEN</span></td><td>Drawing mode for hiding details. See the next section.</td></tr>
-    <tr><td><span class="num">6</span></td><td><span class="ui">FIT TO FRAME</span> / <span class="ui">FILL FRAME</span></td><td>Fit shows the whole photo with no cropping. Fill covers the whole frame and crops the edges evenly.</td></tr>
-    <tr><td><span class="num">7</span></td><td><span class="ui">ROTATE 90°</span></td><td>Turns the photo a quarter turn clockwise. Use it for sideways photos.</td></tr>
-    <tr><td><span class="num">8</span></td><td><span class="ui">RESET CROP</span></td><td>Returns pan, zoom, and rotation to the default.</td></tr>
-    <tr><td><span class="num">9</span></td><td><span class="ui">PAN</span> position</td><td>Shows how far the photo has been moved, in pixels.</td></tr>
-    <tr><td><span class="num">10</span></td><td><span class="ui">CANCEL</span> / <span class="ui">SAVE CHANGES</span></td><td>Cancel (<kbd>Esc</kbd>) closes without changes. Save (<kbd>Enter</kbd>) keeps your changes.</td></tr>
+    <tr><td><span class="num">2</span></td><td>Canvas</td><td>Drag the photo to move it, or click it and use the arrow keys. Scroll the mouse wheel to zoom. Faint guide lines divide the frame into thirds.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">PAN</span></td><td>Normal mode (gold when active). Dragging moves the photo.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">PEN</span></td><td>Drawing mode for hiding details. See the next section.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">SIZE</span></td><td>Pen size for PEN mode.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">UNDO</span> / <span class="ui">CLEAR MARKS</span></td><td>Remove the last pen mark, or all pen marks on this photo.</td></tr>
+    <tr><td><span class="num">7</span></td><td><span class="ui">ZOOM</span></td><td><span class="ui">−</span> and <span class="ui">+</span> change zoom by 10%; the slider covers 20% to 400%. The box shows the current level.</td></tr>
+    <tr><td><span class="num">8</span></td><td><span class="ui">FIT TO FRAME</span> / <span class="ui">FILL FRAME</span></td><td>Fit shows the whole photo with no cropping. Fill covers the whole frame and crops the edges evenly.</td></tr>
+    <tr><td><span class="num">9</span></td><td><span class="ui">ROTATE 90°</span></td><td>Turns the photo a quarter turn clockwise. Use it for sideways photos.</td></tr>
+    <tr><td><span class="num">10</span></td><td><span class="ui">RESET CROP</span></td><td>Returns pan, zoom, and rotation to the default. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">11</span></td><td><span class="ui">OFFSET</span></td><td>How far the photo has been moved, in pixels, with a hint for the current mode.</td></tr>
+    <tr><td><span class="num">12</span></td><td><span class="ui">CANCEL</span> / <span class="ui">SAVE CHANGES</span></td><td>Cancel (<kbd>Esc</kbd>) closes without changes. Save (<kbd>Enter</kbd>) keeps your changes.</td></tr>
   </table>
 
   <h2>Frame a photo</h2>
@@ -478,7 +483,7 @@
     <li>Select <span class="ui">EDIT CROP</span> on the photo.</li>
     <li>If the photo is sideways, select <span class="ui">ROTATE 90°</span> until it is upright.</li>
     <li>Select <span class="ui">FILL FRAME</span> for a clean, edge-to-edge image, or <span class="ui">FIT TO FRAME</span> to keep the whole photo.</li>
-    <li>Scroll or use the zoom slider to adjust the size, then drag the photo to position it.</li>
+    <li>Scroll or use the zoom slider to adjust the size, then drag the photo to position it. For fine moves, click the photo and press the arrow keys (hold <kbd>Shift</kbd> for bigger steps).</li>
     <li>Keep important parts away from the logo and the contact-number strip at the bottom.</li>
     <li>Select <span class="ui">SAVE CHANGES</span>. The card now shows a <b>CROPPED</b> badge.</li>
   </ol>
@@ -488,7 +493,7 @@
   <figure class="narrow">
     <div class="shotwrap">
       <img src="images/06_crop_editor_pair.png" alt="Editor showing left and right photo selector">
-      <span class="pin" style="left:67.4%;top:2.7%">1</span>
+      <span class="pin" style="left:65.7%;top:2%">1</span>
     </div>
     <figcaption><b>Figure 7-2.</b> Editing one half of a pair. <span class="num">1</span> switches between the left and right photo.</figcaption>
   </figure>
@@ -497,26 +502,26 @@
 <section class="keep" id="ch7pen" style="break-before: page;">
   <h2 style="margin-top:0">Hiding details with the PEN tool</h2>
   <p>Use PEN to paint solid marks over things that should not appear in a public listing, such as house numbers, car plates, family photos, mail, or documents. The marks are permanent in the exported image.</p>
-  <figure class="w80">
+  <figure class="w80" style="width:70%">
     <div class="shotwrap">
       <img src="images/07_crop_editor_pen.png" alt="PEN mode with a house number covered">
-      <span class="pin" style="left:50.5%;top:79.5%">1</span>
-      <span class="pin" style="left:59.2%;top:79.5%">2</span>
-      <span class="pin" style="left:70.4%;top:79.5%">3</span>
-      <span class="pin" style="left:56%;top:41%">4</span>
+      <span class="pin" style="left:9.1%;top:77.3%">1</span>
+      <span class="pin" style="left:17.3%;top:78%">2</span>
+      <span class="pin" style="left:32%;top:77.3%">3</span>
+      <span class="pin" style="left:54.6%;top:42.8%">4</span>
     </div>
-    <figcaption><b>Figure 7-3.</b> PEN mode is on <span class="num">1</span>, the brush size is set with <span class="num">2</span>, and the house number has been covered <span class="num">4</span>. <span class="num">3</span> undoes or clears marks.</figcaption>
+    <figcaption><b>Figure 7-3.</b> PEN mode is on <span class="num">1</span>, the pen size is set with <span class="num">2</span>, and the house number has been covered <span class="num">4</span>. <span class="num">3</span> undoes or clears marks.</figcaption>
   </figure>
   <ol class="steps">
-    <li>In the editor, select <span class="ui">PEN</span>. The button is highlighted.</li>
-    <li>Drag the brush-size slider. Left is a fine line; right is a thick brush.</li>
+    <li>In the editor, select <span class="ui">PEN</span>. The button turns gold.</li>
+    <li>Drag the <span class="ui">SIZE</span> slider. Left is a fine line; right is a thick pen.</li>
     <li>Click and drag over the area to hide. Draw several strokes until it is fully covered.</li>
-    <li>To remove the last stroke, select <span class="ui">UNDO</span> or press <kbd>Ctrl</kbd> + <kbd>Z</kbd>. To remove all marks on this photo, select <span class="ui">CLEAR</span>.</li>
+    <li>To remove the last stroke, select <span class="ui">UNDO</span> or press <kbd>Ctrl</kbd> + <kbd>Z</kbd>. To remove all marks on this photo, select <span class="ui">CLEAR MARKS</span>; <span class="ui">UNDO</span> brings them back if you change your mind.</li>
     <li>Select <span class="ui">PAN</span> (or press <kbd>Esc</kbd>) to go back to moving the photo.</li>
     <li>Select <span class="ui">SAVE CHANGES</span>.</li>
   </ol>
-  <div class="box note"><b class="t">Note</b><p>PEN marks stay attached to the photo. They move, zoom, and rotate with it, and they are kept when you rebrand a result. In a pair, marks belong to the half that was selected when you drew them.</p></div>
-  <div class="box warn"><b class="t">Caution</b><p><span class="ui">RESET</span>, <span class="ui">RESET ALL CROPS</span>, and <span class="ui">CLEAR</span> also remove PEN marks. Check sensitive photos again before you export.</p></div>
+  <div class="box note"><b class="t">Note</b><p>PEN marks stay attached to the photo. They move, zoom, and rotate with it, and they are kept when you rebrand a result or reset its crop. In a pair, marks belong to the half that was selected when you drew them.</p></div>
+  <div class="box warn"><b class="t">Caution</b><p>Only <span class="ui">UNDO</span> and <span class="ui">CLEAR MARKS</span> remove PEN marks; <span class="ui">RESET</span> and <span class="ui">RESET ALL CROPS</span> keep them. Removing a photo from the selection, or <span class="ui">CLEAR ALL</span>, discards its marks. Check sensitive photos again before you export.</p></div>
   <div class="box tip"><b class="t">Tip</b><p>In PEN mode, the first press of <kbd>Esc</kbd> returns to PAN mode. A second press of <kbd>Esc</kbd> closes the editor without saving.</p></div>
 </section>
 
@@ -592,24 +597,25 @@
   <figure>
     <div class="shotwrap">
       <img src="images/04_main_results.png" alt="Branded results">
-      <span class="pin" style="left:2.1%;top:27.2%">1</span>
-      <span class="pin" style="left:1.7%;top:45.7%">2</span>
-      <span class="pin" style="left:88.8%;top:44%">3</span>
-      <span class="pin" style="left:1%;top:82%">4</span>
-      <span class="pin" style="left:11.8%;top:82%">5</span>
-      <span class="pin" style="left:1%;top:86.4%">6</span>
+      <span class="pin" style="left:1.7%;top:43.9%">1</span>
+      <span class="pin" style="left:81.3%;top:41.8%">2</span>
+      <span class="pin" style="left:91.9%;top:41.8%">3</span>
+      <span class="pin" style="left:1%;top:80.5%">4</span>
+      <span class="pin" style="left:11.8%;top:80.5%">5</span>
+      <span class="pin" style="left:1%;top:85.6%">6</span>
     </div>
     <figcaption><b>Figure 10-1.</b> Branded results. Four photos produced three results, because the two portrait photos were combined.</figcaption>
   </figure>
   <table class="legend">
     <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
-    <tr><td><span class="num">1</span></td><td>Session hint</td><td>Reminds you that the selected files are still loaded, so selecting <span class="ui">APPLY BRANDING</span> again starts a new session. It reads <b>Unsaved edits in current session</b> after you change a result.</td></tr>
-    <tr><td><span class="num">2</span></td><td><span class="ui">BRANDED ASSETS</span></td><td>Number of finished items.</td></tr>
-    <tr><td><span class="num">3</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Rebrands every result with default framing.</td></tr>
+    <tr><td><span class="num">1</span></td><td><span class="ui">BRANDED ASSETS</span></td><td>Number of finished items.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Rebrands every result with default pan, zoom, and rotation. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">3</span></td><td><span class="ui">CLEAR ALL</span></td><td>Removes every branded result and the selection, and returns to the start screen. The app first offers to save them as a ZIP file (Chapter 12).</td></tr>
     <tr><td><span class="num">4</span></td><td><span class="ui">PREVIEW</span></td><td>Opens the result full size.</td></tr>
     <tr><td><span class="num">5</span></td><td><span class="ui">SAVE</span></td><td>Saves this one result to a location you choose.</td></tr>
     <tr><td><span class="num">6</span></td><td><span class="ui">EDIT CROP</span></td><td>Opens the editor and rebrands this result when you save. A <span class="ui">RESET</span> button appears on results with a custom crop.</td></tr>
   </table>
+  <div class="box note"><b class="t">Note: Session notice</b><p>Right after branding, no notice appears beside <span class="ui">APPLY BRANDING</span>. A notice appears there only when something changes. After you edit a result, it reads <b>Unsaved edits in current session.</b> If the selected media no longer matches the branded results, it reads, for example, <b>5 new photo(s) selected — applying branding will start a new session.</b></p></div>
 
   <h2>Preview window</h2>
   <figure class="narrow">
@@ -677,7 +683,8 @@
   <p>The app asks before it replaces or closes a session that has results, when you:</p>
   <ul>
     <li>apply branding again while you still have results,</li>
-    <li>load a new batch after editing results, or</li>
+    <li>load a new batch of media,</li>
+    <li>select <span class="ui">CLEAR ALL</span> in the branded assets view, or</li>
     <li>close the app.</li>
   </ul>
   <figure class="half">
@@ -756,7 +763,8 @@
     <tr><td>Mouse wheel</td><td>Zoom in or out</td></tr>
     <tr><td>Click and drag (PAN mode)</td><td>Move the photo</td></tr>
     <tr><td>Click and drag (PEN mode)</td><td>Draw a mark</td></tr>
-    <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last PEN mark</td></tr>
+    <tr><td>Arrow keys (photo selected)</td><td>Move the photo; hold <kbd>Shift</kbd> for bigger steps</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last PEN mark, or undo CLEAR MARKS</td></tr>
     <tr><td><kbd>Esc</kbd></td><td>Leave PEN mode; press again to cancel and close</td></tr>
     <tr><td><kbd>Enter</kbd></td><td>Save changes</td></tr>
   </table>
@@ -801,7 +809,7 @@
   <h3>Why did four photos give me three results?</h3>
   <p>Two portrait photos were combined into one frame. Select <span class="ui">KEEP SEPARATE</span> if you want one result per photo.</p>
   <h3>Can I remove PEN marks after exporting?</h3>
-  <p>Not from the exported file. While the session is still open, select <span class="ui">EDIT CROP</span> on the result, select <span class="ui">CLEAR</span>, save, and export again.</p>
+  <p>Not from the exported file. While the session is still open, select <span class="ui">EDIT CROP</span> on the result, select <span class="ui">CLEAR MARKS</span>, save, and export again.</p>
   <h3>Where do I get help?</h3>
   <p>Contact your office IT administrator. Releases and release notes are listed at <code>github.com/Deign86/Alpha_Branding/releases</code>.</p>
 </section>

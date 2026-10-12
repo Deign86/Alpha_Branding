@@ -80,7 +80,16 @@ public class ManualScreenshotGenerator
         using (var dc = visual.RenderOpen())
         {
             dc.DrawRectangle(window.Background ?? Brushes.Black, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
-            dc.DrawRectangle(new VisualBrush(root), null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            // Fixed viewbox: content drawn outside the root (e.g. the pen cursor) must not rescale the capture.
+            var bounds = new Rect(0, 0, root.ActualWidth, root.ActualHeight);
+            var offset = VisualTreeHelper.GetOffset(root);
+            var brush = new VisualBrush(root)
+            {
+                Viewbox = new Rect(offset.X, offset.Y, root.ActualWidth, root.ActualHeight),
+                ViewboxUnits = BrushMappingMode.Absolute,
+                Stretch = Stretch.None
+            };
+            dc.DrawRectangle(brush, null, bounds);
         }
         rtb.Render(visual);
         var encoder = new PngBitmapEncoder();
@@ -186,9 +195,8 @@ public class ManualScreenshotGenerator
                 for (var x = 0.592; x >= 0.548; x -= 0.004) stroke.AddPoint(new Point(x, 0.526));
                 crop.RedactStrokes = new List<RedactStroke> { stroke };
                 var editor = new CropEditorWindow(exterior, crop, overlay, "01_Exterior_Front.jpg");
-                Show(editor, 1020, 780);
                 if (editor.FindName("RedactModeToggle") is ToggleButton pen) pen.IsChecked = true;
-                Pump(300);
+                Show(editor, 1020, 780);
                 Capture(editor, Path.Combine(outDir, "07_crop_editor_pen.png"));
             }
 
@@ -211,12 +219,12 @@ public class ManualScreenshotGenerator
                 var check = new UpdateCheckResult
                 {
                     IsUpdateAvailable = true,
-                    CurrentVersion = "2.3.0",
-                    LatestVersion = "2.4.0",
+                    CurrentVersion = "2.4.0",
+                    LatestVersion = "2.5.0",
                     Release = new GitHubRelease
                     {
-                        Name = "v2.4.0 (example)",
-                        TagName = "v2.4.0",
+                        Name = "v2.5.0 (example)",
+                        TagName = "v2.5.0",
                         Body = "### New Features\n- Example release note shown for illustration.\n\n### Fixes\n- Example fix entry.",
                         PublishedAt = DateTimeOffset.Now
                     },
