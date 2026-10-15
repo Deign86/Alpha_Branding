@@ -1,7 +1,6 @@
 using Alpha.Branding.Models;
 using Alpha.Branding.Services;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ImageMagick;
 using System.IO;
 using System.Windows;
 
@@ -53,7 +52,7 @@ public class RedactTests
     [Fact]
     public void Redact_Render_StrokesProduceOpaqueBlotch()
     {
-        using var photo = new Image<Rgba32>(600, 1000, new Rgba32(255, 255, 255, 255));
+        using var photo = new MagickImage(new MagickColor(255, 255, 255, 255), 600, 1000);
         var stroke = new RedactStroke { R = 0, G = 0, B = 0 };
         stroke.AddPoint(new System.Windows.Point(0.45, 0.45));
         stroke.AddPoint(new System.Windows.Point(0.55, 0.55));
@@ -68,7 +67,7 @@ public class RedactTests
             isSoloPortrait: false);
 
         // RED: once strokes render, the bbox center must be an opaque blotch, not the white photo.
-        var blotch = canvas[300, 500];
+        var blotch = canvas.PixelAt(300, 500);
         Assert.True(blotch.R < 30 && blotch.G < 30 && blotch.B < 30 && blotch.A == 255,
             $"RED: expected opaque blotch in stroke bbox but found R={blotch.R} G={blotch.G} B={blotch.B} A={blotch.A}.");
     }
@@ -76,7 +75,7 @@ public class RedactTests
     [Fact]
     public void Redact_Render_EmptyStrokesMatchUnredactedPixels()
     {
-        using var photo = new Image<Rgba32>(600, 1000, new Rgba32(255, 255, 255, 255));
+        using var photo = new MagickImage(new MagickColor(255, 255, 255, 255), 600, 1000);
         using var withoutRedactions = ImageProcessingService.RenderCroppedPhoto(
             photo.Clone(), ImageProcessingService.HalfWidth, ImageProcessingService.TargetHeight);
         using var withEmptyRedactions = ImageProcessingService.RenderCroppedPhoto(
@@ -85,8 +84,8 @@ public class RedactTests
 
         using var unredactedPng = new MemoryStream();
         using var emptyRedactionsPng = new MemoryStream();
-        withoutRedactions.SaveAsPng(unredactedPng);
-        withEmptyRedactions.SaveAsPng(emptyRedactionsPng);
+        withoutRedactions.Write(unredactedPng, MagickFormat.Png);
+        withEmptyRedactions.Write(emptyRedactionsPng, MagickFormat.Png);
         Assert.Equal(unredactedPng.ToArray(), emptyRedactionsPng.ToArray());
     }
 
@@ -97,10 +96,10 @@ public class RedactTests
         var overlay = Path.GetTempFileName();
         try
         {
-            using (var image = new Image<Rgba32>(1200, 1000, new Rgba32(255, 255, 255, 255)))
-                await image.SaveAsPngAsync(input);
-            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
-                await frame.SaveAsPngAsync(overlay);
+            using (var image = new MagickImage(new MagickColor(255, 255, 255, 255), 1200, 1000))
+                await image.WriteAsync(input, MagickFormat.Png);
+            using (var frame = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
+                await frame.WriteAsync(overlay, MagickFormat.Png);
 
             var service = new ImageProcessingService();
             var branded = await service.ProcessSoloImageAsync(input, overlay, "Redact", 0, 1);
@@ -115,8 +114,8 @@ public class RedactTests
             await service.RebrandImageAsync(branded, settings, new ImageCropSettings(), overlay);
 
             // RED: rebrand must preserve strokes, so the blotch must survive in the new bytes.
-            using var decoded = Image.Load<Rgba32>(branded.ImageBytes);
-            var blotch = decoded[600, 500];
+            using var decoded = new MagickImage(branded.ImageBytes);
+            var blotch = decoded.PixelAt(600, 500);
             Assert.True(blotch.R < 30 && blotch.G < 30 && blotch.B < 30,
                 $"RED: expected blotch to survive rebrand but found R={blotch.R} G={blotch.G} B={blotch.B}.");
         }

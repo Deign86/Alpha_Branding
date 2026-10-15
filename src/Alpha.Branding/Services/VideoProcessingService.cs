@@ -1,6 +1,5 @@
 using Alpha.Branding.Models;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ImageMagick;
 using System.IO;
 using System.Windows.Media.Imaging;
 using Windows.Foundation;
@@ -98,8 +97,8 @@ public class VideoProcessingService
         var tempCanvasPath = Path.Combine(Path.GetTempPath(), "alpha_black_canvas_1200x1000.png");
         if (!File.Exists(tempCanvasPath))
         {
-            using var blackImg = new SixLabors.ImageSharp.Image<Rgba32>((int)TargetWidth, (int)TargetHeight, new Rgba32(0, 0, 0, 255));
-            await blackImg.SaveAsPngAsync(tempCanvasPath, cancellationToken);
+            using var blackImg = new MagickImage(MagickColors.Black, TargetWidth, TargetHeight);
+            await blackImg.WriteAsync(tempCanvasPath, MagickFormat.Png, cancellationToken);
         }
         return tempCanvasPath;
     }

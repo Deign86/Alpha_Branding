@@ -1,13 +1,8 @@
 using Alpha.Branding.Models;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Metadata.Profiles.Exif;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using ImageMagick;
+using ImageMagick.Drawing;
 using System.IO;
 using System.Windows.Media.Imaging;
-using EllipsePolygon = SixLabors.ImageSharp.Drawing.EllipsePolygon;
 
 namespace Alpha.Branding.Services;
 
@@ -35,33 +30,23 @@ public sealed class ImageProcessingService
 
     public static async Task<bool> IsPortraitAsync(string filePath, CancellationToken cancellationToken = default)
     {
-        ImageInfo? info;
-        try
+        using var info = new MagickImage();
+        if (HeicDecodeService.IsHeic(filePath))
         {
-            await using var stream = File.OpenRead(filePath);
-            info = await Image.IdentifyAsync(stream, cancellationToken);
+            info.Ping(await HeicDecodeService.TranscodeToJpegBytesAsync(filePath, cancellationToken));
         }
-        catch (Exception ex) when (HeicDecodeService.IsHeic(filePath) && ex is not OperationCanceledException)
+        else
         {
-            info = null;
+            await info.PingAsync(filePath, cancellationToken);
         }
-
-        if (info == null && HeicDecodeService.IsHeic(filePath))
-        {
-            await using var jpeg = new MemoryStream(await HeicDecodeService.TranscodeToJpegBytesAsync(filePath, cancellationToken));
-            info = await Image.IdentifyAsync(jpeg, cancellationToken);
-        }
-        if (info == null) return false;
 
         var width = info.Width;
         var height = info.Height;
 
-        if (info.Metadata?.ExifProfile != null && info.Metadata.ExifProfile.TryGetValue(ExifTag.Orientation, out var orientationValue))
+        if (info.Orientation is OrientationType.LeftTop or OrientationType.RightTop
+            or OrientationType.RightBottom or OrientationType.LeftBottom)
         {
-            if (orientationValue.Value is ushort val && val is 5 or 6 or 7 or 8)
-            {
-                (width, height) = (height, width);
-            }
+            (width, height) = (height, width);
         }
 
         return height > width;
@@ -199,23 +184,24 @@ public sealed class ImageProcessingService
             .ToArray();
     }
 
-    public static Image<Rgba32> RenderCroppedPhoto(
-        Image<Rgba32> photo,
+    public static MagickImage RenderCroppedPhoto(
+        IMagickImage<byte> photo,
         int targetWidth,
         int targetHeight,
         ImageCropSettings? settings = null,
         bool isSoloPortrait = false,
         IReadOnlyList<RedactStroke>? strokes = null)
     {
-        var originalWidth = photo.Width;
-        var originalHeight = photo.Height;
+        var originalWidth = (int)photo.Width;
+        var originalHeight = (int)photo.Height;
         if (settings != null && settings.Rotation != 0)
         {
-            photo.Mutate(ctx => ctx.Rotate(settings.Rotation));
+            photo.BackgroundColor = MagickColors.None;
+            photo.Rotate(settings.Rotation);
         }
 
-        var srcW = photo.Width;
-        var srcH = photo.Height;
+        var srcW = (int)photo.Width;
+        var srcH = (int)photo.Height;
 
         var scaleFit = Math.Min((double)targetWidth / srcW, (double)targetHeight / srcH);
         var scaleFill = Math.Max((double)targetWidth / srcW, (double)targetHeight / srcH);
@@ -238,16 +224,12 @@ public sealed class ImageProcessingService
         var drawX = (int)Math.Round(centerX + panX);
         var drawY = (int)Math.Round(centerY + panY);
 
-        photo.Mutate(ctx => ctx.Resize(new ResizeOptions
-        {
-            Size = new Size(scaledW, scaledH),
-            Mode = ResizeMode.Stretch
-        }));
+        photo.Resize(new MagickGeometry((uint)scaledW, (uint)scaledH) { IgnoreAspectRatio = true });
 
-        var canvas = new Image<Rgba32>(targetWidth, targetHeight, new Rgba32(18, 18, 18, 255));
-        canvas.Mutate(ctx => ctx.DrawImage(photo, new Point(drawX, drawY), 1f));
-        ApplyRedactStrokes(canvas, strokes ?? settings?.RedactStrokes, new Size(originalWidth, originalHeight),
-            new Size(srcW, srcH), new Size(scaledW, scaledH), new Point(drawX, drawY), settings?.Rotation ?? 0);
+        var canvas = new MagickImage(new MagickColor(18, 18, 18, 255), (uint)targetWidth, (uint)targetHeight);
+        canvas.Composite(photo, drawX, drawY, CompositeOperator.Over);
+        ApplyRedactStrokes(canvas, strokes ?? settings?.RedactStrokes, (originalWidth, originalHeight),
+            (srcW, srcH), (scaledW, scaledH), (drawX, drawY), settings?.Rotation ?? 0);
         return canvas;
     }
 
@@ -280,12 +262,12 @@ public sealed class ImageProcessingService
     }
 
     internal static void ApplyRedactStrokes(
-        Image<Rgba32> canvas,
+        MagickImage canvas,
         IReadOnlyList<RedactStroke>? strokes,
-        Size sourceSize,
-        Size rotatedSize,
-        Size scaledSize,
-        Point drawOffset,
+        (int Width, int Height) sourceSize,
+        (int Width, int Height) rotatedSize,
+        (int Width, int Height) scaledSize,
+        (int X, int Y) drawOffset,
         int rotation)
     {
         if (strokes is null || strokes.Count == 0) return;
@@ -299,8 +281,8 @@ public sealed class ImageProcessingService
             var diameter = (float)(stroke.BrushSizeNormalized * Math.Min(sourceSize.Width, sourceSize.Height)
                 * Math.Min(scaleX, scaleY));
             var radius = diameter / 2;
-            var color = new Rgba32(stroke.R, stroke.G, stroke.B, 255);
-            var points = new PointF[stroke.Points.Count];
+            var color = new MagickColor(stroke.R, stroke.G, stroke.B, 255);
+            var points = new PointD[stroke.Points.Count];
             for (var i = 0; i < points.Length; i++)
             {
                 var point = stroke.Points[i];
@@ -313,17 +295,22 @@ public sealed class ImageProcessingService
                     270 => (sourceY, sourceSize.Width - sourceX),
                     _ => (sourceX, sourceY)
                 };
-                points[i] = new PointF(drawOffset.X + (float)(rotatedX * scaleX), drawOffset.Y + (float)(rotatedY * scaleY));
+                points[i] = new PointD(drawOffset.X + rotatedX * scaleX, drawOffset.Y + rotatedY * scaleY);
             }
 
-            canvas.Mutate(context =>
+            var drawables = new Drawables().FillColor(color);
+            foreach (var point in points)
             {
-                if (points.Length > 1) context.DrawLine(color, diameter, points);
-                foreach (var point in points)
-                {
-                    context.Fill(color, new EllipsePolygon(point, radius));
-                }
-            });
+                drawables.Ellipse(point.X, point.Y, radius, radius, 0, 360);
+            }
+
+            drawables.StrokeColor(color).StrokeWidth(diameter);
+            for (var i = 1; i < points.Length; i++)
+            {
+                drawables.Line(points[i - 1].X, points[i - 1].Y, points[i].X, points[i].Y);
+            }
+
+            drawables.Draw(canvas);
         }
     }
 
@@ -359,13 +346,13 @@ public sealed class ImageProcessingService
     {
         await using var input = await OpenPhotoAsync(inputPath, cancellationToken);
         await using var overlay = File.OpenRead(overlayPath);
-        using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
-        using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
+        using var photo = await LoadImageAsync(input, cancellationToken);
+        using var frame = await LoadImageAsync(overlay, cancellationToken);
 
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
+        CropToCanvas(frame);
 
         using var canvas = RenderCroppedPhoto(photo, TargetWidth, TargetHeight, cropSettings, isSoloPortrait: false, strokes);
-        canvas.Mutate(context => context.DrawImage(frame, new Point(0, 0), 1f));
+        canvas.Composite(frame, 0, 0, CompositeOperator.Over);
 
         var branded = await CreateBrandedImageAsync(canvas, prefix, index, total, cancellationToken);
         branded.SourceFilePaths = [inputPath];
@@ -397,13 +384,13 @@ public sealed class ImageProcessingService
 
         await using var input = await OpenPhotoAsync(inputPath, cancellationToken);
         await using var overlay = File.OpenRead(overlayPath);
-        using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
-        using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
+        using var photo = await LoadImageAsync(input, cancellationToken);
+        using var frame = await LoadImageAsync(overlay, cancellationToken);
 
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
+        CropToCanvas(frame);
 
         using var canvas = RenderCroppedPhoto(photo, TargetWidth, TargetHeight, cropSettings, isSoloPortrait: isPortrait, strokes);
-        canvas.Mutate(context => context.DrawImage(frame, new Point(0, 0), 1f));
+        canvas.Composite(frame, 0, 0, CompositeOperator.Over);
 
         var branded = await CreateBrandedImageAsync(canvas, prefix, index, total, cancellationToken);
         branded.SourceFilePaths = [inputPath];
@@ -430,22 +417,19 @@ public sealed class ImageProcessingService
         await using var rightStream = await OpenPhotoAsync(rightPath, cancellationToken);
         await using var overlayStream = File.OpenRead(overlayPath);
 
-        using var leftPhoto = await Image.LoadAsync<Rgba32>(leftStream, cancellationToken);
-        using var rightPhoto = await Image.LoadAsync<Rgba32>(rightStream, cancellationToken);
-        using var frame = await Image.LoadAsync<Rgba32>(overlayStream, cancellationToken);
+        using var leftPhoto = await LoadImageAsync(leftStream, cancellationToken);
+        using var rightPhoto = await LoadImageAsync(rightStream, cancellationToken);
+        using var frame = await LoadImageAsync(overlayStream, cancellationToken);
 
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
+        CropToCanvas(frame);
 
         using var leftCanvas = RenderCroppedPhoto(leftPhoto, HalfWidth, TargetHeight, leftCrop, isSoloPortrait: false, leftStrokes);
         using var rightCanvas = RenderCroppedPhoto(rightPhoto, HalfWidth, TargetHeight, rightCrop, isSoloPortrait: false, rightStrokes);
 
-        using var canvas = new Image<Rgba32>(TargetWidth, TargetHeight);
-        canvas.Mutate(context =>
-        {
-            context.DrawImage(leftCanvas, new Point(0, 0), 1f);
-            context.DrawImage(rightCanvas, new Point(HalfWidth, 0), 1f);
-            context.DrawImage(frame, new Point(0, 0), 1f);
-        });
+        using var canvas = new MagickImage(MagickColors.None, TargetWidth, TargetHeight);
+        canvas.Composite(leftCanvas, 0, 0, CompositeOperator.Over);
+        canvas.Composite(rightCanvas, HalfWidth, 0, CompositeOperator.Over);
+        canvas.Composite(frame, 0, 0, CompositeOperator.Over);
 
         var branded = await CreateBrandedImageAsync(canvas, prefix, index, total, cancellationToken);
         branded.SourceFilePaths = [leftPath, rightPath];
@@ -469,20 +453,17 @@ public sealed class ImageProcessingService
         await using var input = await OpenPhotoAsync(inputPath, cancellationToken);
         await using var overlay = File.OpenRead(overlayPath);
 
-        using var photo = await Image.LoadAsync<Rgba32>(input, cancellationToken);
-        using var frame = await Image.LoadAsync<Rgba32>(overlay, cancellationToken);
+        using var photo = await LoadImageAsync(input, cancellationToken);
+        using var frame = await LoadImageAsync(overlay, cancellationToken);
 
-        frame.Mutate(context => context.Resize(new ResizeOptions { Size = new Size(TargetWidth, TargetHeight), Mode = ResizeMode.Crop }));
+        CropToCanvas(frame);
 
         using var portraitCanvas = RenderCroppedPhoto(photo, HalfWidth, TargetHeight, cropSettings, isSoloPortrait: false, strokes);
 
-        using var canvas = new Image<Rgba32>(TargetWidth, TargetHeight, new Rgba32(18, 18, 18, 255));
-        canvas.Mutate(context =>
-        {
-            var offsetX = (TargetWidth - HalfWidth) / 2;
-            context.DrawImage(portraitCanvas, new Point(offsetX, 0), 1f);
-            context.DrawImage(frame, new Point(0, 0), 1f);
-        });
+        using var canvas = new MagickImage(new MagickColor(18, 18, 18, 255), TargetWidth, TargetHeight);
+        var offsetX = (TargetWidth - HalfWidth) / 2;
+        canvas.Composite(portraitCanvas, offsetX, 0, CompositeOperator.Over);
+        canvas.Composite(frame, 0, 0, CompositeOperator.Over);
 
         var branded = await CreateBrandedImageAsync(canvas, prefix, index, total, cancellationToken);
         branded.SourceFilePaths = [inputPath];
@@ -577,10 +558,35 @@ public sealed class ImageProcessingService
             ? new MemoryStream(await HeicDecodeService.TranscodeToJpegBytesAsync(path, cancellationToken))
             : File.OpenRead(path);
 
-    private static async Task<BrandedImage> CreateBrandedImageAsync(Image<Rgba32> image, string? prefix, int index, int total, CancellationToken cancellationToken)
+    private static async Task<MagickImage> LoadImageAsync(Stream stream, CancellationToken cancellationToken)
+    {
+        var image = new MagickImage();
+        try
+        {
+            await image.ReadAsync(stream, cancellationToken);
+            if (image.ColorSpace != ColorSpace.sRGB) image.ColorSpace = ColorSpace.sRGB;
+            return image;
+        }
+        catch
+        {
+            image.Dispose();
+            throw;
+        }
+    }
+
+    // Scale to cover the canvas, then center-crop to it.
+    private static void CropToCanvas(MagickImage frame)
+    {
+        frame.Resize(new MagickGeometry(TargetWidth, TargetHeight) { FillArea = true });
+        frame.Crop(TargetWidth, TargetHeight, Gravity.Center);
+        frame.ResetPage();
+    }
+
+    private static async Task<BrandedImage> CreateBrandedImageAsync(MagickImage image, string? prefix, int index, int total, CancellationToken cancellationToken)
     {
         await using var output = new MemoryStream();
-        await image.SaveAsJpegAsync(output, new JpegEncoder { Quality = 90 }, cancellationToken);
+        image.Quality = 90;
+        await image.WriteAsync(output, MagickFormat.Jpeg, cancellationToken);
         var imageBytes = output.ToArray();
         return new BrandedImage
         {
@@ -595,10 +601,8 @@ public sealed class ImageProcessingService
 
     public static BitmapImage CreateFallbackThumbnail()
     {
-        using var img = new Image<Rgba32>(320, 240, new Rgba32(24, 24, 24, 255));
-        using var ms = new MemoryStream();
-        img.SaveAsJpeg(ms);
-        return CreatePreview(ms.ToArray());
+        using var img = new MagickImage(new MagickColor(24, 24, 24, 255), 320, 240);
+        return CreatePreview(img.ToByteArray(MagickFormat.Jpeg));
     }
 
     public static BitmapImage CreatePreview(byte[] imageBytes)

@@ -1,6 +1,5 @@
 using Alpha.Branding.Services;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ImageMagick;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
@@ -93,8 +92,8 @@ public class HeicInputTests
         var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.jpg");
         try
         {
-            using (var image = new Image<Rgba32>(16, 32))
-                await image.SaveAsJpegAsync(path);
+            using (var image = new MagickImage(MagickColors.None, 16, 32))
+                await image.WriteAsync(path, MagickFormat.Jpeg);
 
             Assert.True(await ImageProcessingService.IsPortraitAsync(path));
         }
