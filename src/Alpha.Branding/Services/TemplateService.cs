@@ -1,5 +1,5 @@
 using Alpha.Branding.Models;
-using SixLabors.ImageSharp;
+using ImageMagick;
 using System.IO;
 using System.Text.Json;
 
@@ -124,15 +124,15 @@ public class TemplateService : ITemplateService
 
         try
         {
-            await using var stream = File.OpenRead(sourceFilePath);
-            var info = await Image.IdentifyAsync(stream);
-            if (info == null || info.Width <= 0 || info.Height <= 0)
+            using var info = new MagickImage();
+            await info.PingAsync(sourceFilePath);
+            if (info.Width == 0 || info.Height == 0)
             {
                 return (false, "Unable to read image dimensions.", 0, 0, 0);
             }
 
-            var w = info.Width;
-            var h = info.Height;
+            var w = (int)info.Width;
+            var h = (int)info.Height;
             var ratio = Math.Round((double)w / h, 4);
 
             var message = $"Valid template ({w}×{h} px, aspect ratio {ratio:0.00}:1). Aspect ratio will be strictly preserved.";

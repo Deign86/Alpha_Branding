@@ -5,8 +5,7 @@ using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
 using FlaUI.Core.WindowsAPI;
 using FlaUI.UIA3;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ImageMagick;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -162,14 +161,14 @@ public class UiAutomationTests
         var p1 = Path.Combine(tempDir, "P1.png");
         var p2 = Path.Combine(tempDir, "P2.png");
 
-        using (var imgL = new Image<Rgba32>(1600, 1000))
-            imgL.SaveAsPng(landscape);
+        using (var imgL = new MagickImage(MagickColors.None, 1600, 1000))
+            imgL.Write(landscape, MagickFormat.Png);
 
-        using (var imgP1 = new Image<Rgba32>(800, 1200))
-            imgP1.SaveAsPng(p1);
+        using (var imgP1 = new MagickImage(MagickColors.None, 800, 1200))
+            imgP1.Write(p1, MagickFormat.Png);
 
-        using (var imgP2 = new Image<Rgba32>(800, 1200))
-            imgP2.SaveAsPng(p2);
+        using (var imgP2 = new MagickImage(MagickColors.None, 800, 1200))
+            imgP2.Write(p2, MagickFormat.Png);
 
         return (landscape, p1, p2);
     }

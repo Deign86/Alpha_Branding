@@ -201,7 +201,7 @@ Alpha Premier Realty Branding Studio features a native auto-updater connecting t
 - **Language:** C# 12
 - **Framework:** .NET 8 (`net8.0-windows10.0.19041.0`)
 - **UI Architecture:** Windows Presentation Foundation (WPF), XAML, MVVM
-- **Imaging Core:** `SixLabors.ImageSharp` (v3.1.12) for GPU/CPU-optimized pixel transformations and JPEG encoding
+- **Imaging Core:** `Magick.NET-Q8-x64` (v14.17.1) for image decoding (including HEIC), compositing, and JPEG encoding
 - **Packaging:** `System.IO.Compression` for native multi-threaded ZIP export
 - **Test Suite:** xUnit covering layout calculations, filename sanitization, image compositing, and DPI scaling
 

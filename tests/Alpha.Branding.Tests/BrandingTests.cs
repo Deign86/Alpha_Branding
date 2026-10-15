@@ -1,10 +1,8 @@
 using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using Alpha.Branding.ViewModels;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.PixelFormats;
+using ImageMagick;
+using ImageMagick.Drawing;
 using System.IO;
 using System.IO.Compression;
 
@@ -250,18 +248,18 @@ public class ImageProcessingTests
         var overlay = Path.GetTempFileName();
         try
         {
-            using (var image = new Image<Rgba32>(32, 24, new Rgba32(255, 0, 0, 255)))
-                await image.SaveAsPngAsync(input);
-            using (var frame = new Image<Rgba32>(8, 8, new Rgba32(0, 0, 255, 255)))
-                await frame.SaveAsPngAsync(overlay);
+            using (var image = new MagickImage(new MagickColor(255, 0, 0, 255), 32, 24))
+                await image.WriteAsync(input, MagickFormat.Png);
+            using (var frame = new MagickImage(new MagickColor(0, 0, 255, 255), 8, 8))
+                await frame.WriteAsync(overlay, MagickFormat.Png);
 
             var result = await new ImageProcessingService().ProcessAsync(input, overlay, "Test", 0, 1);
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
-            var centerPixel = decoded[600, 500];
+            using var decoded = new MagickImage(result.ImageBytes);
+            var centerPixel = decoded.PixelAt(600, 500);
 
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
-            Assert.Equal(JpegFormat.Instance, Image.DetectFormat(result.ImageBytes));
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
+            Assert.Equal(MagickFormat.Jpeg, new MagickImageInfo(result.ImageBytes).Format);
             Assert.True(centerPixel.B > centerPixel.R, "The opaque blue overlay should be visible in the composed output.");
         }
         finally
@@ -278,17 +276,17 @@ public class ImageProcessingTests
         var overlay = Path.GetTempFileName();
         try
         {
-            using (var image = new Image<Rgba32>(32, 24, new Rgba32(255, 128, 0, 255)))
-                await image.SaveAsJpegAsync(input);
-            using (var frame = new Image<Rgba32>(8, 8, new Rgba32(0, 0, 255, 255)))
-                await frame.SaveAsPngAsync(overlay);
+            using (var image = new MagickImage(new MagickColor(255, 128, 0, 255), 32, 24))
+                await image.WriteAsync(input, MagickFormat.Jpeg);
+            using (var frame = new MagickImage(new MagickColor(0, 0, 255, 255), 8, 8))
+                await frame.WriteAsync(overlay, MagickFormat.Png);
 
             var result = await new ImageProcessingService().ProcessAsync(input, overlay, "JfifListing", 0, 1);
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
+            using var decoded = new MagickImage(result.ImageBytes);
 
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
-            Assert.Equal(JpegFormat.Instance, Image.DetectFormat(result.ImageBytes));
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
+            Assert.Equal(MagickFormat.Jpeg, new MagickImageInfo(result.ImageBytes).Format);
             Assert.Equal("JfifListing_01.jpg", result.FileName);
         }
         finally
@@ -305,10 +303,10 @@ public class ImageProcessingTests
         var landscapeFile = Path.GetTempFileName();
         try
         {
-            using (var portrait = new Image<Rgba32>(1000, 1500))
-                await portrait.SaveAsPngAsync(portraitFile);
-            using (var landscape = new Image<Rgba32>(1500, 1000))
-                await landscape.SaveAsPngAsync(landscapeFile);
+            using (var portrait = new MagickImage(MagickColors.None, 1000, 1500))
+                await portrait.WriteAsync(portraitFile, MagickFormat.Png);
+            using (var landscape = new MagickImage(MagickColors.None, 1500, 1000))
+                await landscape.WriteAsync(landscapeFile, MagickFormat.Png);
 
             Assert.True(await ImageProcessingService.IsPortraitAsync(portraitFile));
             Assert.False(await ImageProcessingService.IsPortraitAsync(landscapeFile));
@@ -332,17 +330,17 @@ public class ImageProcessingTests
 
         try
         {
-            using (var p = new Image<Rgba32>(600, 1000))
+            using (var p = new MagickImage(MagickColors.None, 600, 1000))
             {
-                await p.SaveAsPngAsync(p1);
-                await p.SaveAsPngAsync(p2);
-                await p.SaveAsPngAsync(p3);
-                await p.SaveAsPngAsync(p4);
+                await p.WriteAsync(p1, MagickFormat.Png);
+                await p.WriteAsync(p2, MagickFormat.Png);
+                await p.WriteAsync(p3, MagickFormat.Png);
+                await p.WriteAsync(p4, MagickFormat.Png);
             }
-            using (var l = new Image<Rgba32>(1200, 1000))
+            using (var l = new MagickImage(MagickColors.None, 1200, 1000))
             {
-                await l.SaveAsPngAsync(l1);
-                await l.SaveAsPngAsync(l2);
+                await l.WriteAsync(l1, MagickFormat.Png);
+                await l.WriteAsync(l2, MagickFormat.Png);
             }
 
             // Case 1: 2 portraits -> 1 pair
@@ -411,18 +409,18 @@ public class ImageProcessingTests
         try
         {
             // Left photo is pure red (255, 0, 0)
-            using (var left = new Image<Rgba32>(600, 1000, new Rgba32(255, 0, 0, 255)))
-                await left.SaveAsPngAsync(leftFile);
+            using (var left = new MagickImage(new MagickColor(255, 0, 0, 255), 600, 1000))
+                await left.WriteAsync(leftFile, MagickFormat.Png);
 
             // Right photo is pure green (0, 255, 0)
-            using (var right = new Image<Rgba32>(600, 1000, new Rgba32(0, 255, 0, 255)))
-                await right.SaveAsPngAsync(rightFile);
+            using (var right = new MagickImage(new MagickColor(0, 255, 0, 255), 600, 1000))
+                await right.WriteAsync(rightFile, MagickFormat.Png);
 
             // Overlay is transparent with a small blue box at top-right
-            using (var overlay = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+            using (var overlay = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
             {
-                overlay[1100, 50] = new Rgba32(0, 0, 255, 255);
-                await overlay.SaveAsPngAsync(overlayFile);
+                new Drawables().FillColor(new MagickColor(0, 0, 255, 255)).Point(1100, 50).Draw(overlay);
+                await overlay.WriteAsync(overlayFile, MagickFormat.Png);
             }
 
             var service = new ImageProcessingService();
@@ -431,16 +429,16 @@ public class ImageProcessingTests
             Assert.NotNull(result);
             Assert.Equal("PairTest_01.jpg", result.FileName);
 
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
+            using var decoded = new MagickImage(result.ImageBytes);
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
 
             // Left side pixel (x=200, y=500) should be predominantly Red
-            var leftPixel = decoded[200, 500];
+            var leftPixel = decoded.PixelAt(200, 500);
             Assert.True(leftPixel.R > 200 && leftPixel.G < 50, "Left side should contain left red image.");
 
             // Right side pixel (x=900, y=500) should be predominantly Green
-            var rightPixel = decoded[900, 500];
+            var rightPixel = decoded.PixelAt(900, 500);
             Assert.True(rightPixel.G > 200 && rightPixel.R < 50, "Right side should contain right green image.");
         }
         finally
@@ -459,25 +457,25 @@ public class ImageProcessingTests
 
         try
         {
-            using (var photo = new Image<Rgba32>(600, 1000, new Rgba32(255, 0, 0, 255)))
-                await photo.SaveAsPngAsync(loneFile);
-            using (var overlay = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
-                await overlay.SaveAsPngAsync(overlayFile);
+            using (var photo = new MagickImage(new MagickColor(255, 0, 0, 255), 600, 1000))
+                await photo.WriteAsync(loneFile, MagickFormat.Png);
+            using (var overlay = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
+                await overlay.WriteAsync(overlayFile, MagickFormat.Png);
 
             var service = new ImageProcessingService();
             var result = await service.ProcessLonePortraitAsync(loneFile, overlayFile, "LoneTest", 0, 1);
 
             Assert.NotNull(result);
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
+            using var decoded = new MagickImage(result.ImageBytes);
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
 
             // Center pixel (x=600, y=500) should be Red
-            var centerPixel = decoded[600, 500];
+            var centerPixel = decoded.PixelAt(600, 500);
             Assert.True(centerPixel.R > 200);
 
             // Left edge pixel (x=50, y=500) should be the dark background
-            var darkEdgePixel = decoded[50, 500];
+            var darkEdgePixel = decoded.PixelAt(50, 500);
             Assert.True(darkEdgePixel.R < 30 && darkEdgePixel.G < 30 && darkEdgePixel.B < 30);
         }
         finally
@@ -496,13 +494,13 @@ public class ImageProcessingTests
 
         try
         {
-            using (var portrait = new Image<Rgba32>(600, 1000, new Rgba32(255, 255, 255, 255)))
+            using (var portrait = new MagickImage(new MagickColor(255, 255, 255, 255), 600, 1000))
             {
-                await portrait.SaveAsPngAsync(p1);
-                await portrait.SaveAsPngAsync(p2);
+                await portrait.WriteAsync(p1, MagickFormat.Png);
+                await portrait.WriteAsync(p2, MagickFormat.Png);
             }
-            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
-                await frame.SaveAsPngAsync(overlay);
+            using (var frame = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
+                await frame.WriteAsync(overlay, MagickFormat.Png);
 
             var vm = new MainWindowViewModel(new ImageProcessingService())
             {
@@ -533,12 +531,12 @@ public class ImageProcessingTests
 
         try
         {
-            using (var portrait = new Image<Rgba32>(600, 1000, new Rgba32(255, 0, 0, 255)))
-                await portrait.SaveAsPngAsync(p1);
-            using (var landscape = new Image<Rgba32>(1200, 1000, new Rgba32(0, 255, 0, 255)))
-                await landscape.SaveAsPngAsync(l1);
-            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
-                await frame.SaveAsPngAsync(overlay);
+            using (var portrait = new MagickImage(new MagickColor(255, 0, 0, 255), 600, 1000))
+                await portrait.WriteAsync(p1, MagickFormat.Png);
+            using (var landscape = new MagickImage(new MagickColor(0, 255, 0, 255), 1200, 1000))
+                await landscape.WriteAsync(l1, MagickFormat.Png);
+            using (var frame = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
+                await frame.WriteAsync(overlay, MagickFormat.Png);
 
             var vm = new MainWindowViewModel(new ImageProcessingService())
             {
@@ -552,16 +550,16 @@ public class ImageProcessingTests
             Assert.Single(vm.Results);
             Assert.Equal("Listing_01.jpg", vm.Results[0].FileName);
 
-            using var decoded = Image.Load<Rgba32>(vm.Results[0].ImageBytes);
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
+            using var decoded = new MagickImage(vm.Results[0].ImageBytes);
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
 
             // Left side pixel (x=200, y=500) contains red portrait
-            var leftPixel = decoded[200, 500];
+            var leftPixel = decoded.PixelAt(200, 500);
             Assert.True(leftPixel.R > 200);
 
             // Right side pixel (x=900, y=500) contains green landscape
-            var rightPixel = decoded[900, 500];
+            var rightPixel = decoded.PixelAt(900, 500);
             Assert.True(rightPixel.G > 200);
         }
         finally
@@ -626,8 +624,8 @@ public class AntiSlopAndResilienceTests
         var tempImg = Path.GetTempFileName();
         try
         {
-            using (var img = new Image<Rgba32>(100, 100))
-                await img.SaveAsPngAsync(tempImg);
+            using (var img = new MagickImage(MagickColors.None, 100, 100))
+                await img.WriteAsync(tempImg, MagickFormat.Png);
 
             await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
             {
@@ -646,8 +644,8 @@ public class AntiSlopAndResilienceTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            using (var img = new Image<Rgba32>(1200, 1000, new Rgba32(200, 150, 50, 255)))
-                await img.SaveAsJpegAsync(tempFile);
+            using (var img = new MagickImage(new MagickColor(200, 150, 50, 255), 1200, 1000))
+                await img.WriteAsync(tempFile, MagickFormat.Jpeg);
 
             var bytes = await File.ReadAllBytesAsync(tempFile);
             var bitmap = ImageProcessingService.CreatePreview(bytes);
@@ -712,14 +710,14 @@ public class SessionWorkflowSafetyTests
         var p2 = Path.GetTempFileName() + ".png";
         var overlay = Path.GetTempFileName() + ".png";
 
-        using (var img1 = new Image<Rgba32>(1200, 1000, new Rgba32(255, 0, 0, 255)))
-            await img1.SaveAsPngAsync(p1);
+        using (var img1 = new MagickImage(new MagickColor(255, 0, 0, 255), 1200, 1000))
+            await img1.WriteAsync(p1, MagickFormat.Png);
 
-        using (var img2 = new Image<Rgba32>(1200, 1000, new Rgba32(0, 255, 0, 255)))
-            await img2.SaveAsPngAsync(p2);
+        using (var img2 = new MagickImage(new MagickColor(0, 255, 0, 255), 1200, 1000))
+            await img2.WriteAsync(p2, MagickFormat.Png);
 
-        using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 255, 128)))
-            await frame.SaveAsPngAsync(overlay);
+        using (var frame = new MagickImage(new MagickColor(0, 0, 255, 128), 1200, 1000))
+            await frame.WriteAsync(overlay, MagickFormat.Png);
 
         return (p1, p2, overlay);
     }
@@ -1493,10 +1491,10 @@ public class SelectedPhotosStagingTests
         var p2 = Path.GetTempFileName() + ".png";
         try
         {
-            using (var img = new Image<Rgba32>(800, 600, new Rgba32(255, 0, 0, 255)))
+            using (var img = new MagickImage(new MagickColor(255, 0, 0, 255), 800, 600))
             {
-                await img.SaveAsJpegAsync(p1);
-                await img.SaveAsPngAsync(p2);
+                await img.WriteAsync(p1, MagickFormat.Jpeg);
+                await img.WriteAsync(p2, MagickFormat.Png);
             }
 
             var vm = new MainWindowViewModel(new ImageProcessingService());
@@ -1645,10 +1643,10 @@ public class VideoProcessingTests
 
         try
         {
-            using (var img = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1200, 1000))
+            using (var img = new MagickImage(MagickColors.None, 1200, 1000))
             {
-                await img.SaveAsJpegAsync(p1);
-                await img.SaveAsJpegAsync(p2);
+                await img.WriteAsync(p1, MagickFormat.Jpeg);
+                await img.WriteAsync(p2, MagickFormat.Jpeg);
             }
             await File.WriteAllBytesAsync(v1, new byte[] { 1, 2, 3 });
             await File.WriteAllBytesAsync(v2, new byte[] { 4, 5, 6 });
@@ -1681,10 +1679,10 @@ public class VideoProcessingTests
 
         try
         {
-            using (var img = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1200, 1000))
+            using (var img = new MagickImage(MagickColors.None, 1200, 1000))
             {
-                await img.SaveAsJpegAsync(p1);
-                await img.SaveAsPngAsync(overlay);
+                await img.WriteAsync(p1, MagickFormat.Jpeg);
+                await img.WriteAsync(overlay, MagickFormat.Png);
             }
             await File.WriteAllBytesAsync(v1, new byte[] { 1, 2, 3 });
 
@@ -2031,8 +2029,8 @@ public class TemplateManagementTests
 
             // Valid 1200x1000 PNG
             var validFile = Path.Combine(tempDir.FullName, "valid.png");
-            using (var img = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
-                await img.SaveAsPngAsync(validFile);
+            using (var img = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
+                await img.WriteAsync(validFile, MagickFormat.Png);
 
             var (isValid, msg, w, h, ratio) = await service.ValidateTemplateAsync(validFile);
             Assert.True(isValid);
@@ -2042,8 +2040,8 @@ public class TemplateManagementTests
 
             // Valid 1200x1000 JFIF
             var validJfif = Path.Combine(tempDir.FullName, "valid.jfif");
-            using (var img = new Image<Rgba32>(1200, 1000, new Rgba32(255, 0, 0, 255)))
-                await img.SaveAsJpegAsync(validJfif);
+            using (var img = new MagickImage(new MagickColor(255, 0, 0, 255), 1200, 1000))
+                await img.WriteAsync(validJfif, MagickFormat.Jpeg);
 
             var (isJfifValid, _, jfifW, jfifH, jfifRatio) = await service.ValidateTemplateAsync(validJfif);
             Assert.True(isJfifValid);
@@ -2074,8 +2072,8 @@ public class TemplateManagementTests
         try
         {
             var sourceFile = Path.Combine(tempDir.FullName, "my_custom_template.png");
-            using (var img = new Image<Rgba32>(1024, 858, new Rgba32(255, 200, 0, 128)))
-                await img.SaveAsPngAsync(sourceFile);
+            using (var img = new MagickImage(new MagickColor(255, 200, 0, 128), 1024, 858))
+                await img.WriteAsync(sourceFile, MagickFormat.Png);
 
             var service1 = new TemplateService(tempDir.FullName);
             var saved = await service1.SaveTemplateAsync(sourceFile, "August Special Edition");
@@ -2108,8 +2106,8 @@ public class TemplateManagementTests
         try
         {
             var sourceFile = Path.Combine(tempDir.FullName, "deletable.png");
-            using (var img = new Image<Rgba32>(800, 600))
-                await img.SaveAsPngAsync(sourceFile);
+            using (var img = new MagickImage(MagickColors.None, 800, 600))
+                await img.WriteAsync(sourceFile, MagickFormat.Png);
 
             var service = new TemplateService(tempDir.FullName);
             var custom = await service.SaveTemplateAsync(sourceFile, "Temporary Promo");
@@ -2140,34 +2138,28 @@ public class DistortionPreventionAndPhotoFidelityTests
         {
             // 16:9 widescreen photo (1920x1080) with distinct color pattern
             // Upper half is red (255, 0, 0), lower half is green (0, 255, 0)
-            using (var img = new Image<Rgba32>(1920, 1080))
+            using (var img = new MagickImage(new MagickColor(0, 255, 0, 255), 1920, 1080))
             {
-                for (int y = 0; y < 1080; y++)
-                {
-                    for (int x = 0; x < 1920; x++)
-                    {
-                        img[x, y] = y < 540 ? new Rgba32(255, 0, 0, 255) : new Rgba32(0, 255, 0, 255);
-                    }
-                }
-                await img.SaveAsPngAsync(input);
+                new Drawables().FillColor(new MagickColor(255, 0, 0, 255)).Rectangle(0, 0, 1919, 539).Draw(img);
+                await img.WriteAsync(input, MagickFormat.Png);
             }
 
             // Transparent overlay
-            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+            using (var frame = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
             {
-                await frame.SaveAsPngAsync(overlay);
+                await frame.WriteAsync(overlay, MagickFormat.Png);
             }
 
             var service = new ImageProcessingService();
             var result = await service.ProcessLandscapeAsync(input, overlay, "AspectTest", 0, 1);
 
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
+            using var decoded = new MagickImage(result.ImageBytes);
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
 
             // Middle vertical point (y = 500) should cleanly preserve the dividing line
-            var topSample = decoded[600, 200];
-            var bottomSample = decoded[600, 800];
+            var topSample = decoded.PixelAt(600, 200);
+            var bottomSample = decoded.PixelAt(600, 800);
             Assert.True(topSample.R > 200, "Top portion must contain top of photo without horizontal compression distortion.");
             Assert.True(bottomSample.G > 200, "Bottom portion must contain bottom of photo without vertical stretch distortion.");
         }
@@ -2186,11 +2178,11 @@ public class DistortionPreventionAndPhotoFidelityTests
 
         try
         {
-            using (var testFrame = new Image<Rgba32>(1024, 858, new Rgba32(200, 160, 90, 180)))
-                await testFrame.SaveAsPngAsync(customOverlay);
+            using (var testFrame = new MagickImage(new MagickColor(200, 160, 90, 180), 1024, 858))
+                await testFrame.WriteAsync(customOverlay, MagickFormat.Png);
 
-            using (var photo = new Image<Rgba32>(1600, 1200, new Rgba32(50, 100, 150, 255)))
-                await photo.SaveAsPngAsync(photoFile);
+            using (var photo = new MagickImage(new MagickColor(50, 100, 150, 255), 1600, 1200))
+                await photo.WriteAsync(photoFile, MagickFormat.Png);
 
             var service = new ImageProcessingService();
             var result = await service.ProcessLandscapeAsync(photoFile, customOverlay, "CustomTplTest", 0, 1);
@@ -2198,9 +2190,9 @@ public class DistortionPreventionAndPhotoFidelityTests
             Assert.NotNull(result);
             Assert.Equal("CustomTplTest_01.jpg", result.FileName);
 
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
+            using var decoded = new MagickImage(result.ImageBytes);
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
         }
         finally
         {
@@ -2216,13 +2208,13 @@ public class DistortionPreventionAndPhotoFidelityTests
         var tempStorage = Directory.CreateTempSubdirectory();
         try
         {
-            using (var photo = new Image<Rgba32>(1200, 1000, new Rgba32(100, 100, 100, 255)))
-                await photo.SaveAsPngAsync(photoFile);
+            using (var photo = new MagickImage(new MagickColor(100, 100, 100, 255), 1200, 1000))
+                await photo.WriteAsync(photoFile, MagickFormat.Png);
 
             // Create custom red template
             var redOverlay = Path.Combine(tempStorage.FullName, "red_overlay.png");
-            using (var frame = new Image<Rgba32>(1200, 1000, new Rgba32(255, 0, 0, 200)))
-                await frame.SaveAsPngAsync(redOverlay);
+            using (var frame = new MagickImage(new MagickColor(255, 0, 0, 200), 1200, 1000))
+                await frame.WriteAsync(redOverlay, MagickFormat.Png);
 
             var templateService = new TemplateService(tempStorage.FullName);
             var customTemplate = await templateService.SaveTemplateAsync(redOverlay, "Vibrant Red Brand");
@@ -2241,8 +2233,8 @@ public class DistortionPreventionAndPhotoFidelityTests
             await vm.ApplyAsync();
 
             Assert.Single(vm.Results);
-            using var decoded = Image.Load<Rgba32>(vm.Results[0].ImageBytes);
-            var pixel = decoded[600, 500];
+            using var decoded = new MagickImage(vm.Results[0].ImageBytes);
+            var pixel = decoded.PixelAt(600, 500);
             Assert.True(pixel.R > 180, "Branded image must incorporate selected custom template color.");
         }
         finally
@@ -2314,9 +2306,9 @@ public class ImageEditingWorkflowTests
             var p2 = Path.Combine(tempDir.FullName, "P2.png");
             var l1 = Path.Combine(tempDir.FullName, "L1.png");
 
-            using (var imgP1 = new Image<Rgba32>(800, 1200)) await imgP1.SaveAsPngAsync(p1);
-            using (var imgP2 = new Image<Rgba32>(800, 1200)) await imgP2.SaveAsPngAsync(p2);
-            using (var imgL1 = new Image<Rgba32>(1600, 1000)) await imgL1.SaveAsPngAsync(l1);
+            using (var imgP1 = new MagickImage(MagickColors.None, 800, 1200)) await imgP1.WriteAsync(p1, MagickFormat.Png);
+            using (var imgP2 = new MagickImage(MagickColors.None, 800, 1200)) await imgP2.WriteAsync(p2, MagickFormat.Png);
+            using (var imgL1 = new MagickImage(MagickColors.None, 1600, 1000)) await imgL1.WriteAsync(l1, MagickFormat.Png);
 
             var items = new List<SelectedPhotoItem>
             {
@@ -2352,9 +2344,9 @@ public class ImageEditingWorkflowTests
             var p2 = Path.Combine(tempDir.FullName, "P2.png");
             var p3 = Path.Combine(tempDir.FullName, "P3.png");
 
-            using (var imgP1 = new Image<Rgba32>(800, 1200)) await imgP1.SaveAsPngAsync(p1);
-            using (var imgP2 = new Image<Rgba32>(800, 1200)) await imgP2.SaveAsPngAsync(p2);
-            using (var imgP3 = new Image<Rgba32>(800, 1200)) await imgP3.SaveAsPngAsync(p3);
+            using (var imgP1 = new MagickImage(MagickColors.None, 800, 1200)) await imgP1.WriteAsync(p1, MagickFormat.Png);
+            using (var imgP2 = new MagickImage(MagickColors.None, 800, 1200)) await imgP2.WriteAsync(p2, MagickFormat.Png);
+            using (var imgP3 = new MagickImage(MagickColors.None, 800, 1200)) await imgP3.WriteAsync(p3, MagickFormat.Png);
 
             var items = new List<SelectedPhotoItem>
             {
@@ -2378,25 +2370,25 @@ public class ImageEditingWorkflowTests
     public void RenderCroppedPhotoPreservesAspectRatioAndPreventsDistortion()
     {
         // Test with square, landscape, and portrait images
-        using var square = new Image<Rgba32>(1000, 1000, new Rgba32(100, 150, 200, 255));
-        using var landscape = new Image<Rgba32>(1920, 1080, new Rgba32(200, 100, 50, 255));
-        using var portrait = new Image<Rgba32>(800, 1400, new Rgba32(50, 200, 100, 255));
+        using var square = new MagickImage(new MagickColor(100, 150, 200, 255), 1000, 1000);
+        using var landscape = new MagickImage(new MagickColor(200, 100, 50, 255), 1920, 1080);
+        using var portrait = new MagickImage(new MagickColor(50, 200, 100, 255), 800, 1400);
 
         using var squareResult = ImageProcessingService.RenderCroppedPhoto(square, 1200, 1000, new ImageCropSettings { Zoom = 0.8 });
-        Assert.Equal(1200, squareResult.Width);
-        Assert.Equal(1000, squareResult.Height);
+        Assert.Equal(1200u, squareResult.Width);
+        Assert.Equal(1000u, squareResult.Height);
 
         using var landscapeResult = ImageProcessingService.RenderCroppedPhoto(landscape, 1200, 1000, new ImageCropSettings { PanX = 50, PanY = -30 });
-        Assert.Equal(1200, landscapeResult.Width);
-        Assert.Equal(1000, landscapeResult.Height);
+        Assert.Equal(1200u, landscapeResult.Width);
+        Assert.Equal(1000u, landscapeResult.Height);
 
         // Portrait photo solo in landscape frame should fit by default without aggressive cropping
         using var portraitResult = ImageProcessingService.RenderCroppedPhoto(portrait, 1200, 1000, new ImageCropSettings(), isSoloPortrait: true);
-        Assert.Equal(1200, portraitResult.Width);
-        Assert.Equal(1000, portraitResult.Height);
+        Assert.Equal(1200u, portraitResult.Width);
+        Assert.Equal(1000u, portraitResult.Height);
 
         // Border area in letterbox should be dark surface #121212
-        var borderSample = portraitResult[10, 500];
+        var borderSample = portraitResult.PixelAt(10, 500);
         Assert.Equal(18, borderSample.R);
         Assert.Equal(18, borderSample.G);
         Assert.Equal(18, borderSample.B);
@@ -2412,21 +2404,18 @@ public class ImageEditingWorkflowTests
             var overlayPath = Path.Combine(tempDir.FullName, "overlay.png");
 
             // Very wide 21:9 image with distinct left and right colors
-            using (var img = new Image<Rgba32>(2100, 900))
+            using (var img = new MagickImage(new MagickColor(0, 255, 0, 255), 2100, 900))
             {
-                for (var x = 0; x < 2100; x++)
-                {
-                    for (var y = 0; y < 900; y++)
-                    {
-                        img[x, y] = x < 500 ? new Rgba32(255, 0, 0, 255) : (x > 1600 ? new Rgba32(0, 0, 255, 255) : new Rgba32(0, 255, 0, 255));
-                    }
-                }
-                await img.SaveAsPngAsync(photoPath);
+                new Drawables()
+                    .FillColor(new MagickColor(255, 0, 0, 255)).Rectangle(0, 0, 499, 899)
+                    .FillColor(new MagickColor(0, 0, 255, 255)).Rectangle(1601, 0, 2099, 899)
+                    .Draw(img);
+                await img.WriteAsync(photoPath, MagickFormat.Png);
             }
 
-            using (var overlay = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0)))
+            using (var overlay = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
             {
-                await overlay.SaveAsPngAsync(overlayPath);
+                await overlay.WriteAsync(overlayPath, MagickFormat.Png);
             }
 
             var service = new ImageProcessingService();
@@ -2435,16 +2424,16 @@ public class ImageEditingWorkflowTests
             var crop = new ImageCropSettings { Zoom = 0.5 };
             var result = await service.ProcessSoloImageAsync(photoPath, overlayPath, "WideTest", 0, 1, crop);
 
-            using var decoded = Image.Load<Rgba32>(result.ImageBytes);
-            Assert.Equal(1200, decoded.Width);
-            Assert.Equal(1000, decoded.Height);
+            using var decoded = new MagickImage(result.ImageBytes);
+            Assert.Equal(1200u, decoded.Width);
+            Assert.Equal(1000u, decoded.Height);
 
             // Assert that content inside the frame contains the red and blue sections
             var hasRed = false;
             var hasBlue = false;
             for (var x = 0; x < 1200; x += 20)
             {
-                var pixel = decoded[x, 500];
+                var pixel = decoded.PixelAt(x, 500);
                 if (pixel.R > 200 && pixel.G < 50 && pixel.B < 50) hasRed = true;
                 if (pixel.B > 200 && pixel.R < 50 && pixel.G < 50) hasBlue = true;
             }
@@ -2468,9 +2457,9 @@ public class ImageEditingWorkflowTests
             var p2 = Path.Combine(tempDir.FullName, "P2.png");
             var overlayPath = Path.Combine(tempDir.FullName, "overlay.png");
 
-            using (var img1 = new Image<Rgba32>(1200, 1000, new Rgba32(200, 50, 50, 255))) await img1.SaveAsPngAsync(p1);
-            using (var img2 = new Image<Rgba32>(1200, 1000, new Rgba32(50, 200, 50, 255))) await img2.SaveAsPngAsync(p2);
-            using (var ov = new Image<Rgba32>(1200, 1000, new Rgba32(0, 0, 0, 0))) await ov.SaveAsPngAsync(overlayPath);
+            using (var img1 = new MagickImage(new MagickColor(200, 50, 50, 255), 1200, 1000)) await img1.WriteAsync(p1, MagickFormat.Png);
+            using (var img2 = new MagickImage(new MagickColor(50, 200, 50, 255), 1200, 1000)) await img2.WriteAsync(p2, MagickFormat.Png);
+            using (var ov = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000)) await ov.WriteAsync(overlayPath, MagickFormat.Png);
 
             var service = new ImageProcessingService();
             var branded1 = await service.ProcessLandscapeAsync(p1, overlayPath, "Batch", 0, 2);
@@ -2512,9 +2501,9 @@ public class ImageEditingWorkflowTests
                 var p2 = Path.Combine(tempDir.FullName, "P2.png");
                 var ov = Path.Combine(tempDir.FullName, "ov.png");
 
-                using (var img = new Image<Rgba32>(800, 600)) img.SaveAsPng(p1);
-                using (var img = new Image<Rgba32>(800, 600)) img.SaveAsPng(p2);
-                using (var img = new Image<Rgba32>(1200, 1000)) img.SaveAsPng(ov);
+                using (var img = new MagickImage(MagickColors.None, 800, 600)) img.Write(p1, MagickFormat.Png);
+                using (var img = new MagickImage(MagickColors.None, 800, 600)) img.Write(p2, MagickFormat.Png);
+                using (var img = new MagickImage(MagickColors.None, 1200, 1000)) img.Write(ov, MagickFormat.Png);
 
                 // Single photo editor: the header item and window title name the photo being edited
                 var singleWindow = new CropEditorWindow(p1, new ImageCropSettings(), ov, "Single Photo");

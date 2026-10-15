@@ -1,8 +1,7 @@
 using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using Alpha.Branding.ViewModels;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ImageMagick;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -258,20 +257,20 @@ public class ScalingAuditScreenshotGenerator
 
         if (!File.Exists(l))
         {
-            using var imgL = new Image<Rgba32>(1600, 1000, new Rgba32(40, 80, 140, 255));
-            imgL.SaveAsJpeg(l);
+            using var imgL = new MagickImage(new MagickColor(40, 80, 140, 255), 1600, 1000);
+            imgL.Write(l, MagickFormat.Jpeg);
         }
 
         if (!File.Exists(p1))
         {
-            using var imgP1 = new Image<Rgba32>(800, 1200, new Rgba32(180, 60, 60, 255));
-            imgP1.SaveAsJpeg(p1);
+            using var imgP1 = new MagickImage(new MagickColor(180, 60, 60, 255), 800, 1200);
+            imgP1.Write(p1, MagickFormat.Jpeg);
         }
 
         if (!File.Exists(p2))
         {
-            using var imgP2 = new Image<Rgba32>(800, 1200, new Rgba32(50, 150, 80, 255));
-            imgP2.SaveAsJpeg(p2);
+            using var imgP2 = new MagickImage(new MagickColor(50, 150, 80, 255), 800, 1200);
+            imgP2.Write(p2, MagickFormat.Jpeg);
         }
 
         return (l, p1, p2);
