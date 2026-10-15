@@ -1,3 +1,4 @@
+using Alpha.Branding.Services;
 using System.Windows;
 using System.IO;
 
@@ -22,6 +23,8 @@ public partial class App : Application
                 LogCrash(ex);
             }
         };
+
+        ImageMagickSecurity.Apply();
     }
 
     public static void LogCrash(Exception ex)
