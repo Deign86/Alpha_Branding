@@ -54,10 +54,9 @@
             </Border>
 
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock Text="Alpha Premier Realty"
-                           Foreground="{StaticResource TextPrimary}"
+                <TextBlock Foreground="{StaticResource TextPrimary}"
                            FontSize="15"
-                           FontWeight="Bold"/>
+                           FontWeight="Bold"><Run Text="Alpha Premier "/><Run Text="Realty" Foreground="{StaticResource GoldLight}"/></TextBlock>
                 <TextBlock Text="Branding Studio"
                            Foreground="{StaticResource TextMuted}"
                            FontSize="11"
@@ -379,23 +378,32 @@
                         </Style>
                     </Border.Style>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
-                        <Image Source="Assets/logo_phoenix.png"
-                               Height="96"
-                               Width="96"
-                               Margin="0,0,0,22"
-                               HorizontalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Style>
-                                <Style TargetType="Image">
-                                    <Setter Property="Opacity" Value="0.85"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDragOver}" Value="True">
-                                            <Setter Property="Opacity" Value="1.0"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Image.Style>
-                        </Image>
+                        <Grid Margin="0,0,0,22" HorizontalAlignment="Center">
+                            <!-- Soft gold halo behind the phoenix mark -->
+                            <Ellipse Width="220" Height="220" Margin="-62">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#38C5A059" Offset="0"/>
+                                        <GradientStop Color="#00C5A059" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <Image Source="Assets/logo_phoenix.png"
+                                   Height="96"
+                                   Width="96"
+                                   RenderOptions.BitmapScalingMode="HighQuality">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Setter Property="Opacity" Value="0.85"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                                <Setter Property="Opacity" Value="1.0"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                        </Grid>
 
                         <!-- Drag-over callout -->
                         <Border AutomationProperties.AutomationId="DragDropReactionBadge"
@@ -523,7 +531,7 @@
                                              drag-to-pair drop-target triggers can actually apply. -->
                                         <Border.Style>
                                             <Style TargetType="Border" BasedOn="{StaticResource GlassPanel}">
-                                                <Setter Property="CornerRadius" Value="16"/>
+                                                <Setter Property="CornerRadius" Value="18"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="BorderBrush" Value="{StaticResource BorderHover}"/>
@@ -540,7 +548,8 @@
                                             <!-- Thumbnail well with badges -->
                                             <Grid Height="180">
                                                 <Border Style="{StaticResource Well}"
-                                                        CornerRadius="10"
+                                                        CornerRadius="8"
+                                                        BorderBrush="{StaticResource ImageOutline}"
                                                         ClipToBounds="True">
                                                     <Image Source="{Binding Thumbnail}"
                                                            Stretch="Uniform"
@@ -759,13 +768,14 @@
                                     <Border Width="256"
                                             Margin="0,0,16,16"
                                             Style="{StaticResource GlassPanel}"
-                                            CornerRadius="16"
+                                            CornerRadius="18"
                                             Padding="10,10,10,12"
                                             AutomationProperties.Name="{Binding FileName}">
                                         <StackPanel>
                                             <Grid Height="180">
                                                 <Border Style="{StaticResource Well}"
-                                                        CornerRadius="10"
+                                                        CornerRadius="8"
+                                                        BorderBrush="{StaticResource ImageOutline}"
                                                         ClipToBounds="True">
                                                     <Image Source="{Binding Preview}"
                                                            Stretch="Uniform"
@@ -924,7 +934,8 @@
         </Grid>
 
         <!-- STATUS STRIP -->
-        <Grid Grid.Row="2" Margin="6,0,4,0">
+        <Border Grid.Row="2" BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0" Padding="6,10,4,0">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -949,6 +960,7 @@
                          Height="8"
                          VerticalAlignment="Center"/>
         </Grid>
+        </Border>
     </Grid>
     </ScrollViewer>
 </Window>

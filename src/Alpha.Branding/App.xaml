@@ -36,11 +36,20 @@
         <SolidColorBrush x:Key="TextMuted" Color="#8E919B"/>
         <SolidColorBrush x:Key="DangerText" Color="#E99090"/>
 
-        <!-- Glass edge: brighter on top so panels read as lit from above -->
+        <!-- Glass edge and fills: brighter on top so surfaces read as lit from above -->
         <LinearGradientBrush x:Key="GlassEdge" StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#2EFFFFFF" Offset="0"/>
-            <GradientStop Color="#14FFFFFF" Offset="1"/>
+            <GradientStop Color="#33FFFFFF" Offset="0"/>
+            <GradientStop Color="#12FFFFFF" Offset="1"/>
         </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GlassFill" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#17FFFFFF" Offset="0"/>
+            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GlassButtonFill" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#21FFFFFF" Offset="0"/>
+            <GradientStop Color="#0FFFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="ImageOutline" Color="#1AFFFFFF"/>
 
         <!-- Window backdrop: charcoal gradient with a gold glow top-right, a dimmer one bottom-left
              and a cool haze in the middle. Stretched to the window so the glow stays in the corners. -->
@@ -146,7 +155,7 @@
 
         <!-- Surfaces -->
         <Style x:Key="GlassPanel" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
+            <Setter Property="Background" Value="{StaticResource GlassFill}"/>
             <Setter Property="BorderBrush" Value="{StaticResource GlassEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="18"/>
@@ -218,14 +227,14 @@
 
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="17"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- Default Button Style: translucent glass tile -->
+        <!-- Default Button Style: translucent glass tile that dips to 0.97 on press -->
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="Background" Value="{StaticResource GlassButtonFill}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{StaticResource GlassEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -244,18 +253,24 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10"
                                 Padding="{TemplateBinding Padding}"
+                                RenderTransformOrigin="0.5,0.5"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#24FFFFFF"/>
+                                <Setter TargetName="border" Property="Background" Value="#2AFFFFFF"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#47000000"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4"/>
@@ -293,6 +308,7 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10"
                                 Padding="{TemplateBinding Padding}"
+                                RenderTransformOrigin="0.5,0.5"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -304,6 +320,11 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldDark}"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4"/>
@@ -523,7 +544,11 @@
                             <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left" Margin="1">
                                 <Border x:Name="Indicator"
                                         Background="{TemplateBinding Foreground}"
-                                        CornerRadius="3"/>
+                                        CornerRadius="3">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#C5A059" Opacity="0.55"/>
+                                    </Border.Effect>
+                                </Border>
                             </Decorator>
                         </Grid>
                     </ControlTemplate>
