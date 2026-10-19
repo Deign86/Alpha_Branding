@@ -80,15 +80,15 @@
         <!-- BODY -->
         <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="272"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="272"/>
             </Grid.ColumnDefinitions>
 
             <!-- SETUP RAIL -->
-            <Border Grid.Column="0"
+            <Border Grid.Column="1"
                     Style="{StaticResource GlassPanelRaised}"
                     Padding="20,18"
-                    Margin="0,0,20,0">
+                    Margin="20,0,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -359,7 +359,7 @@
             </Border>
 
             <!-- GALLERY: empty state, staged media, or branded results -->
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="0">
                 <!-- Empty State -->
                 <Border Visibility="{Binding IsEmptyState, Converter={StaticResource BooleanToVisibilityConverter}}"
                         AutomationProperties.AutomationId="EmptyStateBorder"
