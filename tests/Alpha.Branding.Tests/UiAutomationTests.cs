@@ -259,7 +259,7 @@ public class UiAutomationTests
 
             var updateBtn = window.FindFirstDescendant(cf => cf.ByAutomationId("CheckForUpdatesButton"));
             Assert.NotNull(updateBtn);
-            Assert.Equal("CHECK FOR UPDATES", updateBtn.Name);
+            Assert.Equal("Check for updates", updateBtn.Name);
         }
         finally
         {

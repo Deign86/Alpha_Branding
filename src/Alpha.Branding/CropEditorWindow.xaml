@@ -6,119 +6,104 @@
         Width="1020" Height="780"
         MinWidth="700" MinHeight="520"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BackgroundDark}"
+        Background="{StaticResource GlassBackdrop}"
         Foreground="{StaticResource TextPrimary}"
         FontFamily="Segoe UI, Poppins, sans-serif"
         TextOptions.TextFormattingMode="Display"
         KeyDown="Window_KeyDown">
 
-    <Grid Margin="20">
+    <Grid Margin="20,12,20,16">
         <Grid.RowDefinitions>
-            <!-- Header Bar -->
+            <!-- Top bar -->
             <RowDefinition Height="Auto"/>
-            <!-- Interactive Viewport -->
+            <!-- Interactive viewport -->
             <RowDefinition Height="*"/>
-            <!-- Controls Bar -->
+            <!-- Tool strip -->
             <RowDefinition Height="Auto"/>
-            <!-- Action Footer -->
+            <!-- Footer -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- TOP BAR -->
-        <Border Grid.Row="0"
-                Background="{StaticResource SurfaceDark}"
-                BorderBrush="{StaticResource BorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Padding="18,12"
-                Margin="0,0,0,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0" Margin="4,0,4,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                <Image Grid.Column="0"
-                       Source="Assets/logo_phoenix.png"
-                       Height="30" Width="30"
-                       Margin="0,0,12,0"
-                       VerticalAlignment="Center"
+            <Border Grid.Column="0"
+                    Style="{StaticResource GlassPanel}"
+                    CornerRadius="20"
+                    Width="40" Height="40"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Center">
+                <Image Source="Assets/logo_phoenix.png"
+                       Height="28" Width="28"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Border>
 
-                <Grid Grid.Column="1" VerticalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="CROP &amp; ALIGNMENT EDITOR —"
-                               Foreground="{StaticResource GoldLight}"
-                               FontSize="13"
-                               FontWeight="Bold"/>
-                    <TextBlock x:Name="ItemTitleTextBlock"
-                               Grid.Column="1"
-                               Margin="6,0,0,0"
-                               AutomationProperties.AutomationId="CropEditorItemTitleTextBlock"
-                               Text="{Binding ItemTitle}"
-                               ToolTip="{Binding ActiveFilePath}"
-                               Foreground="{StaticResource TextPrimary}"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               TextTrimming="CharacterEllipsis"/>
-                </Grid>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Crop &amp; alignment"
+                           Foreground="{StaticResource TextPrimary}"
+                           FontSize="15"
+                           FontWeight="Bold"/>
+                <TextBlock x:Name="ItemTitleTextBlock"
+                           AutomationProperties.AutomationId="CropEditorItemTitleTextBlock"
+                           Text="{Binding ItemTitle}"
+                           ToolTip="{Binding ActiveFilePath}"
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="11"
+                           Margin="0,1,0,0"
+                           TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
 
-                <!-- Target Slot Indicator / Pair Switcher -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <StackPanel x:Name="SlotSelectorContainer"
-                                Orientation="Horizontal"
-                                Visibility="{Binding HasMultipleSlots, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                Margin="0,0,12,0">
+            <!-- Pair slot switcher + canvas size -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                <Border x:Name="SlotSelectorContainer"
+                        Style="{StaticResource SegmentTrack}"
+                        Visibility="{Binding HasMultipleSlots, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
                         <RadioButton x:Name="LeftSlotRadio"
                                      AutomationProperties.AutomationId="LeftSlotRadio"
-                                     Content="LEFT PHOTO"
+                                     Content="Left photo"
                                      ToolTip="{Binding LeftFileName}"
                                      IsChecked="{Binding IsLeftSlotSelected, Mode=TwoWay}"
                                      Checked="SlotRadio_Changed"
                                      Style="{StaticResource SmallActionToggleButton}"
                                      MinWidth="96"
-                                     Margin="0,0,6,0"/>
+                                     Margin="0,0,2,0"/>
                         <RadioButton x:Name="RightSlotRadio"
                                      AutomationProperties.AutomationId="RightSlotRadio"
-                                     Content="RIGHT PHOTO"
+                                     Content="Right photo"
                                      ToolTip="{Binding RightFileName}"
                                      IsChecked="{Binding IsRightSlotSelected, Mode=TwoWay}"
                                      Checked="SlotRadio_Changed"
                                      Style="{StaticResource SmallActionToggleButton}"
-                                     MinWidth="96"/>
+                                     MinWidth="96"
+                                     Margin="2,0,0,0"/>
                     </StackPanel>
+                </Border>
 
-                    <Border Background="{StaticResource GoldSubtle}"
-                            BorderBrush="{StaticResource BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="14,4"
-                            VerticalAlignment="Center">
-                        <TextBlock x:Name="CanvasDimensionsTextBlock"
-                                   Text="{Binding TargetDimensionsText}"
-                                   Foreground="{StaticResource GoldLight}"
-                                   FontSize="11"
-                                   FontWeight="Bold"/>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
+                <Border Style="{StaticResource Pill}" Padding="14,6">
+                    <TextBlock x:Name="CanvasDimensionsTextBlock"
+                               Text="{Binding TargetDimensionsText}"
+                               Typography.NumeralAlignment="Tabular"
+                               Foreground="{StaticResource TextSecondary}"
+                               FontSize="11"
+                               FontWeight="SemiBold"/>
+                </Border>
+            </StackPanel>
+        </Grid>
 
-        <!-- INTERACTIVE CROP VIEWPORT -->
+        <!-- INTERACTIVE CROP VIEWPORT: glass panel around a dark well so the photo stays true -->
         <Border Grid.Row="1"
-                Background="{StaticResource SurfaceDark}"
-                BorderThickness="1"
-                CornerRadius="12"
                 Padding="12"
                 Margin="0,0,0,12"
                 ClipToBounds="True">
             <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+                <Style TargetType="Border" BasedOn="{StaticResource GlassPanel}">
                     <Style.Triggers>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
                             <Setter Property="BorderBrush" Value="{StaticResource GoldLight}"/>
@@ -126,109 +111,109 @@
                     </Style.Triggers>
                 </Style>
             </Border.Style>
-            <Grid x:Name="ViewportHost"
-                  ClipToBounds="True"
-                  Background="#080808"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center">
-                <!-- Focusable wrapper: arrow keys move the photo for keyboard users -->
-                <UserControl x:Name="ViewportFocus"
-                             AutomationProperties.AutomationId="CropViewport"
-                             AutomationProperties.Name="Photo position"
-                             AutomationProperties.HelpText="Arrow keys move the photo. Hold Shift for larger steps."
-                             Focusable="True"
-                             FocusVisualStyle="{x:Null}"
-                             KeyDown="Viewport_KeyDown">
-                    <!-- Outer Frame Viewbox keeping exact aspect ratio -->
-                    <Viewbox x:Name="AspectViewbox" Stretch="Uniform">
-                        <Grid x:Name="TargetCanvas"
-                              Width="{Binding TargetWidth}"
-                              Height="{Binding TargetHeight}"
-                              Background="#121212"
-                              ClipToBounds="True"
-                              Cursor="SizeAll"
-                              MouseDown="Canvas_MouseDown"
-                              MouseMove="Canvas_MouseMove"
-                              MouseUp="Canvas_MouseUp"
-                              MouseLeave="Canvas_MouseUp"
-                              MouseWheel="Canvas_MouseWheel">
+            <Border Style="{StaticResource Well}" CornerRadius="10" ClipToBounds="True">
+                <Grid x:Name="ViewportHost"
+                      ClipToBounds="True"
+                      Background="#0C0D10"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center">
+                    <!-- Focusable wrapper: arrow keys move the photo for keyboard users -->
+                    <UserControl x:Name="ViewportFocus"
+                                 AutomationProperties.AutomationId="CropViewport"
+                                 AutomationProperties.Name="Photo position"
+                                 AutomationProperties.HelpText="Arrow keys move the photo. Hold Shift for larger steps."
+                                 Focusable="True"
+                                 FocusVisualStyle="{x:Null}"
+                                 KeyDown="Viewport_KeyDown">
+                        <!-- Outer Frame Viewbox keeping exact aspect ratio -->
+                        <Viewbox x:Name="AspectViewbox" Stretch="Uniform">
+                            <Grid x:Name="TargetCanvas"
+                                  Width="{Binding TargetWidth}"
+                                  Height="{Binding TargetHeight}"
+                                  Background="#121212"
+                                  ClipToBounds="True"
+                                  Cursor="SizeAll"
+                                  MouseDown="Canvas_MouseDown"
+                                  MouseMove="Canvas_MouseMove"
+                                  MouseUp="Canvas_MouseUp"
+                                  MouseLeave="Canvas_MouseUp"
+                                  MouseWheel="Canvas_MouseWheel">
 
-                            <!-- Photo Image with Pan and Zoom RenderTransform -->
-                            <Image x:Name="PhotoImage"
-                                   AutomationProperties.AutomationId="CropEditorPhotoImage"
-                                   Stretch="Fill"
-                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Top"/>
+                                <!-- Photo Image with Pan and Zoom RenderTransform -->
+                                <Image x:Name="PhotoImage"
+                                       AutomationProperties.AutomationId="CropEditorPhotoImage"
+                                       Stretch="Fill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Top"/>
 
-                            <Canvas x:Name="RedactOverlay" IsHitTestVisible="False"/>
-                            <TextBlock AutomationProperties.AutomationId="RedactOverlay"
-                                       AutomationProperties.Name="Pen marks overlay"
-                                       Text="Pen marks overlay"
-                                       Foreground="Transparent"
+                                <Canvas x:Name="RedactOverlay" IsHitTestVisible="False"/>
+                                <TextBlock AutomationProperties.AutomationId="RedactOverlay"
+                                           AutomationProperties.Name="Pen marks overlay"
+                                           Text="Pen marks overlay"
+                                           Foreground="Transparent"
+                                           IsHitTestVisible="False"
+                                           Focusable="False"/>
+
+                                <!-- Rule of thirds alignment grid guidelines (subtle); stretched to the frame so
+                                     the thirds stay correct for the half-width pair slots too -->
+                                <Viewbox Stretch="Fill" IsHitTestVisible="False">
+                                    <Canvas x:Name="GridGuidelines" Width="1200" Height="1000" Opacity="0.25">
+                                        <Line X1="400" Y1="0" X2="400" Y2="1000" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                                        <Line X1="800" Y1="0" X2="800" Y2="1000" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                                        <Line X1="0" Y1="333" X2="1200" Y2="333" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                                        <Line X1="0" Y1="667" X2="1200" Y2="667" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
+                                    </Canvas>
+                                </Viewbox>
+
+                                <!-- Live Branding Overlay Layer -->
+                                <Image x:Name="OverlayImage"
+                                       AutomationProperties.AutomationId="CropEditorOverlayImage"
+                                       Stretch="Fill"
                                        IsHitTestVisible="False"
-                                       Focusable="False"/>
-
-                            <!-- Rule of thirds alignment grid guidelines (subtle); stretched to the frame so
-                                 the thirds stay correct for the half-width pair slots too -->
-                            <Viewbox Stretch="Fill" IsHitTestVisible="False">
-                                <Canvas x:Name="GridGuidelines" Width="1200" Height="1000" Opacity="0.25">
-                                    <!-- Vertical lines -->
-                                    <Line X1="400" Y1="0" X2="400" Y2="1000" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
-                                    <Line X1="800" Y1="0" X2="800" Y2="1000" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
-                                    <!-- Horizontal lines -->
-                                    <Line X1="0" Y1="333" X2="1200" Y2="333" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
-                                    <Line X1="0" Y1="667" X2="1200" Y2="667" Stroke="{StaticResource GoldLight}" StrokeDashArray="4 4" StrokeThickness="1"/>
-                                </Canvas>
-                            </Viewbox>
-
-                            <!-- Live Branding Overlay Layer -->
-                            <Image x:Name="OverlayImage"
-                                   AutomationProperties.AutomationId="CropEditorOverlayImage"
-                                   Stretch="Fill"
-                                   IsHitTestVisible="False"
-                                   Opacity="0.95"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-                        </Grid>
-                    </Viewbox>
-                </UserControl>
-            </Grid>
+                                       Opacity="0.95"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Grid>
+                        </Viewbox>
+                    </UserControl>
+                </Grid>
+            </Border>
         </Border>
 
-        <!-- ADJUSTMENT CONTROLS BAR: three groups that wrap as whole units on narrow windows -->
+        <!-- TOOL STRIP: three groups that wrap as whole units on narrow windows -->
         <Border Grid.Row="2"
-                Background="{StaticResource SurfaceDark}"
-                BorderBrush="{StaticResource BorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="10"
-                Padding="16,6"
+                Style="{StaticResource GlassPanel}"
+                Padding="14,8"
                 Margin="0,0,0,12">
             <WrapPanel Orientation="Horizontal">
 
                 <!-- Canvas mode + pen options -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,24,4">
-                    <RadioButton x:Name="PanModeToggle"
-                                 GroupName="CanvasMode"
-                                 AutomationProperties.AutomationId="PanModeToggle"
-                                 AutomationProperties.Name="Pan mode"
-                                 Content="PAN"
-                                 ToolTip="Drag to move the photo within the frame"
-                                 Style="{StaticResource SmallActionToggleButton}"
-                                 MinWidth="64"
-                                 Margin="0,0,6,0"/>
+                    <Border Style="{StaticResource SegmentTrack}" Margin="0,0,14,0">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="PanModeToggle"
+                                         GroupName="CanvasMode"
+                                         AutomationProperties.AutomationId="PanModeToggle"
+                                         AutomationProperties.Name="Pan mode"
+                                         Content="Pan"
+                                         ToolTip="Drag to move the photo within the frame"
+                                         Style="{StaticResource SmallActionToggleButton}"
+                                         MinWidth="60"
+                                         Margin="0,0,2,0"/>
+                            <RadioButton x:Name="RedactModeToggle"
+                                         GroupName="CanvasMode"
+                                         AutomationProperties.AutomationId="RedactModeToggle"
+                                         AutomationProperties.Name="Pen mode"
+                                         Content="Pen"
+                                         ToolTip="Draw pen marks over the photo to hide details"
+                                         Style="{StaticResource SmallActionToggleButton}"
+                                         MinWidth="60"
+                                         Margin="2,0,0,0"/>
+                        </StackPanel>
+                    </Border>
 
-                    <RadioButton x:Name="RedactModeToggle"
-                                 GroupName="CanvasMode"
-                                 AutomationProperties.AutomationId="RedactModeToggle"
-                                 AutomationProperties.Name="Pen mode"
-                                 Content="PEN"
-                                 ToolTip="Draw pen marks over the photo to hide details"
-                                 Style="{StaticResource SmallActionToggleButton}"
-                                 MinWidth="64"
-                                 Margin="0,0,16,0"/>
-
-                    <TextBlock Text="SIZE:"
-                               Foreground="{StaticResource Gold}"
+                    <TextBlock Text="Size"
+                               Foreground="{StaticResource TextMuted}"
                                FontSize="11"
                                FontWeight="Bold"
                                VerticalAlignment="Center"
@@ -242,12 +227,12 @@
                             MinHeight="32"
                             VerticalAlignment="Center"
                             ToolTip="Pen size"
-                            Margin="0,0,8,0"/>
+                            Margin="0,0,10,0"/>
 
                     <Button x:Name="UndoRedactButton"
                             AutomationProperties.AutomationId="UndoRedactButton"
                             AutomationProperties.Name="Undo last pen mark"
-                            Content="UNDO"
+                            Content="Undo"
                             ToolTip="Undo the last pen mark (Ctrl+Z)"
                             Style="{StaticResource SmallActionButton}"
                             MinWidth="56"
@@ -256,16 +241,16 @@
                     <Button x:Name="ClearRedactButton"
                             AutomationProperties.AutomationId="ClearRedactButton"
                             AutomationProperties.Name="Clear pen marks"
-                            Content="CLEAR MARKS"
-                            ToolTip="Erase all pen marks on this photo (UNDO or Ctrl+Z restores them)"
+                            Content="Clear marks"
+                            ToolTip="Erase all pen marks on this photo (Undo or Ctrl+Z restores them)"
                             Style="{StaticResource DestructiveActionButton}"
                             MinWidth="56"/>
                 </StackPanel>
 
                 <!-- Zoom -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,24,4">
-                    <TextBlock Text="ZOOM:"
-                               Foreground="{StaticResource Gold}"
+                    <TextBlock Text="Zoom"
+                               Foreground="{StaticResource TextMuted}"
                                FontSize="11"
                                FontWeight="Bold"
                                VerticalAlignment="Center"
@@ -308,19 +293,13 @@
                             Padding="0"
                             Margin="0,0,10,0"/>
 
-                    <Border Background="{StaticResource GoldSubtle}"
-                            BorderBrush="{StaticResource BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="8,4"
-                            VerticalAlignment="Center">
+                    <Border Style="{StaticResource Chip}" Padding="8,4">
                         <TextBlock x:Name="ZoomValueTextBlock"
                                    AutomationProperties.AutomationId="ZoomValueTextBlock"
                                    Typography.NumeralAlignment="Tabular"
                                    Text="{Binding ActiveCrop.ZoomPercentageText}"
-                                   Foreground="{StaticResource GoldLight}"
+                                   Style="{StaticResource ChipText}"
                                    FontSize="11"
-                                   FontWeight="Bold"
                                    Width="42"
                                    TextAlignment="Center"/>
                     </Border>
@@ -330,7 +309,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,4">
                     <Button x:Name="FitToFrameButton"
                             AutomationProperties.AutomationId="FitToFrameButton"
-                            Content="FIT TO FRAME"
+                            Content="Fit"
                             ToolTip="Show the whole photo without cropping"
                             Click="FitToFrame_Click"
                             Style="{StaticResource SmallActionButton}"
@@ -338,7 +317,7 @@
 
                     <Button x:Name="FillFrameButton"
                             AutomationProperties.AutomationId="FillFrameButton"
-                            Content="FILL FRAME"
+                            Content="Fill"
                             ToolTip="Fill the entire frame (centered crop)"
                             Click="FillFrame_Click"
                             Style="{StaticResource SmallActionButton}"
@@ -347,7 +326,7 @@
                     <Button x:Name="RotateButton"
                             AutomationProperties.AutomationId="RotateButton"
                             AutomationProperties.Name="Rotate 90° clockwise"
-                            Content="↻ ROTATE 90°"
+                            Content="↻ Rotate 90°"
                             ToolTip="Rotate the photo 90° clockwise"
                             Click="Rotate_Click"
                             Style="{StaticResource SmallActionButton}"
@@ -355,7 +334,7 @@
 
                     <Button x:Name="ResetCropButton"
                             AutomationProperties.AutomationId="ResetCropButton"
-                            Content="RESET CROP"
+                            Content="Reset"
                             ToolTip="Reset pan, zoom and rotation (pen marks are kept)"
                             Click="ResetCrop_Click"
                             Style="{StaticResource SmallActionButton}"/>
@@ -363,68 +342,60 @@
             </WrapPanel>
         </Border>
 
-        <!-- ACTION FOOTER -->
-        <Border Grid.Row="3"
-                Background="{StaticResource SurfaceDark}"
-                BorderBrush="{StaticResource BorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Padding="18,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+        <!-- FOOTER: offset readout and hint on the left, Cancel / Save on the right -->
+        <Grid Grid.Row="3" Margin="6,0,4,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <TextBlock Text="OFFSET:"
-                                   Foreground="{StaticResource Gold}"
-                                   FontSize="11"
-                                   FontWeight="Bold"
-                                   Margin="0,0,6,0"/>
-                        <TextBlock x:Name="PanCoordinatesTextBlock"
-                                   AutomationProperties.AutomationId="PanCoordinatesTextBlock"
-                                   Typography.NumeralAlignment="Tabular"
-                                   Text="{Binding PanCoordinatesText}"
-                                   Foreground="{StaticResource GoldLight}"
-                                   FontSize="11"
-                                   FontWeight="SemiBold"/>
-                    </StackPanel>
-                    <TextBlock AutomationProperties.AutomationId="CropEditorHintTextBlock"
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                    <TextBlock Text="Offset "
+                               Foreground="{StaticResource TextMuted}"
                                FontSize="11"
-                               Foreground="{StaticResource TextSecondary}"
-                               TextWrapping="Wrap">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="Drag or use arrow keys to move the photo • Scroll to zoom • Enter to save • Esc to cancel"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsChecked, ElementName=RedactModeToggle}" Value="True">
-                                        <Setter Property="Text" Value="Drag to draw • Ctrl+Z undoes the last mark • Esc returns to PAN"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                               FontWeight="Bold"/>
+                    <TextBlock x:Name="PanCoordinatesTextBlock"
+                               AutomationProperties.AutomationId="PanCoordinatesTextBlock"
+                               Typography.NumeralAlignment="Tabular"
+                               Text="{Binding PanCoordinatesText}"
+                               Foreground="{StaticResource GoldLight}"
+                               FontSize="11"
+                               FontWeight="SemiBold"/>
                 </StackPanel>
+                <TextBlock AutomationProperties.AutomationId="CropEditorHintTextBlock"
+                           FontSize="11"
+                           Foreground="{StaticResource TextMuted}"
+                           TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="Drag or use arrow keys to move the photo • Scroll to zoom • Enter to save • Esc to cancel"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChecked, ElementName=RedactModeToggle}" Value="True">
+                                    <Setter Property="Text" Value="Drag to draw • Ctrl+Z undoes the last mark • Esc returns to Pan"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="CancelButton"
-                            AutomationProperties.AutomationId="CancelCropButton"
-                            Content="CANCEL"
-                            ToolTip="Discard changes and close (Esc; in PEN mode press Esc twice)"
-                            Click="Cancel_Click"
-                            Style="{StaticResource SecondaryButton}"
-                            Margin="0,0,12,0"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="CancelButton"
+                        AutomationProperties.AutomationId="CancelCropButton"
+                        Content="Cancel"
+                        ToolTip="Discard changes and close (Esc; in Pen mode press Esc twice)"
+                        Click="Cancel_Click"
+                        Style="{StaticResource SecondaryButton}"
+                        Margin="0,0,12,0"/>
 
-                    <Button x:Name="SaveChangesButton"
-                            AutomationProperties.AutomationId="SaveCropButton"
-                            Content="SAVE CHANGES"
-                            ToolTip="Save crop and pen changes and close (Enter)"
-                            Click="SaveChanges_Click"
-                            Style="{StaticResource PrimaryButton}"/>
-                </StackPanel>
-            </Grid>
-        </Border>
+                <Button x:Name="SaveChangesButton"
+                        AutomationProperties.AutomationId="SaveCropButton"
+                        Content="Save changes"
+                        ToolTip="Save crop and pen changes and close (Enter)"
+                        Click="SaveChanges_Click"
+                        Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

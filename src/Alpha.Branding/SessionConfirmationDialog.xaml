@@ -9,7 +9,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
-        Background="{StaticResource BackgroundDark}"
+        Background="{StaticResource GlassBackdrop}"
         Foreground="{StaticResource TextPrimary}"
         FontFamily="Segoe UI, Poppins, sans-serif">
 

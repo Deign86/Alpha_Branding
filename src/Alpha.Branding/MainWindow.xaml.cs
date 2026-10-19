@@ -33,6 +33,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         WindowThemeHelper.EnableDarkTitleBar(this);
         DataContext = _viewModel;
+        VersionTextBlock.Text = _updateService.CurrentVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase)
+            ? _updateService.CurrentVersion
+            : $"v{_updateService.CurrentVersion}";
         _viewModel.PropertyChanged += (_, e) =>
         {
             // Announce outcomes (cleared, completed, skipped, failed), not every per-item progress update.

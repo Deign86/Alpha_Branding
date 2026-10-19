@@ -6,7 +6,7 @@
         Width="1220" Height="840"
         MinWidth="840" MinHeight="480"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundDark}"
+        Background="{StaticResource GlassBackdrop}"
         Foreground="{StaticResource TextPrimary}"
         FontFamily="Segoe UI, Poppins, sans-serif"
         AllowDrop="True"
@@ -19,268 +19,241 @@
     <!-- Below a 600 DIP viewport (200% DPI, MinHeight) the page scrolls instead of crushing the gallery;
          above it the grid fills the viewport exactly and the gallery keeps its own scroller. -->
     <ScrollViewer x:Name="PageScrollViewer"
-                  Margin="24"
+                  Margin="20,12,20,14"
                   Focusable="False"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
     <Grid MinHeight="600" Height="{Binding ViewportHeight, ElementName=PageScrollViewer}">
         <Grid.RowDefinitions>
-            <!-- Top Header -->
+            <!-- Top bar -->
             <RowDefinition Height="Auto"/>
-            <!-- Control Card -->
-            <RowDefinition Height="Auto"/>
-            <!-- Main Content Area -->
+            <!-- Rail + gallery -->
             <RowDefinition Height="*"/>
+            <!-- Status strip -->
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- TOP BRANDING HEADER (Matches alphapremiergroup.com header) -->
-        <Border Grid.Row="0"
-                Background="{StaticResource SurfaceDark}"
-                BorderBrush="{StaticResource BorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Padding="22,14"
-                Margin="0,0,0,16">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+        <!-- TOP BAR: brand on the left, selection summary on the right -->
+        <Grid Grid.Row="0" Margin="4,0,4,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- Phoenix Emblem -->
-                <Image Grid.Column="0"
-                       Source="Assets/logo_phoenix.png"
-                       Height="48"
-                       Width="48"
-                       Margin="0,0,16,0"
-                       VerticalAlignment="Center"
+            <Border Grid.Column="0"
+                    Style="{StaticResource GlassPanel}"
+                    CornerRadius="20"
+                    Width="40" Height="40"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Center">
+                <Image Source="Assets/logo_phoenix.png"
+                       Height="28"
+                       Width="28"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
+            </Border>
 
-                <!-- Header Title & Company Slogan -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="ALPHA PREMIER"
-                                   Foreground="{StaticResource TextPrimary}"
-                                   FontSize="20"
-                                   FontWeight="Bold"/>
-                        <TextBlock Text=" | REALTY"
-                                   Foreground="{StaticResource GoldLight}"
-                                   FontSize="20"
-                                   FontWeight="Bold"/>
-                        <Border Background="{StaticResource GoldSubtle}"
-                                BorderBrush="{StaticResource BorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Padding="8,2"
-                                Margin="14,0,0,0"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="GROUP OF COMPANIES"
-                                       Foreground="{StaticResource GoldLight}"
-                                       FontSize="9"
-                                       FontWeight="Bold"/>
-                        </Border>
-                    </StackPanel>
-                    <TextBlock Text="Official Property Listing Watermarking &amp; Studio Suite"
-                               Foreground="{StaticResource Gold}"
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Alpha Premier Realty"
+                           Foreground="{StaticResource TextPrimary}"
+                           FontSize="15"
+                           FontWeight="Bold"/>
+                <TextBlock Text="Branding Studio"
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="11"
+                           Margin="0,1,0,0"/>
+            </StackPanel>
+
+            <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{StaticResource Gold}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding SelectionSummary}"
+                               AutomationProperties.AutomationId="SelectionSummaryTextBlock"
+                               Foreground="{StaticResource TextSecondary}"
                                FontSize="12"
                                FontWeight="SemiBold"
-                               Margin="0,3,0,0"/>
+                               VerticalAlignment="Center"/>
                 </StackPanel>
+            </Border>
+        </Grid>
 
-                <!-- Selection Status in Header -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="{StaticResource SurfaceElevated}"
-                            BorderBrush="{StaticResource BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="20"
-                            Padding="16,7"
-                            VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding SelectionSummary}"
-                                       AutomationProperties.AutomationId="SelectionSummaryTextBlock"
-                                       Foreground="{StaticResource GoldLight}"
-                                       FontSize="12"
-                                       FontWeight="Bold"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
+        <!-- BODY -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="272"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <!-- CONTROL & ACTION WORKSPACE CARD -->
-        <Border Grid.Row="1"
-                Background="{StaticResource SurfaceDark}"
-                BorderBrush="{StaticResource BorderSubtle}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Padding="22,18"
-                Margin="0,0,0,16">
-            <StackPanel>
+            <!-- SETUP RAIL -->
+            <Border Grid.Column="0"
+                    Style="{StaticResource GlassPanelRaised}"
+                    Padding="20,18"
+                    Margin="0,0,20,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Row 0: selection + template groups wrap to a second line on narrow
-                         windows instead of clipping the action buttons (150%+ DPI). -->
-                    <WrapPanel Grid.Row="0" Orientation="Horizontal">
-
-                    <!-- File Selection & Prefix Input -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,22,10">
-                        <Button Content="SELECT MEDIA"
+                    <StackPanel Grid.Row="0">
+                        <!-- Media -->
+                        <TextBlock Text="MEDIA" Style="{StaticResource SectionLabel}"/>
+                        <Button Content="Select media"
                                 AutomationProperties.AutomationId="SelectPhotosButton"
                                 ToolTip="Select property photos and video clips to brand (Ctrl+O)"
                                 Click="SelectPhotos_Click"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                 Style="{StaticResource SecondaryButton}"
-                                Padding="20,10"
-                                Margin="0,0,18,0"/>
+                                HorizontalAlignment="Stretch"
+                                Margin="0,0,0,18"/>
 
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="FILENAME PREFIX"
-                                       Foreground="{StaticResource Gold}"
-                                       FontSize="11"
-                                       FontWeight="Bold"
-                                       Margin="0,0,0,5"/>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBox Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
-                                         AutomationProperties.AutomationId="PrefixTextBox"
-                                         AutomationProperties.Name="Filename prefix"
-                                         ToolTip="Custom filename prefix for output assets. Special characters are automatically sanitized."
-                                         Width="160"
-                                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"/>
-                                <Border Background="{StaticResource GoldSubtle}"
-                                        BorderBrush="{StaticResource BorderSubtle}"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        Padding="10,7"
-                                        Margin="8,0,0,0"
-                                        MaxWidth="260"
-                                        VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Preview: " Foreground="{StaticResource TextMuted}" FontSize="11"/>
-                                        <TextBlock Text="{Binding PatternPreview}"
-                                                   AutomationProperties.AutomationId="PatternPreviewTextBlock"
-                                                   Foreground="{StaticResource GoldLight}"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Branding Template Selector & Aspect Ratio Indicator -->
-                    <StackPanel VerticalAlignment="Center" Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                            <TextBlock Text="BRANDING TEMPLATE"
-                                       Foreground="{StaticResource Gold}"
-                                       FontSize="11"
-                                       FontWeight="Bold"
-                                       VerticalAlignment="Center"/>
-                            <Border Background="{StaticResource GoldSubtle}"
-                                    BorderBrush="{StaticResource BorderSubtle}"
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Padding="6,1"
-                                    Margin="8,0,0,0"
-                                    VerticalAlignment="Center">
+                        <!-- Template -->
+                        <Grid Margin="0,0,0,7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="TEMPLATE" Style="{StaticResource SectionLabel}" Margin="0" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1" Style="{StaticResource Chip}">
                                 <TextBlock Text="{Binding ActiveTemplateAspectRatio}"
                                            AutomationProperties.AutomationId="ActiveTemplateAspectRatioTextBlock"
-                                           Foreground="{StaticResource GoldLight}"
-                                           FontSize="10"
-                                           FontWeight="SemiBold"/>
+                                           Style="{StaticResource ChipText}"/>
                             </Border>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <ComboBox ItemsSource="{Binding AvailableTemplates}"
-                                      SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
-                                      AutomationProperties.AutomationId="TemplateComboBox"
-                                      AutomationProperties.Name="Branding template"
-                                      ToolTip="Select branding template overlay. Templates maintain strict aspect ratios to prevent distortion."
-                                      MinWidth="230"
-                                      IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <Border Visibility="{Binding IsBuiltIn, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Background="{StaticResource GoldSubtle}"
-                                                    BorderBrush="{StaticResource BorderSubtle}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="3"
-                                                    Padding="4,1"
-                                                    Margin="6,0,0,0"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="OFFICIAL" FontSize="9" FontWeight="Bold" Foreground="{StaticResource GoldLight}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            <Button Content="+ IMPORT"
+                        </Grid>
+                        <ComboBox ItemsSource="{Binding AvailableTemplates}"
+                                  SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
+                                  AutomationProperties.AutomationId="TemplateComboBox"
+                                  AutomationProperties.Name="Branding template"
+                                  ToolTip="Select branding template overlay. Templates maintain strict aspect ratios to prevent distortion."
+                                  HorizontalAlignment="Stretch"
+                                  IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Grid so the name trims and the chip stays visible in the closed selection box -->
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        <Border Grid.Column="1"
+                                                Visibility="{Binding IsBuiltIn, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Style="{StaticResource Chip}"
+                                                Padding="6,1"
+                                                Margin="8,0,0,0">
+                                            <TextBlock Text="Official" Style="{StaticResource ChipText}" FontSize="9"/>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid Margin="0,8,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0"
+                                    Content="Import template"
                                     AutomationProperties.AutomationId="ImportTemplateButton"
                                     AutomationProperties.Name="Import template"
                                     ToolTip="Import and save a new branding template image to the system"
                                     Click="ImportTemplate_Click"
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                     Style="{StaticResource SmallActionButton}"
-                                    Margin="6,0,0,0"/>
-                            <Button Content="DELETE"
+                                    HorizontalAlignment="Stretch"/>
+                            <Button Grid.Column="1"
+                                    Content="Delete"
                                     AutomationProperties.AutomationId="DeleteTemplateButton"
                                     ToolTip="Delete selected custom template"
                                     Click="DeleteTemplate_Click"
                                     IsEnabled="{Binding CanDeleteActiveTemplate}"
                                     Visibility="{Binding CanDeleteActiveTemplate, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Style="{StaticResource DestructiveActionButton}"
-                                    Margin="4,0,0,0"/>
+                                    Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <!-- Filename prefix -->
+                        <TextBlock Text="FILENAME PREFIX" Style="{StaticResource SectionLabel}"/>
+                        <TextBox Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.AutomationId="PrefixTextBox"
+                                 AutomationProperties.Name="Filename prefix"
+                                 ToolTip="Custom filename prefix for output assets. Special characters are automatically sanitized."
+                                 HorizontalAlignment="Stretch"
+                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"/>
+                        <StackPanel Orientation="Horizontal" Margin="2,6,0,18">
+                            <TextBlock Text="Saves as " Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                            <TextBlock Text="{Binding PatternPreview}"
+                                       AutomationProperties.AutomationId="PatternPreviewTextBlock"
+                                       Foreground="{StaticResource GoldLight}"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       MaxWidth="170"
+                                       TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
+
+                        <!-- Layout mode: one segmented choice that shows which layout Apply branding will use -->
+                        <TextBlock Text="LAYOUT" Style="{StaticResource SectionLabel}"/>
+                        <Border Style="{StaticResource SegmentTrack}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton Grid.Column="0"
+                                             GroupName="LayoutMode"
+                                             Content="Combine pairs"
+                                             AutomationProperties.AutomationId="CombineImagesButton"
+                                             ToolTip="Pair portrait photos side by side automatically (6:5 layout)"
+                                             Click="CombineImages_Click"
+                                             IsChecked="{Binding IsCombineLayout, Mode=OneWay}"
+                                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                             Style="{StaticResource SmallActionToggleButton}"
+                                             Padding="4,5"
+                                             Margin="0,0,2,0"/>
+                                <RadioButton Grid.Column="1"
+                                             GroupName="LayoutMode"
+                                             Content="Keep separate"
+                                             AutomationProperties.AutomationId="SeparateImagesButton"
+                                             ToolTip="Brand every photo on its own; pairs and Solo are ignored"
+                                             Click="SeparateImages_Click"
+                                             IsChecked="{Binding IsSeparateLayout, Mode=OneWay}"
+                                             IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                             Style="{StaticResource SmallActionToggleButton}"
+                                             Padding="4,5"
+                                             Margin="2,0,0,0"/>
+                            </Grid>
+                        </Border>
                     </StackPanel>
 
-                    </WrapPanel>
-
-                    <!-- Row 1: session notice (left) + action buttons (right).
-                         Both stay reachable on narrow windows instead of clipping. -->
-                    <Grid Grid.Row="1" Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                    <!-- Action Buttons & Pre-apply Session Indicator -->
-                        <!-- Session notice / Unsaved edits warning indicator -->
+                    <!-- Actions sit at the bottom of the rail -->
+                    <StackPanel Grid.Row="2" Margin="0,18,0,0">
+                        <!-- Session notice / unsaved edits warning -->
                         <Border x:Name="SessionNoticeBorder"
-                                Grid.Column="0"
                                 AutomationProperties.AutomationId="SessionStatusIndicatorBorder"
                                 Visibility="{Binding HasApplyHint, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="1"
-                                CornerRadius="8"
-                                Padding="12,6"
-                                Margin="0,0,12,0"
-                                VerticalAlignment="Center">
+                                CornerRadius="10"
+                                Padding="12,8"
+                                Margin="0,0,0,12">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
-                                    <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+                                    <Setter Property="BorderBrush" Value="#66C5A059"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding HasApplyWarning}" Value="True">
-                                             <Setter Property="Background" Value="#2D1A10"/>
-                                             <Setter Property="BorderBrush" Value="#E07A2B"/>
+                                            <Setter Property="Background" Value="#33E07A2B"/>
+                                            <Setter Property="BorderBrush" Value="#E07A2B"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <Grid VerticalAlignment="Center">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Ellipse Grid.Column="0" Width="6" Height="6" Margin="0,0,8,0" VerticalAlignment="Center">
+                                <Ellipse Grid.Column="0" Width="6" Height="6" Margin="0,5,8,0" VerticalAlignment="Top">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
                                             <Setter Property="Fill" Value="{StaticResource Gold}"/>
@@ -299,8 +272,9 @@
                                            AutomationProperties.AutomationId="ApplyStatusHintTextBlock"
                                            FontSize="11"
                                            FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis"
-                                           VerticalAlignment="Center">
+                                           TextWrapping="Wrap"
+                                           MaxHeight="48"
+                                           TextTrimming="CharacterEllipsis">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
@@ -315,276 +289,203 @@
                             </Grid>
                         </Border>
 
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="APPLY BRANDING"
-                                    AutomationProperties.AutomationId="ApplyBrandingButton"
-                                    ToolTip="Process and watermark selected property photos and videos (Ctrl+B / F5)"
-                                    Click="Apply_Click"
-                                    IsEnabled="{Binding CanApply}"
-                                    Style="{StaticResource PrimaryButton}"
-                                    Margin="0,0,12,0"/>
+                        <Button Content="Apply branding"
+                                AutomationProperties.AutomationId="ApplyBrandingButton"
+                                ToolTip="Process and watermark selected property photos and videos (Ctrl+B / F5)"
+                                Click="Apply_Click"
+                                IsEnabled="{Binding CanApply}"
+                                Style="{StaticResource PrimaryButton}"
+                                FontSize="14"
+                                Padding="20,12"
+                                HorizontalAlignment="Stretch"
+                                Margin="0,0,0,10"/>
 
-                            <Button x:Name="ExportDropdownButton"
-                                    AutomationProperties.AutomationId="ExportZipButton"
-                                    AutomationProperties.Name="Export"
-                                    ToolTip="Export branded photos and videos as ZIP archive or individual files (Ctrl+E / Ctrl+Shift+E)"
-                                    Click="ExportDropdown_Click"
-                                    IsEnabled="{Binding CanExport}"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Margin="0,0,12,0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="EXPORT" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    <Path Data="M 0 0 L 3.5 3.5 L 7 0 Z"
-                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          Margin="8,1,0,0"
-                                          VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button.ContextMenu>
-                                    <ContextMenu x:Name="ExportContextMenu"
-                                                 AutomationProperties.AutomationId="ExportContextMenu">
-                                        <MenuItem x:Name="ExportZipMenuItem"
-                                                  AutomationProperties.AutomationId="ExportZipMenuItem"
-                                                  Header="Export as ZIP Archive (.zip)"
-                                                  InputGestureText="Ctrl+E"
-                                                  ToolTip="Package all branded assets into a single ZIP archive"
-                                                  Click="ExportZip_Click">
-                                            <MenuItem.Icon>
-                                                <TextBlock Text="📦" FontSize="12" VerticalAlignment="Center"/>
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem x:Name="ExportIndividualMenuItem"
-                                                  AutomationProperties.AutomationId="ExportIndividualMenuItem"
-                                                  Header="Export as Individual Files..."
-                                                  InputGestureText="Ctrl+Shift+E"
-                                                  ToolTip="Save all branded photos and videos directly to a selected folder"
-                                                  Click="ExportIndividual_Click">
-                                            <MenuItem.Icon>
-                                                <TextBlock Text="📁" FontSize="12" VerticalAlignment="Center"/>
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                    </ContextMenu>
-                                </Button.ContextMenu>
-                            </Button>
-                            <Button Content="CHECK FOR UPDATES"
+                        <Button x:Name="ExportDropdownButton"
+                                AutomationProperties.AutomationId="ExportZipButton"
+                                AutomationProperties.Name="Export"
+                                ToolTip="Export branded photos and videos as ZIP archive or individual files (Ctrl+E / Ctrl+Shift+E)"
+                                Click="ExportDropdown_Click"
+                                IsEnabled="{Binding CanExport}"
+                                Style="{StaticResource SecondaryButton}"
+                                HorizontalAlignment="Stretch"
+                                Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Export" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <Path Data="M 0 0 L 3.5 3.5 L 7 0 Z"
+                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Margin="8,1,0,0"
+                                      VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.ContextMenu>
+                                <ContextMenu x:Name="ExportContextMenu"
+                                             AutomationProperties.AutomationId="ExportContextMenu">
+                                    <MenuItem x:Name="ExportZipMenuItem"
+                                              AutomationProperties.AutomationId="ExportZipMenuItem"
+                                              Header="Export as ZIP archive (.zip)"
+                                              InputGestureText="Ctrl+E"
+                                              ToolTip="Package all branded assets into a single ZIP archive"
+                                              Click="ExportZip_Click"/>
+                                    <MenuItem x:Name="ExportIndividualMenuItem"
+                                              AutomationProperties.AutomationId="ExportIndividualMenuItem"
+                                              Header="Export as individual files..."
+                                              InputGestureText="Ctrl+Shift+E"
+                                              ToolTip="Save all branded photos and videos directly to a selected folder"
+                                              Click="ExportIndividual_Click"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="VersionTextBlock"
+                                       Grid.Column="0"
+                                       Foreground="{StaticResource TextMuted}"
+                                       FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Margin="2,0,0,0"/>
+                            <Button Grid.Column="1"
+                                    Content="Check for updates"
                                     AutomationProperties.AutomationId="CheckForUpdatesButton"
                                     ToolTip="Check GitHub Releases for new updates"
                                     Click="CheckForUpdates_Click"
-                                    Style="{StaticResource SmallActionButton}"/>
-                        </StackPanel>
-                    </Grid>
+                                    Style="{StaticResource GhostButton}"
+                                    Margin="0,0,-6,0"/>
+                        </Grid>
+                    </StackPanel>
                 </Grid>
-
-                <!-- Divider & Progress / Status Row -->
-                <Border Height="1" Background="{StaticResource BorderSubtle}" Margin="0,16,0,14"/>
-
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="280"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid Grid.Column="0" VerticalAlignment="Center">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="STATUS: " Foreground="{StaticResource Gold}" FontSize="11" FontWeight="Bold" Margin="0,0,6,0"/>
-                        <TextBlock x:Name="StatusTextBlock"
-                                   Grid.Column="1" Text="{Binding Status}"
-                                   ToolTip="{Binding Status}"
-                                   AutomationProperties.AutomationId="StatusTextBlock"
-                                   AutomationProperties.LiveSetting="Polite"
-                                   Foreground="{StaticResource TextPrimary}"
-                                   FontSize="12"
-                                   FontWeight="Medium"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </Grid>
-
-                    <ProgressBar Grid.Column="1"
-                                 AutomationProperties.AutomationId="ProgressBar"
-                                 AutomationProperties.Name="Branding progress"
-                                 Value="{Binding Progress, Mode=OneWay}"
-                                 Height="8"
-                                 VerticalAlignment="Center"/>
-                </Grid>
-            </StackPanel>
-        </Border>
-
-        <!-- MAIN GALLERY / RESULTS AREA -->
-        <Grid Grid.Row="2">
-            <!-- Empty State Display -->
-            <Border Visibility="{Binding IsEmptyState, Converter={StaticResource BooleanToVisibilityConverter}}"
-                    AutomationProperties.AutomationId="EmptyStateBorder"
-                    AllowDrop="True"
-                    CornerRadius="12"
-                    Padding="40">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
-                        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
-                        <Setter Property="BorderThickness" Value="1"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsDragOver}" Value="True">
-                                <Setter Property="Background" Value="#251E14"/>
-                                <Setter Property="BorderBrush" Value="{StaticResource Gold}"/>
-                                <Setter Property="BorderThickness" Value="2"/>
-                                <Setter Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#C5A059" BlurRadius="28" ShadowDepth="0" Opacity="0.55"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="540">
-                    <Image Source="Assets/logo_phoenix.png"
-                           Height="100"
-                           Width="100"
-                           Margin="0,0,0,22"
-                           HorizontalAlignment="Center"
-                           RenderOptions.BitmapScalingMode="HighQuality">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Opacity" Value="0.85"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDragOver}" Value="True">
-                                        <Setter Property="Opacity" Value="1.0"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-
-                    <!-- Drag-Over Visual Callout Badge: Appears when videos or photos are dragged over the box -->
-                    <Border AutomationProperties.AutomationId="DragDropReactionBadge"
-                            Visibility="{Binding IsDragOver, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Background="#382C17"
-                            BorderBrush="{StaticResource GoldLight}"
-                            BorderThickness="1.5"
-                            CornerRadius="8"
-                            Padding="20,10"
-                            Margin="0,0,0,18"
-                            HorizontalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Width="16" Height="16" Fill="{StaticResource GoldLight}" Stretch="Uniform" Margin="0,0,10,0"
-                                  Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
-                            <TextBlock Text="DROP VIDEOS &amp; PHOTOS HERE TO IMPORT"
-                                       Foreground="{StaticResource GoldLight}"
-                                       FontSize="13"
-                                       FontWeight="Bold"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock Text="Alpha Premier Property Branding"
-                               Foreground="{StaticResource GoldLight}"
-                               FontSize="22"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,8"/>
-                    <TextBlock FontSize="13"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               LineHeight="21"
-                               Margin="0,0,0,26">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
-                                <Setter Property="Text" Value="Import property photography and walkthrough video clips to apply official Alpha Premier Realty watermarks and generate publication-ready high-resolution assets."/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDragOver}" Value="True">
-                                        <Setter Property="Text" Value="Release mouse button to import property videos and photography into your branding session."/>
-                                        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                    <Button x:Name="EmptyStateSelectButton"
-                            Content="SELECT MEDIA TO BEGIN"
-                            AutomationProperties.AutomationId="EmptyStateSelectButton"
-                            ToolTip="Choose photos and videos from your computer to start (Ctrl+O)"
-                            Click="SelectPhotos_Click"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                            Style="{StaticResource PrimaryButton}"
-                            HorizontalAlignment="Center"
-                            Padding="28,12"/>
-                </StackPanel>
             </Border>
 
-            <!-- Staged / Selected Photos & Videos Gallery Display -->
-            <Grid Visibility="{Binding HasSelectedPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+            <!-- GALLERY: empty state, staged media, or branded results -->
+            <Grid Grid.Column="1">
+                <!-- Empty State -->
+                <Border Visibility="{Binding IsEmptyState, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        AutomationProperties.AutomationId="EmptyStateBorder"
+                        AllowDrop="True"
+                        CornerRadius="18"
+                        Padding="40">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource GlassPanel}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                    <Setter Property="BorderThickness" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+                        <Image Source="Assets/logo_phoenix.png"
+                               Height="96"
+                               Width="96"
+                               Margin="0,0,0,22"
+                               HorizontalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.85"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                            <Setter Property="Opacity" Value="1.0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
 
-                <!-- Staged Section Header & Quick Action -->
-                <Border Grid.Row="0"
-                        Background="{StaticResource SurfaceDark}"
-                        BorderBrush="{StaticResource BorderSubtle}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="18,10"
-                        Margin="0,0,0,12">
-                    <Grid>
+                        <!-- Drag-over callout -->
+                        <Border AutomationProperties.AutomationId="DragDropReactionBadge"
+                                Visibility="{Binding IsDragOver, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource Chip}"
+                                BorderBrush="{StaticResource GoldLight}"
+                                Padding="18,8"
+                                Margin="0,0,0,18"
+                                HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Width="14" Height="14" Fill="{StaticResource GoldLight}" Stretch="Uniform" Margin="0,0,10,0"
+                                      Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+                                <TextBlock Text="Drop photos and videos here to import"
+                                           Foreground="{StaticResource GoldLight}"
+                                           FontSize="13"
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Alpha Premier Property Branding"
+                                   Foreground="{StaticResource TextPrimary}"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,8"/>
+                        <TextBlock FontSize="13"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   LineHeight="21"
+                                   Margin="0,0,0,26">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+                                    <Setter Property="Text" Value="Import property photography and walkthrough video clips to apply official Alpha Premier Realty watermarks and generate publication-ready high-resolution assets."/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                                            <Setter Property="Text" Value="Release mouse button to import property videos and photography into your branding session."/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Button x:Name="EmptyStateSelectButton"
+                                Content="Select media to begin"
+                                AutomationProperties.AutomationId="EmptyStateSelectButton"
+                                ToolTip="Choose photos and videos from your computer to start (Ctrl+O)"
+                                Click="SelectPhotos_Click"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                Style="{StaticResource PrimaryButton}"
+                                HorizontalAlignment="Center"
+                                Padding="28,12"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Staged media -->
+                <Grid Visibility="{Binding HasSelectedPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="4,2,4,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Column="0" VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"><Run Text="SELECTED MEDIA (" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text="{Binding SelectedFiles.Count, Mode=OneWay}" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text=")" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/></TextBlock>
-                        </Grid>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Staged media" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Foreground="{StaticResource TextMuted}" FontSize="12" VerticalAlignment="Center" Margin="10,1,0,0"><Run Text="{Binding SelectedFiles.Count, Mode=OneWay}"/><Run Text=" items"/></TextBlock>
+                        </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <!-- Layout mode: one segmented choice that shows which layout APPLY BRANDING will use -->
-                            <RadioButton GroupName="LayoutMode"
-                                         Content="COMBINE IMAGES"
-                                         AutomationProperties.AutomationId="CombineImagesButton"
-                                         ToolTip="Pair portrait photos side by side automatically (6:5 layout)"
-                                         Click="CombineImages_Click"
-                                         IsChecked="{Binding IsCombineLayout, Mode=OneWay}"
-                                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                                         Style="{StaticResource SmallActionToggleButton}"
-                                         MinWidth="116"
-                                         Margin="0,0,6,0"/>
-
-                            <RadioButton GroupName="LayoutMode"
-                                         Content="KEEP SEPARATE"
-                                         AutomationProperties.AutomationId="SeparateImagesButton"
-                                         ToolTip="Brand every photo on its own; pairs and SOLO are ignored"
-                                         Click="SeparateImages_Click"
-                                         IsChecked="{Binding IsSeparateLayout, Mode=OneWay}"
-                                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                                         Style="{StaticResource SmallActionToggleButton}"
-                                         MinWidth="108"
-                                         Margin="0,0,12,0"/>
-
-                            <Button Content="RESET ALL CROPS"
-                                    AutomationProperties.AutomationId="ResetAllStagedCropsButton"
-                                    ToolTip="Reset pan, zoom and rotation on every selected photo (pen marks are kept)"
-                                    Click="ResetAllStagedCrops_Click"
-                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                                    Style="{StaticResource SmallActionButton}"
-                                    Margin="0,0,12,0"/>
-
                             <Button x:Name="AddMoreButton"
-                                    Content="ADD MORE"
+                                    Content="Add more"
                                     AutomationProperties.AutomationId="AddMorePhotosButton"
                                     ToolTip="Add more photos or videos to the selection (you can also drop files here)"
                                     Click="AddMorePhotos_Click"
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                     Style="{StaticResource SmallActionButton}"
-                                    Margin="0,0,12,0"/>
-
-                            <Button Content="CLEAR ALL"
+                                    Margin="0,0,8,0"/>
+                            <Button Content="Reset crops"
+                                    AutomationProperties.AutomationId="ResetAllStagedCropsButton"
+                                    ToolTip="Reset pan, zoom and rotation on every selected photo (pen marks are kept)"
+                                    Click="ResetAllStagedCrops_Click"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                                    Style="{StaticResource SmallActionButton}"
+                                    Margin="0,0,8,0"/>
+                            <Button Content="Clear all"
                                     AutomationProperties.AutomationId="ClearQueueButton"
                                     AutomationProperties.Name="Clear all selected media"
                                     ToolTip="Remove every photo and video from the selection. Crop, pen and pairing edits are discarded."
@@ -593,280 +494,245 @@
                                     Style="{StaticResource DestructiveActionButton}"/>
                         </StackPanel>
                     </Grid>
-                </Border>
 
-                <!-- Staged Media Grid -->
-                <ScrollViewer Grid.Row="1"
-                              AutomationProperties.AutomationId="SelectedPhotosScrollViewer"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding SelectedPhotos}"
-                                  AutomationProperties.AutomationId="SelectedPhotosItemsControl">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="270"
-                                        Margin="0,0,16,16"
-                                        AllowDrop="True"
-                                        PreviewMouseLeftButtonDown="StagedCard_PreviewMouseLeftButtonDown"
-                                        PreviewMouseMove="StagedCard_PreviewMouseMove"
-                                        DragOver="StagedCard_DragOver"
-                                        DragLeave="StagedCard_DragLeave"
-                                        Drop="StagedCard_Drop"
-                                        CornerRadius="12"
-                                        Padding="10"
-                                        AutomationProperties.Name="{Binding FileName}">
-                                    <!-- Colours live in the Style (not as local values) so the hover and
-                                         drag-to-pair drop-target triggers can actually apply. -->
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
-                                            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
-                                            <Setter Property="BorderThickness" Value="1"/>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderHover}"/>
-                                                    <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
-                                                </Trigger>
-                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource GoldLight}"/>
-                                                    <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel>
-                                        <!-- Thumbnail Container with Video Badge -->
-                                        <Grid Height="190">
-                                            <Border CornerRadius="8"
-                                                    ClipToBounds="True"
-                                                    Background="{StaticResource BackgroundDark}">
-                                                <Image Source="{Binding Thumbnail}"
-                                                       Stretch="Uniform"
-                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            </Border>
+                    <ScrollViewer Grid.Row="1"
+                                  AutomationProperties.AutomationId="SelectedPhotosScrollViewer"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding SelectedPhotos}"
+                                      AutomationProperties.AutomationId="SelectedPhotosItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="256"
+                                            Margin="0,0,16,16"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="StagedCard_PreviewMouseLeftButtonDown"
+                                            PreviewMouseMove="StagedCard_PreviewMouseMove"
+                                            DragOver="StagedCard_DragOver"
+                                            DragLeave="StagedCard_DragLeave"
+                                            Drop="StagedCard_Drop"
+                                            Padding="10,10,10,12"
+                                            AutomationProperties.Name="{Binding FileName}">
+                                        <!-- Colours live in the Style (not as local values) so the hover and
+                                             drag-to-pair drop-target triggers can actually apply. -->
+                                        <Border.Style>
+                                            <Style TargetType="Border" BasedOn="{StaticResource GlassPanel}">
+                                                <Setter Property="CornerRadius" Value="16"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource BorderHover}"/>
+                                                        <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource GoldLight}"/>
+                                                        <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel>
+                                            <!-- Thumbnail well with badges -->
+                                            <Grid Height="180">
+                                                <Border Style="{StaticResource Well}"
+                                                        CornerRadius="10"
+                                                        ClipToBounds="True">
+                                                    <Image Source="{Binding Thumbnail}"
+                                                           Stretch="Uniform"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                </Border>
 
-                                            <!-- Video Indicator Badge -->
-                                            <Border Visibility="{Binding IsVideo, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Background="#CC0A0A0A"
-                                                    BorderBrush="{StaticResource Gold}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="4"
-                                                    Padding="7,3"
-                                                    Margin="8"
-                                                    HorizontalAlignment="Left"
-                                                    VerticalAlignment="Top">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="▶ VIDEO" Foreground="{StaticResource GoldLight}" FontSize="10" FontWeight="Bold"/>
-                                                    <TextBlock Text="{Binding DurationText, StringFormat=' • {0}'}"
-                                                               Visibility="{Binding DurationText, Converter={StaticResource EmptyToVisibilityConverter}}"
+                                                <Border Visibility="{Binding IsVideo, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource ThumbBadge}"
+                                                        HorizontalAlignment="Left">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="▶ Video" Foreground="{StaticResource GoldLight}" FontSize="10" FontWeight="Bold"/>
+                                                        <TextBlock Text="{Binding DurationText, StringFormat=' • {0}'}"
+                                                                   Visibility="{Binding DurationText, Converter={StaticResource EmptyToVisibilityConverter}}"
+                                                                   Foreground="{StaticResource TextPrimary}"
+                                                                   FontSize="10"
+                                                                   FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <Border Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource ThumbBadge}"
+                                                        HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding CropStatusText}" Foreground="{StaticResource GoldLight}" FontSize="9" FontWeight="Bold"/>
+                                                </Border>
+                                            </Grid>
+
+                                            <!-- Filename, pair partner and size -->
+                                            <Grid Margin="2,10,2,10">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding FileName}"
+                                                               AutomationProperties.AutomationId="SelectedFileNameTextBlock"
                                                                Foreground="{StaticResource TextPrimary}"
-                                                               FontSize="10"
-                                                               FontWeight="SemiBold"/>
+                                                               FontWeight="SemiBold"
+                                                               FontSize="12"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               ToolTip="{Binding FilePath}"/>
+                                                    <TextBlock Visibility="{Binding HasExplicitPair, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                               FontSize="11"
+                                                               Margin="0,3,0,0"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               ToolTip="{Binding PairedPartnerPath}"><Run Text="Paired with " Foreground="{StaticResource TextMuted}"/><Run Text="{Binding PairedPartnerName, Mode=OneWay}" Foreground="{StaticResource GoldLight}" FontWeight="SemiBold"/></TextBlock>
                                                 </StackPanel>
-                                            </Border>
-                                            <!-- Custom Crop Indicator Badge -->
-                                            <Border Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Background="#CC252015"
-                                                    BorderBrush="{StaticResource Gold}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    Margin="8"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Top">
-                                                <TextBlock Text="{Binding CropStatusText}" Foreground="{StaticResource GoldLight}" FontSize="9" FontWeight="Bold"/>
-                                            </Border>
-                                        </Grid>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding FileSizeText}"
+                                                           Foreground="{StaticResource TextMuted}"
+                                                           FontSize="11"
+                                                           Margin="8,1,0,0"
+                                                           VerticalAlignment="Top"/>
+                                            </Grid>
 
-                                        <!-- Filename and Size Details -->
-                                        <Grid Margin="0,10,0,10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding FileName}"
-                                                       AutomationProperties.AutomationId="SelectedFileNameTextBlock"
-                                                       Foreground="{StaticResource TextPrimary}"
-                                                       FontWeight="Bold"
-                                                       FontSize="12"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       ToolTip="{Binding FilePath}"/>
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding FileSizeText}"
-                                                       Foreground="{StaticResource TextMuted}"
-                                                       FontSize="11"
-                                                       Margin="8,0,0,0"
-                                                       VerticalAlignment="Center"/>
-                                        </Grid>
+                                            <!-- Row 1: Edit crop + Solo -->
+                                            <Grid Margin="0,0,0,8" Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0"
+                                                        Content="Edit crop"
+                                                        AutomationProperties.AutomationId="EditCropButton"
+                                                        AutomationProperties.Name="{Binding FileName, StringFormat='Edit crop: {0}'}"
+                                                        ToolTip="Adjust framing, zoom and pen marks"
+                                                        Click="EditStagedCrop_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Style="{StaticResource SmallActionButton}"
+                                                        Margin="0,0,4,0"/>
+                                                <ToggleButton Grid.Column="1"
+                                                              Content="Solo"
+                                                              AutomationProperties.AutomationId="ToggleLayoutButton"
+                                                              AutomationProperties.Name="{Binding FileName, StringFormat='Solo: {0}'}"
+                                                              ToolTip="Keep this photo as its own branded image instead of pairing it"
+                                                              ToolTipService.ShowOnDisabled="True"
+                                                              IsChecked="{Binding IsSolo, Mode=OneWay}"
+                                                              Click="ToggleStagedLayout_Click"
+                                                              Margin="4,0,0,0">
+                                                    <ToggleButton.Style>
+                                                        <Style TargetType="ToggleButton" BasedOn="{StaticResource SmallActionToggleButton}">
+                                                            <Setter Property="Background" Value="#14FFFFFF"/>
+                                                            <Setter Property="BorderBrush" Value="{StaticResource GlassEdge}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.IsSeparateLayout, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                    <Setter Property="ToolTip" Value="Keep separate is on, so every photo is already its own image."/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ToggleButton.Style>
+                                                </ToggleButton>
+                                            </Grid>
 
-                                        <!-- Per-image Edit & Layout Action Buttons -->
-                                        <Grid Margin="0,0,0,8" Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0"
-                                                    Content="EDIT CROP"
-                                                    AutomationProperties.AutomationId="EditCropButton"
-                                                    AutomationProperties.Name="{Binding FileName, StringFormat='Edit crop: {0}'}"
-                                                    ToolTip="Adjust framing, zoom and pen marks"
-                                                    Click="EditStagedCrop_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Style="{StaticResource SmallActionButton}"
-                                                    Margin="0,0,6,0"/>
-                                            <ToggleButton Grid.Column="1"
-                                                          Content="SOLO"
-                                                          AutomationProperties.AutomationId="ToggleLayoutButton"
-                                                          AutomationProperties.Name="{Binding FileName, StringFormat='Solo: {0}'}"
-                                                          ToolTip="Keep this photo as its own branded image instead of pairing it"
-                                                          ToolTipService.ShowOnDisabled="True"
-                                                          IsChecked="{Binding IsSolo, Mode=OneWay}"
-                                                          Click="ToggleStagedLayout_Click">
-                                                <ToggleButton.Style>
-                                                    <Style TargetType="ToggleButton" BasedOn="{StaticResource SmallActionToggleButton}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding DataContext.IsSeparateLayout, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                                <Setter Property="ToolTip" Value="KEEP SEPARATE is on, so every photo is already its own image."/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </ToggleButton.Style>
-                                            </ToggleButton>
-                                        </Grid>
+                                            <!-- Row 2: Pair/Unpair, Reset (when cropped), Remove -->
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid Grid.Column="0" Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,8,0">
+                                                    <Button x:Name="PairButton"
+                                                            Content="Pair"
+                                                            AutomationProperties.AutomationId="PairButton"
+                                                            AutomationProperties.Name="{Binding FileName, StringFormat='Pair: {0}'}"
+                                                            ToolTipService.ShowOnDisabled="True"
+                                                            Click="PairButton_Click"
+                                                            Visibility="{Binding HasExplicitPair, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource SmallActionButton}">
+                                                                <Setter Property="ToolTip" Value="Pair with the next unpaired photo. To choose the partner, drag this card onto another photo."/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSolo}" Value="True">
+                                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                                        <Setter Property="ToolTip" Value="Turn off Solo to pair this photo."/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding DataContext.IsSeparateLayout, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                                        <Setter Property="ToolTip" Value="Keep separate is on, so photos are not paired."/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                        <Setter Property="IsEnabled" Value="False"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <Button x:Name="UnpairButton"
+                                                            Content="Unpair"
+                                                            AutomationProperties.AutomationId="UnpairButton"
+                                                            AutomationProperties.Name="{Binding FileName, StringFormat='Unpair: {0}'}"
+                                                            ToolTip="Unpair these photos; both return to automatic layout"
+                                                            Click="UnpairButton_Click"
+                                                            IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                            Visibility="{Binding HasExplicitPair, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Style="{StaticResource SmallActionButton}"/>
+                                                </Grid>
+                                                <Button Grid.Column="1"
+                                                        Content="Reset"
+                                                        AutomationProperties.AutomationId="ResetCropButton"
+                                                        AutomationProperties.Name="{Binding FileName, StringFormat='Reset crop: {0}'}"
+                                                        ToolTip="Reset pan, zoom and rotation (pen marks are kept)"
+                                                        Click="ResetStagedCrop_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource SmallActionButton}"
+                                                        Margin="0,0,8,0"/>
+                                                <Button Grid.Column="2"
+                                                        Content="Remove"
+                                                        AutomationProperties.AutomationId="RemoveSelectedPhotoButton"
+                                                        AutomationProperties.Name="{Binding FileName, StringFormat='Remove from selection: {0}'}"
+                                                        ToolTip="Remove this item from the selection"
+                                                        Click="RemoveSelectedPhoto_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Style="{StaticResource DestructiveActionButton}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
 
-                                        <!-- Pairing: PAIR while unpaired, UNPAIR once paired -->
-                                        <Grid Margin="0,0,0,8" Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <Button x:Name="PairButton"
-                                                    Content="PAIR"
-                                                    AutomationProperties.AutomationId="PairButton"
-                                                    AutomationProperties.Name="{Binding FileName, StringFormat='Pair: {0}'}"
-                                                    ToolTipService.ShowOnDisabled="True"
-                                                    Click="PairButton_Click"
-                                                    Visibility="{Binding HasExplicitPair, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                                <Button.Style>
-                                                    <Style TargetType="Button" BasedOn="{StaticResource SmallActionButton}">
-                                                        <Setter Property="ToolTip" Value="Pair with the next unpaired photo. To choose the partner, drag this card onto another photo."/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsSolo}" Value="True">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                                <Setter Property="ToolTip" Value="Turn off SOLO to pair this photo."/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding DataContext.IsSeparateLayout, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                                <Setter Property="ToolTip" Value="KEEP SEPARATE is on, so photos are not paired."/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
-                                            <Button x:Name="UnpairButton"
-                                                    Content="UNPAIR"
-                                                    AutomationProperties.AutomationId="UnpairButton"
-                                                    AutomationProperties.Name="{Binding FileName, StringFormat='Unpair: {0}'}"
-                                                    ToolTip="Unpair these photos; both return to automatic layout"
-                                                    Click="UnpairButton_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Visibility="{Binding HasExplicitPair, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Style="{StaticResource SmallActionButton}"/>
-                                        </Grid>
+                <!-- Branded results -->
+                <Grid Visibility="{Binding HasResults, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                                        <Border Visibility="{Binding HasExplicitPair, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                Background="{StaticResource GoldSubtle}"
-                                                BorderBrush="{StaticResource BorderSubtle}"
-                                                BorderThickness="1"
-                                                CornerRadius="8"
-                                                Padding="10,6"
-                                                Margin="0,0,0,8"
-                                                ToolTip="{Binding PairedPartnerPath}">
-                                            <TextBlock FontSize="11" TextTrimming="CharacterEllipsis"><Run Text="Paired with " Foreground="{StaticResource TextSecondary}"/><Run Text="{Binding PairedPartnerName, Mode=OneWay}" Foreground="{StaticResource GoldLight}" FontWeight="SemiBold"/></TextBlock>
-                                        </Border>
-
-                                        <!-- Secondary Actions: Reset & Remove -->
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0"
-                                                    Content="RESET"
-                                                    AutomationProperties.AutomationId="ResetCropButton"
-                                                    AutomationProperties.Name="{Binding FileName, StringFormat='Reset crop: {0}'}"
-                                                    ToolTip="Reset pan, zoom and rotation (pen marks are kept)"
-                                                    Click="ResetStagedCrop_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Style="{StaticResource SmallActionButton}"
-                                                    Margin="0,0,6,0"/>
-                                            <Button Grid.Column="1"
-                                                    Content="REMOVE FROM SELECTION"
-                                                    AutomationProperties.AutomationId="RemoveSelectedPhotoButton"
-                                                    AutomationProperties.Name="{Binding FileName, StringFormat='Remove from selection: {0}'}"
-                                                    ToolTip="Remove this item from the selection"
-                                                    Click="RemoveSelectedPhoto_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Style="{StaticResource DestructiveActionButton}"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Grid>
-
-            <!-- Results Grid Display -->
-            <Grid Visibility="{Binding HasResults, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!-- Results Section Header & Quick Action -->
-                <Border Grid.Row="0"
-                        Background="{StaticResource SurfaceDark}"
-                        BorderBrush="{StaticResource BorderSubtle}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="18,10"
-                        Margin="0,0,0,12">
-                    <Grid>
+                    <Grid Grid.Row="0" Margin="4,2,4,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Column="0" VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"><Run Text="BRANDED ASSETS (" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text="{Binding Results.Count, Mode=OneWay}" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/><Run Text=")" Foreground="{StaticResource GoldLight}" FontWeight="Bold"/></TextBlock>
-                        </Grid>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Branded assets" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Foreground="{StaticResource TextMuted}" FontSize="12" VerticalAlignment="Center" Margin="10,1,0,0"><Run Text="{Binding Results.Count, Mode=OneWay}"/><Run Text=" ready"/></TextBlock>
+                        </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="RESET ALL CROPS"
+                            <Button Content="Reset crops"
                                     AutomationProperties.AutomationId="ResetAllResultCropsButton"
                                     ToolTip="Reset pan, zoom and rotation on every branded image (pen marks are kept)"
                                     Click="ResetAllResultCrops_Click"
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                                     Style="{StaticResource SmallActionButton}"
-                                    Margin="0,0,12,0"/>
-
-                            <Button Content="CLEAR ALL"
+                                    Margin="0,0,8,0"/>
+                            <Button Content="Clear all"
                                     AutomationProperties.AutomationId="ClearSessionButton"
                                     AutomationProperties.Name="Clear all branded items"
                                     ToolTip="Remove every branded item and the selection. You can export them first."
@@ -875,210 +741,212 @@
                                     Style="{StaticResource DestructiveActionButton}"/>
                         </StackPanel>
                     </Grid>
-                </Border>
 
-                <ScrollViewer Grid.Row="1"
-                              AutomationProperties.AutomationId="ResultsScrollViewer"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Results}"
-                                  AutomationProperties.AutomationId="ResultsItemsControl">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="270"
-                                        Margin="0,0,16,16"
-                                        Background="{StaticResource SurfaceDark}"
-                                        BorderBrush="{StaticResource BorderSubtle}"
-                                        BorderThickness="1"
-                                        CornerRadius="12"
-                                        Padding="10"
-                                        AutomationProperties.Name="{Binding FileName}">
-                                    <StackPanel>
-                                        <!-- Image Thumbnail with Video Badge -->
-                                        <Grid Height="190">
-                                            <Border CornerRadius="8"
-                                                    ClipToBounds="True"
-                                                    Background="{StaticResource BackgroundDark}">
-                                                <Image Source="{Binding Preview}"
-                                                       Stretch="Uniform"
-                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            </Border>
+                    <ScrollViewer Grid.Row="1"
+                                  AutomationProperties.AutomationId="ResultsScrollViewer"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding Results}"
+                                      AutomationProperties.AutomationId="ResultsItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="256"
+                                            Margin="0,0,16,16"
+                                            Style="{StaticResource GlassPanel}"
+                                            CornerRadius="16"
+                                            Padding="10,10,10,12"
+                                            AutomationProperties.Name="{Binding FileName}">
+                                        <StackPanel>
+                                            <Grid Height="180">
+                                                <Border Style="{StaticResource Well}"
+                                                        CornerRadius="10"
+                                                        ClipToBounds="True">
+                                                    <Image Source="{Binding Preview}"
+                                                           Stretch="Uniform"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                </Border>
 
-                                            <!-- Video Indicator Badge -->
-                                            <Border Visibility="{Binding IsVideo, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Background="#CC0A0A0A"
-                                                    BorderBrush="{StaticResource Gold}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="4"
-                                                    Padding="7,3"
-                                                    Margin="8"
-                                                    HorizontalAlignment="Left"
-                                                    VerticalAlignment="Top">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="▶ VIDEO" Foreground="{StaticResource GoldLight}" FontSize="10" FontWeight="Bold"/>
-                                                    <TextBlock Text="{Binding DurationText, StringFormat=' • {0}'}"
-                                                               Visibility="{Binding DurationText, Converter={StaticResource EmptyToVisibilityConverter}}"
-                                                               Foreground="{StaticResource TextPrimary}"
-                                                               FontSize="10"
-                                                               FontWeight="SemiBold"/>
-                                                </StackPanel>
-                                            </Border>
+                                                <Border Visibility="{Binding IsVideo, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource ThumbBadge}"
+                                                        HorizontalAlignment="Left">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="▶ Video" Foreground="{StaticResource GoldLight}" FontSize="10" FontWeight="Bold"/>
+                                                        <TextBlock Text="{Binding DurationText, StringFormat=' • {0}'}"
+                                                                   Visibility="{Binding DurationText, Converter={StaticResource EmptyToVisibilityConverter}}"
+                                                                   Foreground="{StaticResource TextPrimary}"
+                                                                   FontSize="10"
+                                                                   FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                </Border>
 
-                                            <!-- Custom Crop Indicator Badge -->
-                                            <Border Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Background="#CC252015"
-                                                    BorderBrush="{StaticResource Gold}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="4"
-                                                    Padding="6,2"
-                                                    Margin="8"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Top">
-                                                <TextBlock Text="CROPPED" Foreground="{StaticResource GoldLight}" FontSize="9" FontWeight="Bold"/>
-                                            </Border>
-                                        </Grid>
+                                                <Border Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource ThumbBadge}"
+                                                        HorizontalAlignment="Right">
+                                                    <TextBlock Text="Cropped" Foreground="{StaticResource GoldLight}" FontSize="9" FontWeight="Bold"/>
+                                                </Border>
+                                            </Grid>
 
-                                        <!-- Filename and Details -->
-                                        <Grid Margin="0,10,0,10">
                                             <TextBlock Text="{Binding FileName}"
                                                        AutomationProperties.AutomationId="ResultFileNameTextBlock"
                                                        Foreground="{StaticResource GoldLight}"
-                                                       FontWeight="Bold"
+                                                       FontWeight="SemiBold"
                                                        FontSize="12"
+                                                       Margin="2,10,2,10"
                                                        TextTrimming="CharacterEllipsis"
                                                        ToolTip="{Binding FileName}"/>
-                                        </Grid>
 
-                                        <!-- Action Buttons: Preview & Save -->
-                                        <Grid Margin="0,0,0,6">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
+                                            <!-- Row 1: Preview + Save -->
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0"
+                                                        Content="Preview"
+                                                        AutomationProperties.AutomationId="PreviewButton"
+                                                        ToolTip="Open preview player and inspector"
+                                                        Click="Preview_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Style="{StaticResource SmallActionButton}"
+                                                        Margin="0,0,4,0"/>
+                                                <Button Grid.Column="1"
+                                                        Content="Save"
+                                                        AutomationProperties.AutomationId="SaveButton"
+                                                        ToolTip="Save branded asset"
+                                                        Click="Save_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Style="{StaticResource SmallGoldButton}"
+                                                        Margin="4,0,0,0"/>
+                                            </Grid>
 
-                                            <Button Grid.Column="0"
-                                                    Content="PREVIEW"
-                                                    AutomationProperties.AutomationId="PreviewButton"
-                                                    ToolTip="Open preview player and inspector"
-                                                    Click="Preview_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Style="{StaticResource SmallActionButton}"
-                                                    Margin="0,0,4,0"/>
+                                            <!-- Row 2: Edit crop + Reset -->
+                                            <Grid Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0"
+                                                        Content="Edit crop"
+                                                        AutomationProperties.AutomationId="EditResultCropButton"
+                                                        ToolTip="Adjust image framing, pan, and zoom without restarting"
+                                                        Click="EditResultCrop_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Style="{StaticResource SmallActionButton}"/>
+                                                <Button Grid.Column="1"
+                                                        Content="Reset"
+                                                        AutomationProperties.AutomationId="ResetResultCropButton"
+                                                        ToolTip="Reset this image's crop to default framing"
+                                                        Click="ResetResultCrop_Click"
+                                                        IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
+                                                        Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                        Style="{StaticResource SmallActionButton}"
+                                                        Margin="8,0,0,0"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
 
-                                            <Button Grid.Column="1"
-                                                    Content="SAVE"
-                                                    AutomationProperties.AutomationId="SaveButton"
-                                                    ToolTip="Save branded asset"
-                                                    Click="Save_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Style="{StaticResource SmallGoldButton}"/>
-                                        </Grid>
-
-                                        <!-- Post-Branding Edit Crop & Reset Buttons -->
-                                        <Grid Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Button Grid.Column="0"
-                                                    Content="EDIT CROP"
-                                                    AutomationProperties.AutomationId="EditResultCropButton"
-                                                    ToolTip="Adjust image framing, pan, and zoom without restarting"
-                                                    Click="EditResultCrop_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Style="{StaticResource SmallActionButton}"
-                                                    Margin="0,0,4,0"/>
-
-                                            <Button Grid.Column="1"
-                                                    Content="RESET"
-                                                    AutomationProperties.AutomationId="ResetResultCropButton"
-                                                    ToolTip="Reset this image's crop to default framing"
-                                                    Click="ResetResultCrop_Click"
-                                                    IsEnabled="{Binding DataContext.IsBusy, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanConverter}}"
-                                                    Visibility="{Binding HasCustomCrop, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                    Style="{StaticResource SmallActionButton}"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Grid>
-
-            <!-- Drop Indicator Overlay for Staged / Results View -->
-            <Border IsHitTestVisible="False"
-                    Background="#401B160C"
-                    BorderBrush="{StaticResource Gold}"
-                    BorderThickness="2"
-                    CornerRadius="12"
-                    Panel.ZIndex="100">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding IsDragOver}" Value="True"/>
-                                    <Condition Binding="{Binding IsEmptyState}" Value="False"/>
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <Border.Effect>
-                    <DropShadowEffect Color="#C5A059" BlurRadius="28" ShadowDepth="0" Opacity="0.55"/>
-                </Border.Effect>
-                <Border Background="#2A2013"
-                        BorderBrush="{StaticResource GoldLight}"
-                        BorderThickness="1.5"
-                        CornerRadius="10"
-                        Padding="28,14"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Path Width="20" Height="20" Fill="{StaticResource GoldLight}" Stretch="Uniform" Margin="0,0,12,0"
-                              Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Foreground="{StaticResource GoldLight}"
-                                       FontSize="14"
-                                       FontWeight="Bold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="DROP PHOTOS &amp; VIDEOS TO ADD THEM"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasResults}" Value="True">
-                                                <Setter Property="Text" Value="DROP TO START A NEW SESSION"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock Foreground="{StaticResource TextSecondary}"
-                                       FontSize="12"
-                                       Margin="0,2,0,0">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="They join the selection; existing edits are kept"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasResults}" Value="True">
-                                                <Setter Property="Text" Value="You'll be asked before branded items are replaced"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                <!-- Drop indicator overlay for the staged / results views -->
+                <Border IsHitTestVisible="False"
+                        Background="#66121317"
+                        BorderBrush="{StaticResource Gold}"
+                        BorderThickness="2"
+                        CornerRadius="18"
+                        Panel.ZIndex="100">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsDragOver}" Value="True"/>
+                                        <Condition Binding="{Binding IsEmptyState}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Border Background="{StaticResource PopupSurface}"
+                            BorderBrush="{StaticResource GoldLight}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="28,14"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Width="20" Height="20" Fill="{StaticResource GoldLight}" Stretch="Uniform" Margin="0,0,12,0"
+                                  Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Foreground="{StaticResource GoldLight}"
+                                           FontSize="14"
+                                           FontWeight="Bold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Drop photos and videos to add them"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasResults}" Value="True">
+                                                    <Setter Property="Text" Value="Drop to start a new session"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Foreground="{StaticResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,2,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="They join the selection; existing edits are kept"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasResults}" Value="True">
+                                                    <Setter Property="Text" Value="You'll be asked before branded items are replaced"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
                 </Border>
-            </Border>
+            </Grid>
+        </Grid>
+
+        <!-- STATUS STRIP -->
+        <Grid Grid.Row="2" Margin="6,0,4,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="260"/>
+            </Grid.ColumnDefinitions>
+            <Ellipse Grid.Column="0" Width="7" Height="7" Fill="{StaticResource Gold}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+            <TextBlock x:Name="StatusTextBlock"
+                       Grid.Column="1" Text="{Binding Status}"
+                       ToolTip="{Binding Status}"
+                       AutomationProperties.AutomationId="StatusTextBlock"
+                       AutomationProperties.LiveSetting="Polite"
+                       Foreground="{StaticResource TextSecondary}"
+                       FontSize="12"
+                       FontWeight="Medium"
+                       VerticalAlignment="Center"
+                       Margin="0,0,16,0"
+                       TextTrimming="CharacterEllipsis"/>
+            <ProgressBar Grid.Column="2"
+                         AutomationProperties.AutomationId="ProgressBar"
+                         AutomationProperties.Name="Branding progress"
+                         Value="{Binding Progress, Mode=OneWay}"
+                         Height="8"
+                         VerticalAlignment="Center"/>
         </Grid>
     </Grid>
     </ScrollViewer>

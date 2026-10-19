@@ -4,13 +4,14 @@
              xmlns:local="clr-namespace:Alpha.Branding"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Alpha Premier Official Brand Color Palette (from alphapremiergroup.com) -->
-        <Color x:Key="ColorBackgroundDark">#0A0A0A</Color>
-        <Color x:Key="ColorSurfaceDark">#111215</Color>
-        <Color x:Key="ColorSurfaceElevated">#18191E</Color>
-        <Color x:Key="ColorSurfaceInput">#0D0E10</Color>
-        <Color x:Key="ColorBorderSubtle">#423722</Color>
-        <Color x:Key="ColorBorderHover">#735E35</Color>
+        <!-- Obsidian Glass palette: Alpha Premier gold on a deep charcoal backdrop.
+             Panels are translucent white over the backdrop; wells are translucent black. -->
+        <Color x:Key="ColorBackgroundDark">#121317</Color>
+        <Color x:Key="ColorSurfaceDark">#0FFFFFFF</Color>
+        <Color x:Key="ColorSurfaceElevated">#1CFFFFFF</Color>
+        <Color x:Key="ColorSurfaceInput">#52000000</Color>
+        <Color x:Key="ColorBorderSubtle">#1AFFFFFF</Color>
+        <Color x:Key="ColorBorderHover">#38FFFFFF</Color>
         <Color x:Key="ColorGold">#C5A059</Color>
         <Color x:Key="ColorGoldLight">#E2C285</Color>
         <Color x:Key="ColorGoldDark">#9E7B35</Color>
@@ -25,13 +26,77 @@
         <SolidColorBrush x:Key="Gold" Color="{StaticResource ColorGold}"/>
         <SolidColorBrush x:Key="GoldLight" Color="{StaticResource ColorGoldLight}"/>
         <SolidColorBrush x:Key="GoldDark" Color="{StaticResource ColorGoldDark}"/>
-        <SolidColorBrush x:Key="GoldSubtle" Color="#252015"/>
-        <SolidColorBrush x:Key="Charcoal" Color="{StaticResource ColorBackgroundDark}"/>
+        <SolidColorBrush x:Key="GoldSubtle" Color="#2EC5A059"/>
+        <!-- Popups float over other windows, so they stay near-opaque -->
+        <SolidColorBrush x:Key="PopupSurface" Color="#F5191B20"/>
+        <SolidColorBrush x:Key="WellEdge" Color="#1F000000"/>
 
-        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#B0B4BC"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#9096A5"/>
-        <SolidColorBrush x:Key="SuccessGreen" Color="#22C55E"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F1EEE7"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#B3B5BC"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#8E919B"/>
+        <SolidColorBrush x:Key="DangerText" Color="#E99090"/>
+
+        <!-- Glass edge: brighter on top so panels read as lit from above -->
+        <LinearGradientBrush x:Key="GlassEdge" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#2EFFFFFF" Offset="0"/>
+            <GradientStop Color="#14FFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Window backdrop: charcoal gradient with a gold glow top-right, a dimmer one bottom-left
+             and a cool haze in the middle. Stretched to the window so the glow stays in the corners. -->
+        <DrawingBrush x:Key="GlassBackdrop" Stretch="Fill" ViewboxUnits="Absolute" Viewbox="0,0,1600,1000">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <DrawingGroup.ClipGeometry>
+                        <RectangleGeometry Rect="0,0,1600,1000"/>
+                    </DrawingGroup.ClipGeometry>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,1600,1000"/>
+                        </GeometryDrawing.Geometry>
+                        <GeometryDrawing.Brush>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#1B1C22" Offset="0"/>
+                                <GradientStop Color="#0F1013" Offset="0.7"/>
+                            </LinearGradientBrush>
+                        </GeometryDrawing.Brush>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="800,600" RadiusX="620" RadiusY="420"/>
+                        </GeometryDrawing.Geometry>
+                        <GeometryDrawing.Brush>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#593C425A" Offset="0"/>
+                                <GradientStop Color="#003C425A" Offset="1"/>
+                            </RadialGradientBrush>
+                        </GeometryDrawing.Brush>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="1420,-60" RadiusX="900" RadiusY="520"/>
+                        </GeometryDrawing.Geometry>
+                        <GeometryDrawing.Brush>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#47C5A059" Offset="0"/>
+                                <GradientStop Color="#00C5A059" Offset="1"/>
+                            </RadialGradientBrush>
+                        </GeometryDrawing.Brush>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="-100,1080" RadiusX="720" RadiusY="520"/>
+                        </GeometryDrawing.Geometry>
+                        <GeometryDrawing.Brush>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#24C5A059" Offset="0"/>
+                                <GradientStop Color="#00C5A059" Offset="1"/>
+                            </RadialGradientBrush>
+                        </GeometryDrawing.Brush>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
 
         <!-- Global Window Typography Rendering Defaults -->
         <Style TargetType="Window">
@@ -52,9 +117,9 @@
             <GradientStop Color="#E2C285" Offset="1"/>
         </LinearGradientBrush>
 
-        <LinearGradientBrush x:Key="DarkHeaderGradient" StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#141519" Offset="0"/>
-            <GradientStop Color="#0D0E10" Offset="1"/>
+        <LinearGradientBrush x:Key="GoldGradientHorizontal" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#9E7B35" Offset="0"/>
+            <GradientStop Color="#E2C285" Offset="1"/>
         </LinearGradientBrush>
 
         <!-- Converters -->
@@ -70,7 +135,7 @@
                 <Setter.Value>
                     <ControlTemplate>
                         <Border Margin="-3"
-                                CornerRadius="11"
+                                CornerRadius="13"
                                 BorderThickness="2"
                                 BorderBrush="{StaticResource GoldLight}"
                                 SnapsToDevicePixels="True"/>
@@ -79,11 +144,90 @@
             </Setter>
         </Style>
 
-        <!-- Default Button Style -->
-        <Style TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
+        <!-- Surfaces -->
+        <Style x:Key="GlassPanel" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource GlassEdge}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+        </Style>
+
+        <!-- One shadowed panel per window at most: effects re-render their whole subtree -->
+        <Style x:Key="GlassPanelRaised" TargetType="Border" BasedOn="{StaticResource GlassPanel}">
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="28" ShadowDepth="10" Direction="270" Color="#000000" Opacity="0.35"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Well" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SurfaceInput}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource WellEdge}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+        </Style>
+
+        <!-- Segmented control track: holds SmallActionToggleButton radios -->
+        <Style x:Key="SegmentTrack" TargetType="Border" BasedOn="{StaticResource Well}">
+            <Setter Property="Padding" Value="4"/>
+        </Style>
+
+        <Style x:Key="Pill" TargetType="Border" BasedOn="{StaticResource Well}">
+            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="Padding" Value="14,7"/>
+        </Style>
+
+        <Style x:Key="Chip" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
+            <Setter Property="BorderBrush" Value="#66C5A059"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+        </Style>
+
+        <Style x:Key="ChipText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Thumbnail badge over a photo (video, cropped, pair) -->
+        <Style x:Key="ThumbBadge" TargetType="Border">
+            <Setter Property="Background" Value="#A6000000"/>
+            <Setter Property="BorderBrush" Value="#33FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+        </Style>
+
+        <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,0,0,7"/>
+        </Style>
+
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Default Button Style: translucent glass tile -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource GlassEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="16,9"/>
             <Setter Property="FontSize" Value="13"/>
@@ -98,23 +242,23 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="10"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#22242B"/>
+                                <Setter TargetName="border" Property="Background" Value="#24FFFFFF"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#121316"/>
+                                <Setter TargetName="border" Property="Background" Value="#47000000"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -123,18 +267,23 @@
             </Setter>
         </Style>
 
-        <!-- Primary Gold Button Style (Matches .hero-btn from website) -->
+        <!-- Primary Gold Button: the single filled action on a view -->
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource GoldGradient}"/>
-            <Setter Property="Foreground" Value="#000000"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Gold}"/>
+            <Setter Property="Foreground" Value="#1A1508"/>
+            <Setter Property="BorderBrush" Value="#59FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="Padding" Value="20,11"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="6" Direction="270" Color="#C5A059" Opacity="0.35"/>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -142,7 +291,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="10"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -151,14 +300,13 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldGradientHover}"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldDark}"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -169,7 +317,7 @@
 
         <!-- Signature ToolTip Style -->
         <Style TargetType="ToolTip">
-            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
+            <Setter Property="Background" Value="{StaticResource PopupSurface}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -183,7 +331,7 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="6"
+                                CornerRadius="8"
                                 Padding="{TemplateBinding Padding}">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="12" ShadowDepth="3" Direction="270" Color="#000000" Opacity="0.6"/>
@@ -195,35 +343,39 @@
             </Setter>
         </Style>
 
-        <!-- Secondary Outlined Button Style -->
+        <!-- Secondary Button: quieter glass tile -->
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="Padding" Value="16,9"/>
         </Style>
 
         <!-- Small Action Button Style -->
         <Style x:Key="SmallActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="MinHeight" Value="32"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
         </Style>
 
-        <!-- Small Action Toggle Button Style: segmented mode toggles and radios (PAN/PEN, LEFT/RIGHT PHOTO,
-             COMBINE/KEEP SEPARATE). Checked mirrors the DarkComboBoxItem "selected" idiom and adds a bold
-             weight so the state never relies on colour alone. -->
+        <!-- Text-only button for rarely used actions (Check for updates) -->
+        <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+
+        <!-- Segment toggle: sits inside a SegmentTrack. Checked reads as the lifted glass segment
+             plus gold bold text so the state never relies on colour alone. -->
         <Style x:Key="SmallActionToggleButton" TargetType="ToggleButton">
-            <Setter Property="Background" Value="{StaticResource SurfaceElevated}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="MinHeight" Value="32"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -235,28 +387,27 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="9"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#22242B"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BorderHover}"/>
+                                <Setter TargetName="border" Property="Background" Value="#14FFFFFF"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#121316"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
+                                <Setter TargetName="border" Property="Background" Value="#33000000"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource GoldSubtle}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter TargetName="border" Property="Background" Value="#1FFFFFFF"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#2EFFFFFF"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -265,8 +416,9 @@
             </Setter>
         </Style>
 
-        <!-- Destructive Action Button Style (e.g. Delete Template) -->
+        <!-- Destructive Action Button Style (Clear all, Delete template, Remove) -->
         <Style x:Key="DestructiveActionButton" TargetType="Button" BasedOn="{StaticResource SmallActionButton}">
+            <Setter Property="Foreground" Value="{StaticResource DangerText}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -274,24 +426,24 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="10"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#2D1414"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#EF4444"/>
+                                <Setter TargetName="border" Property="Background" Value="#33E05050"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#E05050"/>
                                 <Setter Property="Foreground" Value="#FCA5A5"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#1F0D0D"/>
+                                <Setter TargetName="border" Property="Background" Value="#47000000"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="#DC2626"/>
                                 <Setter Property="Foreground" Value="#F87171"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -300,20 +452,21 @@
             </Setter>
         </Style>
 
-        <!-- Small Gold Action Button Style -->
+        <!-- Small Gold Action Button: used per card, so no glow effect -->
         <Style x:Key="SmallGoldButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Padding" Value="12,5"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Effect" Value="{x:Null}"/>
         </Style>
 
-
-        <!-- Dark TextBox Style -->
+        <!-- TextBox: recessed well -->
         <Style TargetType="TextBox">
             <Setter Property="Background" Value="{StaticResource SurfaceInput}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource WellEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Padding" Value="12,9"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="CaretBrush" Value="{StaticResource Gold}"/>
             <Setter Property="SelectionBrush" Value="{StaticResource Gold}"/>
@@ -326,7 +479,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="10"
                                 SnapsToDevicePixels="True">
                             <ScrollViewer x:Name="PART_ContentHost"
                                           Focusable="False"
@@ -339,7 +492,7 @@
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
-                                <Setter TargetName="border" Property="Background" Value="#121317"/>
+                                <Setter TargetName="border" Property="Background" Value="#66000000"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Opacity" Value="0.4"/>
@@ -353,9 +506,9 @@
         <!-- Golden ProgressBar Style -->
         <Style TargetType="ProgressBar">
             <Setter Property="Background" Value="{StaticResource SurfaceInput}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource WellEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="{StaticResource GoldGradient}"/>
+            <Setter Property="Foreground" Value="{StaticResource GoldGradientHorizontal}"/>
             <Setter Property="Height" Value="8"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
@@ -378,9 +531,9 @@
             </Setter>
         </Style>
 
-        <!-- Alpha Premier Signature Golden ScrollBar Style (Matches website ::-webkit-scrollbar) -->
+        <!-- ScrollBar: thin translucent thumb that warms to gold on hover -->
         <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="{StaticResource BackgroundDark}"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -391,11 +544,18 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{StaticResource Gold}"
+                                                <Border x:Name="thumb"
+                                                        Background="#4DFFFFFF"
                                                         CornerRadius="4"
-                                                        Margin="2"
-                                                        BorderBrush="{StaticResource BackgroundDark}"
-                                                        BorderThickness="1"/>
+                                                        Margin="2"/>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="thumb" Property="Background" Value="{StaticResource Gold}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsDragging" Value="True">
+                                                        <Setter TargetName="thumb" Property="Background" Value="{StaticResource GoldLight}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -415,7 +575,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Alpha Premier Dark Gold Slider Style -->
+        <!-- Slider: recessed track, gold thumb with a glass rim -->
         <Style x:Key="SliderThumb" TargetType="Thumb">
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -424,17 +584,17 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
                         <Ellipse x:Name="thumbEllipse"
-                                 Width="14" Height="14"
-                                 Fill="{StaticResource GoldLight}"
-                                 Stroke="{StaticResource GoldDark}"
+                                 Width="18" Height="18"
+                                 Fill="{StaticResource Gold}"
+                                 Stroke="#66FFFFFF"
                                  StrokeThickness="1.5">
                             <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.5"/>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Direction="270" Color="#000000" Opacity="0.5"/>
                             </Ellipse.Effect>
                         </Ellipse>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="thumbEllipse" Property="Fill" Value="{StaticResource Gold}"/>
+                                <Setter TargetName="thumbEllipse" Property="Fill" Value="{StaticResource GoldLight}"/>
                                 <Setter TargetName="thumbEllipse" Property="Stroke" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
@@ -470,11 +630,11 @@
                     <ControlTemplate TargetType="Slider">
                         <Grid VerticalAlignment="Center">
                             <Border x:Name="TrackBackground"
-                                    Height="4"
+                                    Height="8"
                                     Background="{StaticResource SurfaceInput}"
-                                    BorderBrush="{StaticResource BorderSubtle}"
+                                    BorderBrush="{StaticResource WellEdge}"
                                     BorderThickness="1"
-                                    CornerRadius="2"
+                                    CornerRadius="4"
                                     VerticalAlignment="Center"/>
                             <Track x:Name="PART_Track" VerticalAlignment="Center">
                                 <Track.DecreaseRepeatButton>
@@ -490,7 +650,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -498,8 +658,7 @@
             </Setter>
         </Style>
 
-
-        <!-- Alpha Premier Dark MenuItem Style -->
+        <!-- MenuItem -->
         <Style x:Key="DarkMenuItem" TargetType="MenuItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -516,7 +675,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="Transparent"
                                 BorderThickness="1"
-                                CornerRadius="6"
+                                CornerRadius="8"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <Grid>
@@ -552,7 +711,7 @@
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -561,9 +720,9 @@
             </Setter>
         </Style>
 
-        <!-- Alpha Premier Dark ContextMenu Style -->
+        <!-- ContextMenu -->
         <Style x:Key="DarkContextMenu" TargetType="ContextMenu">
-            <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
+            <Setter Property="Background" Value="{StaticResource PopupSurface}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -577,11 +736,11 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
+                                CornerRadius="12"
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.75"/>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="6" Direction="270" Color="#000000" Opacity="0.6"/>
                             </Border.Effect>
                             <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
                         </Border>
@@ -590,7 +749,7 @@
             </Setter>
         </Style>
 
-        <!-- Alpha Premier Dark ComboBoxItem Style -->
+        <!-- ComboBoxItem -->
         <Style x:Key="DarkComboBoxItem" TargetType="ComboBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -604,7 +763,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="Transparent"
                                 BorderThickness="1"
-                                CornerRadius="6"
+                                CornerRadius="8"
                                 Padding="{TemplateBinding Padding}"
                                 Margin="2,1"
                                 SnapsToDevicePixels="True">
@@ -622,7 +781,7 @@
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
+                                <Setter Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -630,14 +789,14 @@
             </Setter>
         </Style>
 
-        <!-- Alpha Premier Dark ComboBox Style -->
+        <!-- ComboBox: recessed well with a gold chevron -->
         <Style x:Key="DarkComboBox" TargetType="ComboBox">
             <Setter Property="Background" Value="{StaticResource SurfaceInput}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource WellEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="12,7"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItem}"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -654,9 +813,9 @@
                                     <ControlTemplate TargetType="ToggleButton">
                                         <Border x:Name="border"
                                                 Background="{StaticResource SurfaceInput}"
-                                                BorderBrush="{StaticResource BorderSubtle}"
+                                                BorderBrush="{StaticResource WellEdge}"
                                                 BorderThickness="1"
-                                                CornerRadius="8"
+                                                CornerRadius="10"
                                                 Padding="{TemplateBinding Padding}"
                                                 SnapsToDevicePixels="True">
                                             <Grid>
@@ -679,7 +838,7 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BorderHover}"/>
                                             </Trigger>
                                             <Trigger Property="IsChecked" Value="True">
                                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Gold}"/>
@@ -710,14 +869,14 @@
                                       MinWidth="{TemplateBinding ActualWidth}"
                                       MaxHeight="260">
                                     <Border x:Name="DropDownBorder"
-                                            Background="{StaticResource SurfaceDark}"
+                                            Background="{StaticResource PopupSurface}"
                                             BorderThickness="1"
                                             BorderBrush="{StaticResource BorderSubtle}"
-                                            CornerRadius="8"
+                                            CornerRadius="12"
                                             Padding="4"
                                             Margin="0,4,0,0">
                                         <Border.Effect>
-                                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.75"/>
+                                            <DropShadowEffect BlurRadius="20" ShadowDepth="6" Direction="270" Color="#000000" Opacity="0.6"/>
                                         </Border.Effect>
                                         <ScrollViewer SnapsToDevicePixels="True">
                                             <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
@@ -736,5 +895,3 @@
         <Style TargetType="ComboBox" BasedOn="{StaticResource DarkComboBox}"/>
     </Application.Resources>
 </Application>
-
-

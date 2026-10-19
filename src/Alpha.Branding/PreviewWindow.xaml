@@ -6,7 +6,7 @@
         Width="1080" Height="820"
         MinWidth="720" MinHeight="480"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BackgroundDark}"
+        Background="{StaticResource GlassBackdrop}"
         Foreground="{StaticResource TextPrimary}"
         FontFamily="Segoe UI, Poppins, sans-serif"
         KeyDown="Window_KeyDown"
