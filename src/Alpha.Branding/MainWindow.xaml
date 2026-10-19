@@ -115,10 +115,11 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="TEMPLATE" Style="{StaticResource SectionLabel}" Margin="0" VerticalAlignment="Center"/>
-                            <Border Grid.Column="1" Style="{StaticResource Chip}">
+                            <Border Grid.Column="1" Style="{StaticResource Chip}" Padding="6,1">
                                 <TextBlock Text="{Binding ActiveTemplateAspectRatio}"
                                            AutomationProperties.AutomationId="ActiveTemplateAspectRatioTextBlock"
-                                           Style="{StaticResource ChipText}"/>
+                                           Style="{StaticResource ChipText}"
+                                           FontSize="9"/>
                             </Border>
                         </Grid>
                         <ComboBox ItemsSource="{Binding AvailableTemplates}"
