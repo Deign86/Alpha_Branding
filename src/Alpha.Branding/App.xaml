@@ -176,7 +176,7 @@
         </Style>
 
         <Style x:Key="Pill" TargetType="Border" BasedOn="{StaticResource Well}">
-            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="Padding" Value="14,7"/>
         </Style>
 
@@ -184,7 +184,7 @@
             <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
             <Setter Property="BorderBrush" Value="#66C5A059"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="8,2"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -202,7 +202,7 @@
             <Setter Property="Background" Value="#A6000000"/>
             <Setter Property="BorderBrush" Value="#33FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="999"/>
+            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="8,3"/>
             <Setter Property="Margin" Value="8"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
