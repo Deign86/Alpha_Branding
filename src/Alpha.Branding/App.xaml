@@ -45,61 +45,42 @@
             <GradientStop Color="#17FFFFFF" Offset="0"/>
             <GradientStop Color="#0AFFFFFF" Offset="1"/>
         </LinearGradientBrush>
-        <LinearGradientBrush x:Key="GlassButtonFill" StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#21FFFFFF" Offset="0"/>
-            <GradientStop Color="#0FFFFFFF" Offset="1"/>
-        </LinearGradientBrush>
         <SolidColorBrush x:Key="ImageOutline" Color="#1AFFFFFF"/>
 
-        <!-- Window backdrop: charcoal gradient with a gold glow top-right, a dimmer one bottom-left
-             and a cool haze in the middle. Stretched to the window so the glow stays in the corners. -->
+        <!-- Window backdrop: black in the middle, gold glowing in from the top-right and bottom-left corners.
+             Stretched to the window so the glow stays in the corners at any size. -->
         <DrawingBrush x:Key="GlassBackdrop" Stretch="Fill" ViewboxUnits="Absolute" Viewbox="0,0,1600,1000">
             <DrawingBrush.Drawing>
                 <DrawingGroup>
                     <DrawingGroup.ClipGeometry>
                         <RectangleGeometry Rect="0,0,1600,1000"/>
                     </DrawingGroup.ClipGeometry>
-                    <GeometryDrawing>
+                    <GeometryDrawing Brush="#0B0A08">
                         <GeometryDrawing.Geometry>
                             <RectangleGeometry Rect="0,0,1600,1000"/>
                         </GeometryDrawing.Geometry>
-                        <GeometryDrawing.Brush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#1B1C22" Offset="0"/>
-                                <GradientStop Color="#0F1013" Offset="0.7"/>
-                            </LinearGradientBrush>
-                        </GeometryDrawing.Brush>
                     </GeometryDrawing>
                     <GeometryDrawing>
                         <GeometryDrawing.Geometry>
-                            <EllipseGeometry Center="800,600" RadiusX="620" RadiusY="420"/>
+                            <EllipseGeometry Center="1600,0" RadiusX="900" RadiusY="620"/>
                         </GeometryDrawing.Geometry>
                         <GeometryDrawing.Brush>
                             <RadialGradientBrush>
-                                <GradientStop Color="#593C425A" Offset="0"/>
-                                <GradientStop Color="#003C425A" Offset="1"/>
+                                <GradientStop Color="#E6C5A059" Offset="0"/>
+                                <GradientStop Color="#4D8A6A2C" Offset="0.5"/>
+                                <GradientStop Color="#00000000" Offset="1"/>
                             </RadialGradientBrush>
                         </GeometryDrawing.Brush>
                     </GeometryDrawing>
                     <GeometryDrawing>
                         <GeometryDrawing.Geometry>
-                            <EllipseGeometry Center="1420,-60" RadiusX="900" RadiusY="520"/>
+                            <EllipseGeometry Center="0,1000" RadiusX="900" RadiusY="620"/>
                         </GeometryDrawing.Geometry>
                         <GeometryDrawing.Brush>
                             <RadialGradientBrush>
-                                <GradientStop Color="#47C5A059" Offset="0"/>
-                                <GradientStop Color="#00C5A059" Offset="1"/>
-                            </RadialGradientBrush>
-                        </GeometryDrawing.Brush>
-                    </GeometryDrawing>
-                    <GeometryDrawing>
-                        <GeometryDrawing.Geometry>
-                            <EllipseGeometry Center="-100,1080" RadiusX="720" RadiusY="520"/>
-                        </GeometryDrawing.Geometry>
-                        <GeometryDrawing.Brush>
-                            <RadialGradientBrush>
-                                <GradientStop Color="#24C5A059" Offset="0"/>
-                                <GradientStop Color="#00C5A059" Offset="1"/>
+                                <GradientStop Color="#E6C5A059" Offset="0"/>
+                                <GradientStop Color="#4D8A6A2C" Offset="0.5"/>
+                                <GradientStop Color="#00000000" Offset="1"/>
                             </RadialGradientBrush>
                         </GeometryDrawing.Brush>
                     </GeometryDrawing>
@@ -111,6 +92,15 @@
         <Style TargetType="Window">
             <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
             <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        </Style>
+
+        <!-- Type: Montserrat for headings and eyebrows, Segoe UI for body and controls -->
+        <FontFamily x:Key="HeadingFont">Montserrat, Segoe UI</FontFamily>
+        <Style x:Key="DisplayTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
         </Style>
 
         <!-- Brand Gradients -->
@@ -129,6 +119,42 @@
         <LinearGradientBrush x:Key="GoldGradientHorizontal" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#9E7B35" Offset="0"/>
             <GradientStop Color="#E2C285" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Metallic frame for pills, chips and buttons: a highlight top-left, deep gold bottom-right, catching light again at the end -->
+        <LinearGradientBrush x:Key="GoldFrame" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F3DFAE" Offset="0"/>
+            <GradientStop Color="#C5A059" Offset="0.4"/>
+            <GradientStop Color="#8A6A2C" Offset="0.75"/>
+            <GradientStop Color="#E2C285" Offset="1"/>
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="FrameFill" Color="#D9100D0A"/>
+
+        <!-- Emboss for the gold primary buttons: lit from above, so the rim is light on top and dark below,
+             an inner bevel ring repeats that, and a sheen fades down the face. Pressed flips both to an inset. -->
+        <LinearGradientBrush x:Key="EmbossEdge" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#D9FFFFFF" Offset="0"/>
+            <GradientStop Color="#66FFFFFF" Offset="0.35"/>
+            <GradientStop Color="#7A5A22" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="EmbossBevel" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#99FFFFFF" Offset="0"/>
+            <GradientStop Color="#00FFFFFF" Offset="0.5"/>
+            <GradientStop Color="#59000000" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="EmbossSheen" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#40FFFFFF" Offset="0"/>
+            <GradientStop Color="#00FFFFFF" Offset="0.55"/>
+            <GradientStop Color="#26000000" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="EmbossBevelPressed" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#73000000" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="0.5"/>
+            <GradientStop Color="#66FFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="EmbossSheenPressed" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#40000000" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="0.6"/>
         </LinearGradientBrush>
 
         <!-- Converters -->
@@ -184,14 +210,17 @@
             <Setter Property="Padding" Value="4"/>
         </Style>
 
+        <!-- Pill and chip: dark fill inside a metallic gold frame -->
         <Style x:Key="Pill" TargetType="Border" BasedOn="{StaticResource Well}">
+            <Setter Property="Background" Value="{StaticResource FrameFill}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource GoldFrame}"/>
             <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="Padding" Value="14,7"/>
         </Style>
 
         <Style x:Key="Chip" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource GoldSubtle}"/>
-            <Setter Property="BorderBrush" Value="#66C5A059"/>
+            <Setter Property="Background" Value="{StaticResource FrameFill}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource GoldFrame}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="8,2"/>
@@ -218,11 +247,14 @@
             <Setter Property="SnapsToDevicePixels" Value="True"/>
         </Style>
 
+        <!-- Eyebrow label: set the text with local:Tracked.Text so it renders letter-spaced -->
         <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
             <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="0,0,0,7"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
 
         <Style x:Key="SectionTitle" TargetType="TextBlock">
@@ -232,11 +264,11 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- Default Button Style: translucent glass tile that dips to 0.97 on press -->
+        <!-- Default Button Style: dark tile in a metallic gold frame that dips to 0.97 on press -->
         <Style TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource GlassButtonFill}"/>
+            <Setter Property="Background" Value="{StaticResource FrameFill}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource GlassEdge}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource GoldFrame}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="16,9"/>
             <Setter Property="FontSize" Value="13"/>
@@ -282,11 +314,12 @@
             </Setter>
         </Style>
 
-        <!-- Primary Gold Button: the single filled action on a view -->
+        <!-- Primary Gold Button: the single filled action on a view, embossed. The shadow lives on its own
+             leaf behind the face so the face and label render straight to the window, never through an effect bitmap. -->
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource GoldGradient}"/>
             <Setter Property="Foreground" Value="#1A1508"/>
-            <Setter Property="BorderBrush" Value="#59FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource EmbossEdge}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="20,11"/>
             <Setter Property="FontSize" Value="13"/>
@@ -294,40 +327,55 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="20" ShadowDepth="6" Direction="270" Color="#C5A059" Opacity="0.35"/>
-                </Setter.Value>
-            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="10"
-                                Padding="{TemplateBinding Padding}"
-                                RenderTransformOrigin="0.5,0.5"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Grid x:Name="root" RenderTransformOrigin="0.5,0.5">
+                            <Border x:Name="shadow"
+                                    Background="#000000"
+                                    CornerRadius="10"
+                                    SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="16" ShadowDepth="5" Direction="270" Color="#000000" Opacity="0.6"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border x:Name="border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="10"
+                                    SnapsToDevicePixels="True">
+                                <Border x:Name="bevel"
+                                        Background="{StaticResource EmbossSheen}"
+                                        BorderBrush="{StaticResource EmbossBevel}"
+                                        BorderThickness="1"
+                                        CornerRadius="9"
+                                        Padding="{TemplateBinding Padding}"
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldGradientHover}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource GoldDark}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldDark}"/>
-                                <Setter TargetName="border" Property="RenderTransform">
+                                <Setter TargetName="bevel" Property="Background" Value="{StaticResource EmbossSheenPressed}"/>
+                                <Setter TargetName="bevel" Property="BorderBrush" Value="{StaticResource EmbossBevelPressed}"/>
+                                <Setter TargetName="root" Property="RenderTransform">
                                     <Setter.Value>
                                         <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
+                            <!-- Disabled dims through colour, not Opacity: an opacity layer would soften the label -->
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.4"/>
+                                <Setter TargetName="border" Property="Background" Value="#6E5B33"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#2EFFFFFF"/>
+                                <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
+                                <Setter Property="Foreground" Value="#2E2614"/>
                                 <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -335,7 +383,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
         <!-- Signature ToolTip Style -->
         <Style TargetType="ToolTip">
             <Setter Property="Background" Value="{StaticResource PopupSurface}"/>
@@ -364,10 +411,8 @@
             </Setter>
         </Style>
 
-        <!-- Secondary Button: quieter glass tile -->
-        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="{StaticResource SurfaceDark}"/>
-        </Style>
+        <!-- Secondary Button: same framed tile as the default -->
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"/>
 
         <!-- Small Action Button Style -->
         <Style x:Key="SmallActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -422,8 +467,8 @@
                                 <Setter TargetName="border" Property="Background" Value="#33000000"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#1FFFFFFF"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#2EFFFFFF"/>
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource FrameFill}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource GoldFrame}"/>
                                 <Setter Property="Foreground" Value="{StaticResource GoldLight}"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
                             </Trigger>
@@ -473,12 +518,11 @@
             </Setter>
         </Style>
 
-        <!-- Small Gold Action Button: used per card, so no glow effect -->
+        <!-- Small Gold Action Button: per-card Save; the shadow leaf is static, so it stays cheap in a grid of cards -->
         <Style x:Key="SmallGoldButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="MinHeight" Value="32"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Effect" Value="{x:Null}"/>
         </Style>
 
         <!-- TextBox: recessed well -->

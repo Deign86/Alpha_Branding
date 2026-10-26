@@ -47,6 +47,14 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
     }
 
+    /// <summary>Runs the empty-state ripple only while it is on screen; never when Windows animation effects are off.</summary>
+    private void DropRippleHost_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (!SystemParameters.ClientAreaAnimation) return;
+        var wave = (System.Windows.Media.Animation.Storyboard)Resources["DropRippleWave"];
+        if ((bool)e.NewValue) wave.Begin(this, true); else wave.Stop(this);
+    }
+
     private void AnnounceStatus() =>
         System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(StatusTextBlock)
             ?.RaiseAutomationEvent(System.Windows.Automation.Peers.AutomationEvents.LiveRegionChanged);

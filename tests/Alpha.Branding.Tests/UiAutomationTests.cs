@@ -283,11 +283,11 @@ public class UiAutomationTests
             Assert.NotNull(prefixBox);
 
             prefixBox.Text = "Metro_Manila_Condo";
-            Thread.Sleep(200);
 
-            var patternPreview = window.FindFirstDescendant(cf => cf.ByAutomationId("PatternPreviewTextBlock"));
-            Assert.NotNull(patternPreview);
-            Assert.Equal("Metro_Manila_Condo_01.jpg", patternPreview.Name);
+            // The preview updates on the UI thread; poll instead of a fixed sleep so a busy test run cannot race it.
+            Assert.True(Retry.WhileFalse(
+                () => window.FindFirstDescendant(cf => cf.ByAutomationId("PatternPreviewTextBlock"))?.Name == "Metro_Manila_Condo_01.jpg",
+                TimeSpan.FromSeconds(2)).Result);
         }
         finally
         {
