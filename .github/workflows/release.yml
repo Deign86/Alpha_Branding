@@ -39,11 +39,13 @@ jobs:
       - name: Build macOS app
         run: macos/build.sh "${{ steps.version.outputs.version }}"
 
-      - name: Upload macOS archive
+      - name: Upload macOS packages
         uses: actions/upload-artifact@v4
         with:
           name: macos-app
-          path: macos/build/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.zip
+          path: |
+            macos/build/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.zip
+            macos/build/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.pkg
           if-no-files-found: error
 
   release:
@@ -158,7 +160,7 @@ jobs:
       - name: Generate checksums
         shell: pwsh
         run: |
-          $artifacts = Get-ChildItem -Path artifacts -File | Where-Object { $_.Extension -in @('.exe', '.zip') }
+          $artifacts = Get-ChildItem -Path artifacts -File | Where-Object { $_.Extension -in @('.exe', '.zip', '.pkg') }
           $checksumFile = "artifacts\SHA256SUMS.txt"
 
           $checksums = @()
@@ -179,6 +181,7 @@ jobs:
             artifacts/Alpha.Branding.Setup.exe
             artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-win-x64.zip
             artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.zip
+            artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.pkg
             artifacts/SHA256SUMS.txt
           draft: false
           prerelease: false

@@ -1,5 +1,6 @@
 #!/bin/bash
-# Builds "Alpha Branding Studio.app" (universal: Apple silicon + Intel) and a release zip into macos/build.
+# Builds "Alpha Branding Studio.app" (universal: Apple silicon + Intel), a release zip and a .pkg installer
+# into macos/build.
 # Needs only the Xcode Command Line Tools (xcode-select --install).
 #
 #   ./build.sh            version taken from src/Alpha.Branding/Alpha.Branding.csproj
@@ -17,6 +18,7 @@ fi
 APP="build/Alpha Branding Studio.app"
 OBJ="build/obj"
 ZIP="build/Alpha.Branding-v$VERSION-macos.zip"
+PKG="build/Alpha.Branding-v$VERSION-macos.pkg"
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$OBJ"
 
@@ -44,4 +46,13 @@ iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 # Ad-hoc signature. Without an Apple Developer ID, other Macs ask the user to confirm the first launch.
 codesign --force --sign - "$APP"
 ditto -c -k --norsrc --noextattr --keepParent "$APP" "$ZIP"
-echo "Built $APP (v$VERSION) and $ZIP"
+
+PKGROOT="$OBJ/pkgroot"
+mkdir -p "$PKGROOT"
+ditto "$APP" "$PKGROOT/$(basename "$APP")"
+pkgbuild --analyze --root "$PKGROOT" "$OBJ/component.plist" >/dev/null
+# Always install into /Applications, even when another copy of the app is registered elsewhere on the Mac.
+/usr/libexec/PlistBuddy -c "Set :0:BundleIsRelocatable false" "$OBJ/component.plist"
+pkgbuild --quiet --root "$PKGROOT" --component-plist "$OBJ/component.plist" --install-location /Applications \
+  --identifier com.alphapremier.brandingstudio --version "$VERSION" "$PKG"
+echo "Built $APP (v$VERSION), $ZIP and $PKG"
