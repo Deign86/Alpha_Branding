@@ -5,9 +5,9 @@
 <h1 align="center">Alpha Premier Realty Branding Studio</h1>
 
 <p align="center">
-  <strong>The native Windows desktop studio for luxury real estate branding.</strong><br/>
+  <strong>The native desktop studio for luxury real estate branding, on Windows and Mac.</strong><br/>
   Watermark property photos. Interactive crop & align. Batch processing. 100% offline & local.<br/>
-  High-DPI responsive C# / .NET 8 WPF application for Windows.
+  C# / .NET 8 WPF on Windows · Swift / SwiftUI on macOS.
 </p>
 
 <p align="center">
@@ -64,19 +64,19 @@
 
 ## What is Alpha Branding Studio?
 
-Alpha Premier Realty Branding Studio is a **high-performance native Windows desktop application** designed specifically for real estate media teams, brokers, and photographers. Originally conceived as a lightweight browser tool, it has been fully refactored and engineered into a robust C# / .NET 8 WPF application with zero browser shell, Electron, or webview overhead.
+Alpha Premier Realty Branding Studio is a **high-performance native desktop application for Windows and macOS** designed specifically for real estate media teams, brokers, and photographers. Originally conceived as a lightweight browser tool, it has been fully refactored and engineered into a robust C# / .NET 8 WPF application, with a native SwiftUI Mac app producing identical output. Neither uses a browser shell, Electron, or webview.
 
 The application applies the official Alpha Premier Realty luxury gold branding frame to listing photos with sub-millisecond precision, preserving aspect ratios and eliminating distortions while giving operators an interactive, non-destructive cropping and alignment canvas.
 
 - **100% Local & Private** — All image processing, cropping, watermarking, and ZIP archiving take place entirely on-device; no cloud servers, API keys, credentials, or telemetry.
-- **Native WPF Architecture** — Built with C#, .NET 8, and XAML utilizing DirectWrite and hardware acceleration; no WebViews or Electron bloat.
+- **Native on Both Platforms** — Windows: C#, .NET 8, and XAML utilizing DirectWrite and hardware acceleration. Mac: Swift and SwiftUI on Apple's own imaging and video frameworks, universal for Apple silicon and Intel. No WebViews or Electron bloat.
 - **Interactive Crop & Alignment Studio** — Non-destructive panning, smooth mouse-wheel zooming (10%–400%), 90° clockwise rotation, and instant Fit/Fill presets with a live branding overlay preview.
 - **Smart Photo Layout Engine** — Choose between **Combine Pairs** (stitching two vertical shots into a balanced 6:5 frame) and **Separate All** (processing each photo independently).
 - **Multi-Format Ingestion** — Supports JPG, JPEG, PNG, BMP, WEBP, and **JFIF** image files.
 - **High-DPI Adaptive UI** — Pixel-perfect responsiveness across 100%, 125%, 150%, 175%, and 200% display scaling factors, guaranteeing no clipped buttons on compact laptops or high-resolution displays.
 - **Batch Export & Packaging** — Generates sanitized sequential filenames (`AlphaPremier_Photo_01.jpg`) and exports entire batches to a compressed ZIP archive with one click.
-- **Authenticode Auto-Updates** — Checks for new GitHub releases silently in the background, verifies digital signatures to prevent tampering, and displays a rich markdown changelog.
-- **Enterprise & RMM Deployment** — Includes a dedicated unattended PowerShell script (`Install.ps1`) engineered for Action1 RMM, Microsoft Intune, and CI/CD runners.
+- **Authenticode Auto-Updates (Windows)** — Checks for new GitHub releases silently in the background, verifies digital signatures to prevent tampering, and displays a rich markdown changelog.
+- **Enterprise & RMM Deployment (Windows)** — Includes a dedicated unattended PowerShell script (`Install.ps1`) engineered for Action1 RMM, Microsoft Intune, and CI/CD runners.
 
 ---
 
@@ -208,6 +208,8 @@ Alpha Premier Realty Branding Studio features a native auto-updater connecting t
 
 ## Technology Stack
 
+### Windows
+
 - **Language:** C# 12
 - **Framework:** .NET 8 (`net8.0-windows10.0.19041.0`)
 - **UI Architecture:** Windows Presentation Foundation (WPF), XAML, MVVM
@@ -215,11 +217,20 @@ Alpha Premier Realty Branding Studio features a native auto-updater connecting t
 - **Packaging:** `System.IO.Compression` for native multi-threaded ZIP export
 - **Test Suite:** xUnit covering layout calculations, filename sanitization, image compositing, and DPI scaling
 
+### macOS
+
+- **Language:** Swift 5 language mode (builds with Swift 6 toolchains), macOS 13+ deployment target
+- **UI Architecture:** SwiftUI with an AppKit app delegate for Finder/Dock file opening and quit confirmation
+- **Imaging Core:** ImageIO and CoreGraphics for decoding (including HEIC and EXIF orientation), compositing, and JPEG encoding
+- **Video:** AVFoundation with a Core Image compositor, keeping source audio
+- **Packaging:** `ditto` ZIP export; `pkgbuild` installer
+- **Test Suite:** `macos/test.sh` engine checks on generated photos and videos (planner, layout, overlay, pan, rotation, pen marks, video framing)
+
 ---
 
 ## Build and Test
 
-### Prerequisites
+### Prerequisites (Windows app)
 
 - Windows 10 (1809+) or Windows 11
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
