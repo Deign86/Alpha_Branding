@@ -21,7 +21,7 @@ rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$OBJ"
 
 for arch in arm64 x86_64; do
-  echo "Compiling for $arch…"
+  echo "Compiling for ${arch}..."
   swiftc -O -swift-version 5 -parse-as-library \
     -target "$arch-apple-macos13.0" \
     Sources/*.swift -o "$OBJ/AlphaBranding-$arch"
