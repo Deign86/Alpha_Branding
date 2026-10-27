@@ -9,6 +9,13 @@
 - Keep the solution, project files, NuGet references, build, and publish configuration reproducible.
 - Verify changes with relevant `dotnet` restore, build, test, publish, and format commands.
 
+## Native macOS application rules
+
+- The Mac app lives in `macos/` and is a native Swift/SwiftUI app built with Apple frameworks only (ImageIO, CoreGraphics, AVFoundation); the same no-webview rule applies.
+- It reuses the branding assets in `src/Alpha.Branding/Assets`; do not copy them.
+- Keep its output identical to the Windows app (1200×1000 frame, pairing rules, file naming).
+- Verify changes with `macos/test.sh` and `macos/build.sh`.
+
 ## Inspect first and avoid slop
 
 - Read relevant code, assets, tests, and nearby conventions before editing.

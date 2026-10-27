@@ -85,7 +85,8 @@ The application applies the official Alpha Premier Realty luxury gold branding f
 | Package | Platform | Format | Description |
 | :--- | :--- | :--- | :--- |
 | **Windows Installer** | Windows 10 / 11 (x64) | `Alpha.Branding.Setup.exe` | Self-contained single-file bootstrapper. Installs per-user without admin rights. |
-| **Portable Archive** | Windows 10 / 11 (x64) | `Alpha.Branding-v*.zip` | Standalone portable executable. Extract and run directly without installation. |
+| **Portable Archive** | Windows 10 / 11 (x64) | `Alpha.Branding-v*-win-x64.zip` | Standalone portable executable. Extract and run directly without installation. |
+| **Mac App** | macOS 13 Ventura or later (Apple silicon & Intel) | `Alpha.Branding-v*-macos.zip` | Native SwiftUI app. Unzip and drag **Alpha Branding Studio** into Applications. |
 | **Silent RMM Script** | Windows PowerShell | `Install.ps1` | Headless unattended deployment for Action1 RMM, Intune, or automated scripts. |
 
 > **[Download the latest release binaries →](https://github.com/Deign86/Alpha_Branding/releases/latest)**
@@ -101,6 +102,14 @@ The application applies the official Alpha Premier Realty luxury gold branding f
 ```powershell
 Alpha.Branding.Setup.exe --uninstall
 ```
+
+### Mac App
+
+- Same workflow and output as Windows: 1200×1000 JPEGs, portrait pairing, crop & pen editor, templates, ZIP export.
+- Videos: MP4, MOV and M4V (WMV, AVI, MKV and WEBM are Windows-only).
+- The app is not signed with an Apple Developer ID yet, so the first launch needs **right-click → Open → Open**. If macOS still refuses, open **System Settings → Privacy & Security** and click **Open Anyway**.
+- Custom templates are stored in `~/Library/Application Support/Alpha Premier Realty/Branding Studio/Templates`.
+- No in-app updater: download new versions from the releases page.
 
 ---
 
@@ -246,6 +255,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 Output binary: `artifacts/Alpha.Branding.Setup.exe`
 
+### Mac App
+
+Needs only the Xcode Command Line Tools (`xcode-select --install`).
+
+```bash
+# Branding engine checks on generated photos and videos
+macos/test.sh
+
+# Universal app + release zip (version defaults to the .csproj <Version>)
+macos/build.sh
+```
+
+Output: `macos/build/Alpha Branding Studio.app` and `macos/build/Alpha.Branding-v<version>-macos.zip`. Every `v*` tag publishes the Mac zip alongside the Windows installer.
+
 ---
 
 ## Automated Disk Cleanup (`Auto-Clean.ps1`)
@@ -281,6 +304,10 @@ Alpha_Branding.sln
 │       ├── Models/                  # Processed image, crop settings, release models
 │       ├── Services/                # Image processing, template management, update services
 │       └── ViewModels/              # MVVM workflow, layout coordination, UI commands
+├── macos/                           # Native SwiftUI Mac app (shares src/Alpha.Branding/Assets)
+│   ├── Sources/                     # Views, studio model, image & video branding engines
+│   ├── Tests/                       # Engine checks run by test.sh
+│   └── build.sh                     # Universal .app + release zip
 ├── installer/
 │   ├── Bootstrapper/                # Lightweight native C# bootstrapper
 │   └── Build-Installer.ps1          # Single-file packaging script

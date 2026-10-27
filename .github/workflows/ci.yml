@@ -23,6 +23,17 @@ jobs:
         with:
           args: -color -verbose
 
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run engine checks
+        run: macos/test.sh
+
+      - name: Build macOS app
+        run: macos/build.sh
+
   build-test:
     runs-on: windows-latest
     steps:

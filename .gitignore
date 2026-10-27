@@ -12,3 +12,6 @@ installer/certs/
 *.cer
 *.p12
 *.snk
+
+# macOS app build output
+macos/build/
