@@ -15,8 +15,40 @@ permissions:
   contents: write
 
 jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "Version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Run engine checks
+        run: macos/test.sh
+
+      - name: Build macOS app
+        run: macos/build.sh "${{ steps.version.outputs.version }}"
+
+      - name: Upload macOS archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: macos/build/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.zip
+          if-no-files-found: error
+
   release:
     runs-on: windows-latest
+    needs: macos
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,6 +149,12 @@ jobs:
           Compress-Archive -Path "$publishDir\*" -DestinationPath $zipPath -CompressionLevel Optimal
           Write-Host "Created portable archive: $zipPath"
 
+      - name: Download macOS archive
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-app
+          path: artifacts
+
       - name: Generate checksums
         shell: pwsh
         run: |
@@ -140,6 +178,7 @@ jobs:
           files: |
             artifacts/Alpha.Branding.Setup.exe
             artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-win-x64.zip
+            artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.zip
             artifacts/SHA256SUMS.txt
           draft: false
           prerelease: false
