@@ -1,3 +1,14 @@
+## Alpha Premier Property Branding Studio v2.5.0
+
+### New Features
+- **Mac app**: a native SwiftUI version for macOS 13 or later, universal for Apple silicon and Intel, with the same workflow and output as Windows: 1200×1000 frames, portrait pairing, Combine/Separate and SOLO, crop editor with PEN redaction, custom templates, ZIP and individual export, and the same file names.
+- **Mac downloads**: each release now includes `Alpha.Branding-v<version>-macos.pkg` (installs into Applications) and `Alpha.Branding-v<version>-macos.zip`, listed in `SHA256SUMS.txt`.
+- **Mac video branding**: MP4, MOV and M4V clips are fitted on black with the frame on top, keeping their audio; sideways phone videos come out upright.
+
+### Fixes & Improvements
+- **Redaction test**: compares pixels instead of PNG bytes, so it no longer fails when the two renders fall in different seconds.
+- **Scope note**: the Windows app is unchanged apart from its version number. The Mac app has no in-app updater, and it isn't Developer ID–signed yet, so the first open of a downloaded copy needs **System Settings → Privacy & Security → Open Anyway**.
+
 ## Alpha Premier Property Branding Studio v2.4.0
 
 ### New Features
