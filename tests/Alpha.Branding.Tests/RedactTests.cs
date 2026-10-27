@@ -82,11 +82,15 @@ public class RedactTests
             photo.Clone(), ImageProcessingService.HalfWidth, ImageProcessingService.TargetHeight,
             new ImageCropSettings { RedactStrokes = [] });
 
-        using var unredactedPng = new MemoryStream();
-        using var emptyRedactionsPng = new MemoryStream();
-        withoutRedactions.Write(unredactedPng, MagickFormat.Png);
-        withEmptyRedactions.Write(emptyRedactionsPng, MagickFormat.Png);
-        Assert.Equal(unredactedPng.ToArray(), emptyRedactionsPng.ToArray());
+        // Compare raw pixels, not encoded PNGs: ImageMagick writes date:create/date:modify
+        // text chunks, so two PNG writes straddling a second boundary differ in bytes.
+        Assert.Equal(withoutRedactions.Width, withEmptyRedactions.Width);
+        Assert.Equal(withoutRedactions.Height, withEmptyRedactions.Height);
+        using var unredactedPixels = withoutRedactions.GetPixels();
+        using var emptyRedactionsPixels = withEmptyRedactions.GetPixels();
+        Assert.Equal(
+            unredactedPixels.ToByteArray(PixelMapping.RGBA),
+            emptyRedactionsPixels.ToByteArray(PixelMapping.RGBA));
     }
 
     [Fact]
