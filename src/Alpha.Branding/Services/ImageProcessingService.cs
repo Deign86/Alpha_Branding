@@ -261,6 +261,14 @@ public sealed class ImageProcessingService
         return new System.Windows.Point(Math.Clamp(sourceX, 0, srcW), Math.Clamp(sourceY, 0, srcH));
     }
 
+    /// <summary>Pixelate cell size, in output pixels, for a mark of the given brush diameter. Strength follows
+    /// the brush, so a mark sized to cover a line of text leaves at most two cells per letter height.</summary>
+    public static int RedactBlockSize(double diameter) =>
+        Math.Max(4, (int)Math.Round(diameter / 2, MidpointRounding.AwayFromZero));
+
+    /// <summary>Gaussian blur sigma, in output pixels, for a mark of the given brush diameter.</summary>
+    public static double RedactBlurSigma(double diameter) => Math.Max(2, diameter / 3);
+
     internal static void ApplyRedactStrokes(
         MagickImage canvas,
         IReadOnlyList<RedactStroke>? strokes,
@@ -272,16 +280,14 @@ public sealed class ImageProcessingService
     {
         if (strokes is null || strokes.Count == 0) return;
 
-        var scaleX = (float)scaledSize.Width / rotatedSize.Width;
-        var scaleY = (float)scaledSize.Height / rotatedSize.Height;
+        var scaleX = (double)scaledSize.Width / rotatedSize.Width;
+        var scaleY = (double)scaledSize.Height / rotatedSize.Height;
         foreach (var stroke in strokes)
         {
             if (stroke is null || stroke.Points.Count == 0) continue;
 
-            var diameter = (float)(stroke.BrushSizeNormalized * Math.Min(sourceSize.Width, sourceSize.Height)
-                * Math.Min(scaleX, scaleY));
-            var radius = diameter / 2;
-            var color = new MagickColor(stroke.R, stroke.G, stroke.B, 255);
+            var diameter = stroke.BrushSizeNormalized * Math.Min(sourceSize.Width, sourceSize.Height)
+                * Math.Min(scaleX, scaleY);
             var points = new PointD[stroke.Points.Count];
             for (var i = 0; i < points.Length; i++)
             {
@@ -298,20 +304,78 @@ public sealed class ImageProcessingService
                 points[i] = new PointD(drawOffset.X + rotatedX * scaleX, drawOffset.Y + rotatedY * scaleY);
             }
 
-            var drawables = new Drawables().FillColor(color);
-            foreach (var point in points)
-            {
-                drawables.Ellipse(point.X, point.Y, radius, radius, 0, 360);
-            }
+            ApplyRedactEffect(canvas, stroke.Effect, points, diameter);
+        }
+    }
 
-            drawables.StrokeColor(color).StrokeWidth(diameter);
+    /// <summary>Replaces the pixels under one mark with a pixelated or blurred copy of themselves.</summary>
+    private static void ApplyRedactEffect(MagickImage canvas, RedactEffect effect, PointD[] points, double diameter)
+    {
+        var radius = diameter / 2;
+        var block = RedactBlockSize(diameter);
+        var sigma = RedactBlurSigma(diameter);
+        // Blur reads pixels around the mark, so the working area includes the kernel's reach.
+        var reach = radius + (effect == RedactEffect.Blur ? Math.Ceiling(3 * sigma) : 0);
+        var left = (int)Math.Floor(points.Min(p => p.X) - reach);
+        var top = (int)Math.Floor(points.Min(p => p.Y) - reach);
+        var right = (int)Math.Ceiling(points.Max(p => p.X) + reach);
+        var bottom = (int)Math.Ceiling(points.Max(p => p.Y) + reach);
+        if (effect == RedactEffect.Pixelate)
+        {
+            // Cells sit on a grid anchored at the frame's top-left corner.
+            left = (int)Math.Floor((double)left / block) * block;
+            top = (int)Math.Floor((double)top / block) * block;
+            right = (int)Math.Ceiling((double)right / block) * block;
+            bottom = (int)Math.Ceiling((double)bottom / block) * block;
+        }
+
+        left = Math.Max(0, left);
+        top = Math.Max(0, top);
+        right = Math.Min((int)canvas.Width, right);
+        bottom = Math.Min((int)canvas.Height, bottom);
+        if (right <= left || bottom <= top) return;
+
+        var width = (uint)(right - left);
+        var height = (uint)(bottom - top);
+        using var area = canvas.CloneArea(left, top, width, height);
+        area.ResetPage();
+        if (effect == RedactEffect.Blur)
+        {
+            area.Blur(0, sigma);
+        }
+        else
+        {
+            var columns = (uint)Math.Ceiling((double)width / block);
+            var rows = (uint)Math.Ceiling((double)height / block);
+            area.Scale(new MagickGeometry(columns, rows) { IgnoreAspectRatio = true });
+            area.Sample(new MagickGeometry(width, height) { IgnoreAspectRatio = true });
+        }
+
+        // Round dots at each point plus wide segments between them: the shape of a round-capped brush stroke.
+        // Two passes, because stroke settings in one Drawables list also widen the dots.
+        using var mask = new MagickImage(MagickColors.Black, width, height);
+        var dots = new Drawables().FillColor(MagickColors.White);
+        foreach (var point in points)
+        {
+            dots.Ellipse(point.X - left, point.Y - top, radius, radius, 0, 360);
+        }
+
+        dots.Draw(mask);
+        if (points.Length > 1)
+        {
+            var segments = new Drawables().StrokeColor(MagickColors.White).StrokeWidth(diameter);
             for (var i = 1; i < points.Length; i++)
             {
-                drawables.Line(points[i - 1].X, points[i - 1].Y, points[i].X, points[i].Y);
+                segments.Line(points[i - 1].X - left, points[i - 1].Y - top, points[i].X - left, points[i].Y - top);
             }
 
-            drawables.Draw(canvas);
+            segments.Draw(mask);
         }
+
+        // CopyAlpha uses the mask's brightness only when the mask has no alpha channel of its own.
+        mask.Alpha(AlphaOption.Off);
+        area.Composite(mask, CompositeOperator.CopyAlpha);
+        canvas.Composite(area, left, top, CompositeOperator.Over);
     }
 
     public async Task<BrandedImage> ProcessAsync(string inputPath, string overlayPath, string? prefix, int index, int total, CancellationToken cancellationToken = default)

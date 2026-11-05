@@ -106,7 +106,7 @@ Alpha.Branding.Setup.exe --uninstall
 
 ### Mac App
 
-- Same workflow and output as Windows: 1200×1000 JPEGs, portrait pairing, crop & pen editor, templates, ZIP export.
+- Same workflow and output as Windows: 1200×1000 JPEGs, portrait pairing, crop editor with pixelate and blur, templates, ZIP export.
 - Videos: MP4, MOV and M4V (WMV, AVI, MKV and WEBM are Windows-only).
 - The installer and app are not signed with an Apple Developer ID yet, so macOS blocks the first open of a downloaded copy. Open **System Settings → Privacy & Security** and click **Open Anyway** (on macOS 13–14, **right-click → Open** also works).
 - Custom templates are stored in `~/Library/Application Support/Alpha Premier Realty/Branding Studio/Templates`.
@@ -127,6 +127,7 @@ Fine-tune every photo before watermarking with the built-in Crop Editor:
 | **Fit to Frame** | One-Click Button | Scales image down so entire frame is contained with zero cropping |
 | **Fill Frame** | One-Click Button | Scales image up to completely fill the 1200×1000 branding canvas |
 | **Rotate 90°** | One-Click Button | Clockwise 90-degree orientation correction |
+| **Pixelate / Blur** | Click & Drag | Hide phone numbers on tarps and signs, house numbers, plates or faces; a bigger brush hides more strongly |
 | **Reset Crop** | One-Click Button | Restores default geometry and alignment instantly |
 
 ### Smart Layout Modes
@@ -224,7 +225,7 @@ Alpha Premier Realty Branding Studio features a native auto-updater connecting t
 - **Imaging Core:** ImageIO and CoreGraphics for decoding (including HEIC and EXIF orientation), compositing, and JPEG encoding
 - **Video:** AVFoundation with a Core Image compositor, keeping source audio
 - **Packaging:** `ditto` ZIP export; `pkgbuild` installer
-- **Test Suite:** `macos/test.sh` engine checks on generated photos and videos (planner, layout, overlay, pan, rotation, pen marks, video framing)
+- **Test Suite:** `macos/test.sh` engine checks on generated photos and videos (planner, layout, overlay, pan, rotation, pixelate and blur marks, video framing)
 
 ---
 

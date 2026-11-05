@@ -80,7 +80,7 @@ public class ManualScreenshotGenerator
         using (var dc = visual.RenderOpen())
         {
             dc.DrawRectangle(window.Background ?? Brushes.Black, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
-            // Fixed viewbox: content drawn outside the root (e.g. the pen cursor) must not rescale the capture.
+            // Fixed viewbox: content drawn outside the root (e.g. the crosshair cursor) must not rescale the capture.
             var bounds = new Rect(0, 0, root.ActualWidth, root.ActualHeight);
             var offset = VisualTreeHelper.GetOffset(root);
             var brush = new VisualBrush(root)
@@ -195,9 +195,9 @@ public class ManualScreenshotGenerator
                 for (var x = 0.592; x >= 0.548; x -= 0.004) stroke.AddPoint(new Point(x, 0.526));
                 crop.RedactStrokes = new List<RedactStroke> { stroke };
                 var editor = new CropEditorWindow(exterior, crop, overlay, "01_Exterior_Front.jpg");
-                if (editor.FindName("RedactModeToggle") is ToggleButton pen) pen.IsChecked = true;
+                if (editor.FindName("PixelateModeToggle") is ToggleButton pixelate) pixelate.IsChecked = true;
                 Show(editor, 1020, 780);
-                Capture(editor, Path.Combine(outDir, "07_crop_editor_pen.png"));
+                Capture(editor, Path.Combine(outDir, "07_crop_editor_pixelate.png"));
             }
 
             if (results.Count > 0)

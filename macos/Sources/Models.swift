@@ -4,13 +4,14 @@ enum MediaKind { case image, video }
 
 enum LayoutMode { case combine, separate }
 
+/// How a mark hides what is under it in the exported image.
+enum RedactEffect: Equatable { case pixelate, blur }
+
 struct RedactStroke: Equatable {
     /// Points normalized to 0...1 of the oriented source photo, so marks survive any framing.
     var points: [CGPoint] = []
     var brushSizeNormalized: Double = 0.02
-    var red: UInt8 = 0
-    var green: UInt8 = 0
-    var blue: UInt8 = 0
+    var effect: RedactEffect = .pixelate
 
     mutating func add(_ point: CGPoint) {
         points.append(CGPoint(x: min(max(point.x, 0), 1), y: min(max(point.y, 0), 1)))
@@ -41,7 +42,7 @@ struct CropSettings: Equatable {
     var hasRedactions: Bool { !strokes.isEmpty }
     var zoomText: String { "\(Int((zoom * 100).rounded()))%" }
 
-    /// Resets framing only. Pen marks stay: they hide private details and are stored in
+    /// Resets framing only. Blur marks stay: they hide private details and are stored in
     /// source-image coordinates, so they remain valid under any framing.
     mutating func resetFraming() {
         panX = 0

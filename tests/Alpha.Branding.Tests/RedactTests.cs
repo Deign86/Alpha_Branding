@@ -1,6 +1,7 @@
 using Alpha.Branding.Models;
 using Alpha.Branding.Services;
 using ImageMagick;
+using ImageMagick.Drawing;
 using System.IO;
 using System.Windows;
 
@@ -50,26 +51,56 @@ public class RedactTests
     }
 
     [Fact]
-    public void Redact_Render_StrokesProduceOpaqueBlotch()
+    public void Redact_Pixelate_AveragesFineDetailIntoCells()
     {
-        using var photo = new MagickImage(new MagickColor(255, 255, 255, 255), 600, 1000);
-        var stroke = new RedactStroke { R = 0, G = 0, B = 0 };
-        stroke.AddPoint(new System.Windows.Point(0.45, 0.45));
-        stroke.AddPoint(new System.Windows.Point(0.55, 0.55));
+        using var photo = Stripes(600, 1000);
+        using var plain = RenderSlot(Stripes(600, 1000));
+        // Brush 0.1 x 600 px = 60 px, so cells are 30 px on a grid anchored at the frame corner.
+        using var canvas = RenderSlot(photo, DiagonalMark(RedactEffect.Pixelate, 0.1));
 
-        var settings = new ImageCropSettings();
-        settings.RedactStrokes.Add(stroke);
-        using var canvas = ImageProcessingService.RenderCroppedPhoto(
-            photo,
-            ImageProcessingService.HalfWidth,
-            ImageProcessingService.TargetHeight,
-            settings,
-            isSoloPortrait: false);
+        var center = canvas.PixelAt(300, 500);
+        Assert.True(center.R > 90 && center.R < 165 && center.A == 255,
+            $"Expected the 2 px stripes to average to opaque gray, found R={center.R} A={center.A}.");
+        Assert.Equal(canvas.PixelAt(305, 490), canvas.PixelAt(325, 505));
+        // Just past the round end cap (36 px from it): untouched.
+        Assert.Equal(plain.PixelAt(300, 430), canvas.PixelAt(300, 430));
+    }
 
-        // RED: once strokes render, the bbox center must be an opaque blotch, not the white photo.
-        var blotch = canvas.PixelAt(300, 500);
-        Assert.True(blotch.R < 30 && blotch.G < 30 && blotch.B < 30 && blotch.A == 255,
-            $"RED: expected opaque blotch in stroke bbox but found R={blotch.R} G={blotch.G} B={blotch.B} A={blotch.A}.");
+    [Fact]
+    public void Redact_Blur_SmoothsDetailInsideTheBrushOnly()
+    {
+        using var plain = RenderSlot(Stripes(600, 1000));
+        using var canvas = RenderSlot(Stripes(600, 1000), DiagonalMark(RedactEffect.Blur, 0.1));
+
+        var center = canvas.PixelAt(300, 500);
+        Assert.True(center.R > 90 && center.R < 165 && center.A == 255,
+            $"Expected the 2 px stripes to blur to opaque gray, found R={center.R} A={center.A}.");
+        // Blur reads past the brush edge but must not write past it.
+        Assert.Equal(plain.PixelAt(300, 430), canvas.PixelAt(300, 430));
+    }
+
+    [Theory]
+    [InlineData(RedactEffect.Pixelate)]
+    [InlineData(RedactEffect.Blur)]
+    public void Redact_Marks_KeepPhotoColorsInsteadOfPainting(RedactEffect effect)
+    {
+        using var photo = new MagickImage(new MagickColor(200, 30, 30, 255), 600, 1000);
+        using var canvas = RenderSlot(photo, DiagonalMark(effect, 0.1));
+
+        var center = canvas.PixelAt(300, 500);
+        Assert.True(Math.Abs(center.R - 200) < 3 && Math.Abs(center.G - 30) < 3 && Math.Abs(center.B - 30) < 3,
+            $"A {effect} mark over a flat color must leave that color, found R={center.R} G={center.G} B={center.B}.");
+    }
+
+    [Fact]
+    public void Redact_Clone_KeepsEffect()
+    {
+        var stroke = new RedactStroke { Effect = RedactEffect.Blur };
+        stroke.AddPoint(new System.Windows.Point(0.2, 0.3));
+
+        Assert.Equal(RedactEffect.Pixelate, new RedactStroke().Effect);
+        Assert.Equal(RedactEffect.Blur, stroke.Clone().Effect);
+        Assert.Equal(RedactEffect.Blur, new ImageCropSettings { RedactStrokes = [stroke] }.Clone().RedactStrokes[0].Effect);
     }
 
     [Fact]
@@ -100,7 +131,7 @@ public class RedactTests
         var overlay = Path.GetTempFileName();
         try
         {
-            using (var image = new MagickImage(new MagickColor(255, 255, 255, 255), 1200, 1000))
+            using (var image = Stripes(1200, 1000))
                 await image.WriteAsync(input, MagickFormat.Png);
             using (var frame = new MagickImage(new MagickColor(0, 0, 0, 0), 1200, 1000))
                 await frame.WriteAsync(overlay, MagickFormat.Png);
@@ -109,19 +140,15 @@ public class RedactTests
             var branded = await service.ProcessSoloImageAsync(input, overlay, "Redact", 0, 1);
             Assert.IsType<ImageBatchItem.SoloImage>(branded.SourceBatchItem);
 
-            var stroke = new RedactStroke { R = 0, G = 0, B = 0 };
-            stroke.AddPoint(new System.Windows.Point(0.45, 0.45));
-            stroke.AddPoint(new System.Windows.Point(0.55, 0.55));
-
             var settings = new ImageCropSettings();
-            settings.RedactStrokes.Add(stroke);
+            settings.RedactStrokes.Add(DiagonalMark(RedactEffect.Pixelate, 0.1));
             await service.RebrandImageAsync(branded, settings, new ImageCropSettings(), overlay);
 
-            // RED: rebrand must preserve strokes, so the blotch must survive in the new bytes.
+            // Rebrand must keep the mark: the stripes under it become one flat gray cell.
             using var decoded = new MagickImage(branded.ImageBytes);
-            var blotch = decoded.PixelAt(600, 500);
-            Assert.True(blotch.R < 30 && blotch.G < 30 && blotch.B < 30,
-                $"RED: expected blotch to survive rebrand but found R={blotch.R} G={blotch.G} B={blotch.B}.");
+            var cell = decoded.PixelAt(600, 500);
+            Assert.True(cell.R > 90 && cell.R < 165,
+                $"Expected the pixelated cell to survive rebrand but found R={cell.R} G={cell.G} B={cell.B}.");
         }
         finally
         {
@@ -154,7 +181,7 @@ public class RedactTests
     }
 
     [Fact]
-    public void Redact_ResetCrop_KeepsPenMarks()
+    public void Redact_ResetCrop_KeepsMarks()
     {
         var stroke = new RedactStroke();
         stroke.AddPoint(new System.Windows.Point(0.25, 0.5));
@@ -163,9 +190,36 @@ public class RedactTests
 
         crop.Reset();
 
-        // Reset is framing-only; silently dropping pen marks would un-hide private details.
+        // Reset is framing-only; silently dropping blur marks would un-hide private details.
         Assert.True(crop.IsDefault);
         Assert.True(crop.HasRedactions);
         Assert.Single(crop.RedactStrokes);
     }
+
+    /// <summary>White photo with 2 px black stripes every 4 px: detail any pixelate or blur must remove.</summary>
+    private static MagickImage Stripes(uint width, uint height)
+    {
+        var image = new MagickImage(MagickColors.White, width, height);
+        var stripes = new Drawables().FillColor(MagickColors.Black);
+        for (var x = 0; x < width; x += 4)
+        {
+            stripes.Rectangle(x, 0, x + 1, height);
+        }
+
+        stripes.Draw(image);
+        return image;
+    }
+
+    /// <summary>A mark from 45% to 55% of the photo on both axes.</summary>
+    private static RedactStroke DiagonalMark(RedactEffect effect, double brushSize)
+    {
+        var stroke = new RedactStroke { Effect = effect, BrushSizeNormalized = brushSize };
+        stroke.AddPoint(new System.Windows.Point(0.45, 0.45));
+        stroke.AddPoint(new System.Windows.Point(0.55, 0.55));
+        return stroke;
+    }
+
+    private static MagickImage RenderSlot(MagickImage photo, params RedactStroke[] strokes) =>
+        ImageProcessingService.RenderCroppedPhoto(photo, ImageProcessingService.HalfWidth, ImageProcessingService.TargetHeight,
+            new ImageCropSettings { RedactStrokes = [.. strokes] });
 }

@@ -67,11 +67,23 @@ struct EngineCheck {
         expect(turnedImage, 600, 250, (255, 0, 0), "rotate 90° is clockwise (left edge moves to the top)")
         expect(turnedImage, 600, 750, (0, 255, 0), "rotate 90° is clockwise (right edge moves to the bottom)")
 
+        // Marks pixelate or blur the photo under the brush (100 px wide here); they never paint over it.
+        let striped = try writeJPEG(stripes(1200, 1000), to: file("stripes.jpg"))
+        let plainStripes = try ImageEngine.compose(.landscape(striped, CropSettings()), overlay: overlay)
         var marked = CropSettings()
-        marked.strokes = [RedactStroke(points: [CGPoint(x: 0.45, y: 0.5), CGPoint(x: 0.55, y: 0.5)], brushSizeNormalized: 0.05)]
-        let markedImage = try ImageEngine.compose(.landscape(landscape, marked), overlay: overlay)
-        expect(markedImage, 600, 500, (0, 0, 0), "pen mark burned into the export")
-        expect(markedImage, 600, 600, (0, 0, 255), "pen mark stays where it was drawn")
+        marked.strokes = [RedactStroke(points: [CGPoint(x: 0.45, y: 0.45), CGPoint(x: 0.55, y: 0.55)], brushSizeNormalized: 0.1)]
+        for effect in [RedactEffect.pixelate, .blur] {
+            marked.strokes[0].effect = effect
+            let markedStripes = try ImageEngine.compose(.landscape(striped, marked), overlay: overlay)
+            expect(markedStripes, 600, 500, (128, 128, 128), "\(effect) turns fine stripes under the mark gray")
+            check(same(pixel(markedStripes, 600, 380), pixel(plainStripes, 600, 380)),
+                  "\(effect) leaves pixels past the brush edge untouched")
+            if effect == .pixelate {
+                check(same(pixel(markedStripes, 605, 505), pixel(markedStripes, 640, 540)), "pixelate fills each 50 px cell with one color")
+            }
+            let markedFlat = try ImageEngine.compose(.landscape(landscape, marked), overlay: overlay)
+            expect(markedFlat, 600, 500, (0, 0, 255), "\(effect) keeps the photo's colors instead of painting")
+        }
 
         checkFramingRoundTrip()
 
@@ -116,6 +128,8 @@ struct EngineCheck {
         print(failures == 0 ? "All engine checks passed." : "\(failures) engine check(s) failed.")
         exit(failures == 0 ? 0 : 1)
     }
+
+    static func same(_ a: RGB, _ b: RGB) -> Bool { a.r == b.r && a.g == b.g && a.b == b.b }
 
     static func check(_ condition: Bool, _ name: String) {
         print(condition ? "PASS" : "FAIL", name)
@@ -175,7 +189,7 @@ struct EngineCheck {
             let framing = ImageEngine.Framing(crop: crop, sourceWidth: 4000, sourceHeight: 3000, targetWidth: 1200, targetHeight: 1000)
             let point = CGPoint(x: 0.37, y: 0.61)
             let back = framing.normalizedPoint(fromTarget: framing.targetPoint(fromNormalized: point))
-            check(abs(back.x - point.x) < 1e-9 && abs(back.y - point.y) < 1e-9, "pen coordinates round-trip at \(rotation)°")
+            check(abs(back.x - point.x) < 1e-9 && abs(back.y - point.y) < 1e-9, "mark coordinates round-trip at \(rotation)°")
         }
     }
 
@@ -183,6 +197,16 @@ struct EngineCheck {
 
     static func solid(_ width: Int, _ height: Int, _ color: CGColor) -> CGImage {
         let context = ImageEngine.makeContext(width: width, height: height, fill: color)
+        return context.makeImage()!
+    }
+
+    /// White with 2 px black stripes every 4 px: fine detail that pixelate and blur must remove.
+    static func stripes(_ width: Int, _ height: Int) -> CGImage {
+        let context = ImageEngine.makeContext(width: width, height: height, fill: white)
+        context.setFillColor(CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 1))
+        for x in stride(from: 0, to: width, by: 4) {
+            context.fill(CGRect(x: x, y: 0, width: 2, height: height))
+        }
         return context.makeImage()!
     }
 

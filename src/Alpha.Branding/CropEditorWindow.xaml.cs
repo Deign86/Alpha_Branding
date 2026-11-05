@@ -3,10 +3,11 @@ using Alpha.Branding.Services;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
-using Polyline = System.Windows.Shapes.Polyline;
 
 namespace Alpha.Branding;
 
@@ -31,6 +32,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     private BitmapSource? _leftBitmap;
     private BitmapSource? _rightBitmap;
     private BitmapSource? _overlayBitmap;
+    private readonly Dictionary<(BitmapSource Bitmap, int Rotation, int Columns, int Rows), BitmapSource> _pixelatedPreviews = new();
 
     public CropEditorWindow(
         string filePath,
@@ -56,7 +58,8 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
 
         DataContext = this;
         PanModeToggle.Checked += ModeToggle_Checked;
-        RedactModeToggle.Checked += ModeToggle_Checked;
+        PixelateModeToggle.Checked += ModeToggle_Checked;
+        BlurModeToggle.Checked += ModeToggle_Checked;
         UndoRedactButton.Click += UndoRedact_Click;
         ClearRedactButton.Click += ClearRedact_Click;
         PanModeToggle.IsChecked = true;
@@ -107,6 +110,8 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     public string TargetDimensionsText => $"{TargetWidth} × {TargetHeight} px";
 
     public string PanCoordinatesText => $"X: {(int)Math.Round(ActiveCrop.PanX)} px  Y: {(int)Math.Round(ActiveCrop.PanY)} px";
+
+    private bool IsMarkMode => PixelateModeToggle.IsChecked == true || BlurModeToggle.IsChecked == true;
 
     private void CropEditorWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -232,43 +237,116 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     {
         RedactOverlay.Children.Clear();
         var bmp = GetActiveBitmap();
-        if (bmp == null) return;
+        if (bmp == null || PhotoImage.Source is not BitmapSource photo) return;
 
+        var rotation = ActiveCrop.Rotation;
         var (scale, drawX, drawY) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
-        foreach (var stroke in ActiveCrop.RedactStrokes.Concat(_activeStroke is null ? [] : [_activeStroke]))
+        double Diameter(RedactStroke stroke) => stroke.BrushSizeNormalized * Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale;
+        Point ToCanvas(Point point)
         {
-            if (stroke.Points.Count == 0) continue;
-            var line = new Polyline
+            var x = point.X * bmp.PixelWidth;
+            var y = point.Y * bmp.PixelHeight;
+            var (rotatedX, rotatedY) = rotation switch
             {
-                Stroke = new SolidColorBrush(Color.FromRgb(stroke.R, stroke.G, stroke.B)),
-                StrokeThickness = stroke.BrushSizeNormalized * Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale,
-                StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round,
-                StrokeLineJoin = PenLineJoin.Round
+                90 => (bmp.PixelHeight - y, x),
+                180 => (bmp.PixelWidth - x, bmp.PixelHeight - y),
+                270 => (y, bmp.PixelWidth - x),
+                _ => (x, y)
             };
-            foreach (var point in stroke.Points)
-            {
-                var x = point.X * bmp.PixelWidth;
-                var y = point.Y * bmp.PixelHeight;
-                var (rotatedX, rotatedY) = ActiveCrop.Rotation switch
-                {
-                    90 => (bmp.PixelHeight - y, x),
-                    180 => (bmp.PixelWidth - x, bmp.PixelHeight - y),
-                    270 => (y, bmp.PixelWidth - x),
-                    _ => (x, y)
-                };
-                line.Points.Add(new Point(drawX + rotatedX * scale, drawY + rotatedY * scale));
-            }
-            if (line.Points.Count == 1) line.Points.Add(line.Points[0]);
-            RedactOverlay.Children.Add(line);
+            return new Point(drawX + rotatedX * scale, drawY + rotatedY * scale);
         }
+
+        // Marks with the same effect and strength share a layer: a pixelated or blurred copy of the photo,
+        // visible only through the brush shapes.
+        var strokes = ActiveCrop.RedactStrokes.Concat(_activeStroke is null ? [] : [_activeStroke]).Where(s => s.Points.Count > 0);
+        foreach (var group in strokes.GroupBy(s => (s.Effect, Strength: s.Effect == RedactEffect.Pixelate
+                     ? ImageProcessingService.RedactBlockSize(Diameter(s))
+                     : Math.Round(ImageProcessingService.RedactBlurSigma(Diameter(s)), 1))))
+        {
+            var shapes = new DrawingGroup();
+            foreach (var stroke in group)
+            {
+                var points = stroke.Points.Select(ToCanvas).ToList();
+                var path = new StreamGeometry();
+                using (var context = path.Open())
+                {
+                    context.BeginFigure(points[0], isFilled: false, isClosed: false);
+                    context.PolyLineTo(points.Count > 1 ? points.Skip(1).ToList() : points, isStroked: true, isSmoothJoin: true);
+                }
+
+                var pen = new Pen(Brushes.Black, Diameter(stroke))
+                {
+                    StartLineCap = PenLineCap.Round,
+                    EndLineCap = PenLineCap.Round,
+                    LineJoin = PenLineJoin.Round
+                };
+                shapes.Children.Add(new GeometryDrawing(null, pen, path));
+            }
+
+            var layer = new Image { Width = PhotoImage.Width, Height = PhotoImage.Height, Stretch = Stretch.Fill };
+            if (group.Key.Effect == RedactEffect.Blur)
+            {
+                layer.Source = photo;
+                // WPF's Gaussian kernel radius spans about three standard deviations.
+                layer.Effect = new BlurEffect
+                {
+                    Radius = 3 * group.Key.Strength,
+                    KernelType = KernelType.Gaussian,
+                    RenderingBias = RenderingBias.Quality
+                };
+            }
+            else
+            {
+                layer.Source = GetPixelatedPreview(bmp, rotation, group.Key.Strength / scale);
+                RenderOptions.SetBitmapScalingMode(layer, BitmapScalingMode.NearestNeighbor);
+            }
+
+            Canvas.SetLeft(layer, drawX);
+            Canvas.SetTop(layer, drawY);
+            var frame = new Rect(0, 0, TargetWidth, TargetHeight);
+            var host = new Canvas
+            {
+                Width = TargetWidth,
+                Height = TargetHeight,
+                OpacityMask = new DrawingBrush(shapes)
+                {
+                    Stretch = Stretch.Fill,
+                    ViewboxUnits = BrushMappingMode.Absolute,
+                    Viewbox = frame,
+                    ViewportUnits = BrushMappingMode.Absolute,
+                    Viewport = frame
+                }
+            };
+            host.Children.Add(layer);
+            RedactOverlay.Children.Add(host);
+        }
+    }
+
+    /// <summary>The upright photo shrunk to one pixel per pixelate cell. Stretched back with nearest-neighbour
+    /// scaling, it previews the exported pixelation.</summary>
+    private BitmapSource GetPixelatedPreview(BitmapSource bitmap, int rotation, double sourceCellSize)
+    {
+        var quarterTurn = rotation == 90 || rotation == 270;
+        var width = quarterTurn ? bitmap.PixelHeight : bitmap.PixelWidth;
+        var height = quarterTurn ? bitmap.PixelWidth : bitmap.PixelHeight;
+        var columns = Math.Max(1, (int)Math.Ceiling(width / sourceCellSize));
+        var rows = Math.Max(1, (int)Math.Ceiling(height / sourceCellSize));
+        var key = (bitmap, rotation, columns, rows);
+        if (_pixelatedPreviews.TryGetValue(key, out var preview)) return preview;
+
+        // Zooming changes the cell size in source pixels; keep only recent sizes.
+        if (_pixelatedPreviews.Count >= 16) _pixelatedPreviews.Clear();
+        BitmapSource upright = rotation == 0 ? bitmap : new TransformedBitmap(bitmap, new RotateTransform(rotation));
+        preview = new TransformedBitmap(upright, new ScaleTransform((double)columns / width, (double)rows / height));
+        preview.Freeze();
+        _pixelatedPreviews[key] = preview;
+        return preview;
     }
 
     private void ModeToggle_Checked(object sender, RoutedEventArgs e)
     {
-        var redact = ReferenceEquals(sender, RedactModeToggle);
-        if (!redact) FinishRedactStroke();
-        TargetCanvas.Cursor = redact ? Cursors.Cross : Cursors.SizeAll;
+        FinishRedactStroke();
+        TargetCanvas.Cursor = ReferenceEquals(sender, PanModeToggle) ? Cursors.SizeAll : Cursors.Cross;
     }
 
     private void AddRedactPoint(Point position)
@@ -329,14 +407,15 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
-            if (RedactModeToggle.IsChecked == true)
+            if (IsMarkMode)
             {
                 var bmp = GetActiveBitmap();
                 if (bmp == null) return;
                 var (scale, _, _) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
                 _activeStroke = new RedactStroke
                 {
-                    BrushSizeNormalized = BrushSizeSlider.Value / (Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale)
+                    BrushSizeNormalized = BrushSizeSlider.Value / (Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale),
+                    Effect = BlurModeToggle.IsChecked == true ? RedactEffect.Blur : RedactEffect.Pixelate
                 };
                 AddRedactPoint(e.GetPosition(TargetCanvas));
                 TargetCanvas.CaptureMouse();
@@ -521,7 +600,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
             UndoRedact_Click(sender, e);
             e.Handled = true;
         }
-        else if (e.Key == Key.Escape && RedactModeToggle.IsChecked == true)
+        else if (e.Key == Key.Escape && IsMarkMode)
         {
             PanModeToggle.IsChecked = true;
             e.Handled = true;
