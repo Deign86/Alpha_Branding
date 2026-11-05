@@ -280,7 +280,11 @@ macos/test.sh
 macos/build.sh
 ```
 
-Output: `macos/build/Alpha Branding Studio.app`, `macos/build/Alpha.Branding-v<version>-macos.zip` and `macos/build/Alpha.Branding-v<version>-macos.pkg`. Every `v*` tag publishes the Mac zip and installer alongside the Windows installer.
+Output: `macos/build/Alpha Branding Studio.app`, `macos/build/Alpha.Branding-v<version>-macos.zip` and `macos/build/Alpha.Branding-v<version>-macos.pkg`. Each release publishes the Mac zip and installer alongside the Windows installer.
+
+### Releases
+
+Merging a pull request into `main` publishes a release with the Windows installer and portable zip and the Mac zip and `.pkg` (`.github/workflows/release.yml`). Its version is the last `v*` tag bumped by the merged pull request titles: `feat:` raises the minor version, `!` or `BREAKING CHANGE:` the major version, anything else the patch. To pick a version, raise `<Version>` in `src/Alpha.Branding/Alpha.Branding.csproj` in the pull request; a higher value there wins. Pushing a `v*` tag, or running the workflow by hand with a version, publishes exactly that version.
 
 ---
 
