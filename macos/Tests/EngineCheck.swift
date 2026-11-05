@@ -67,23 +67,17 @@ struct EngineCheck {
         expect(turnedImage, 600, 250, (255, 0, 0), "rotate 90° is clockwise (left edge moves to the top)")
         expect(turnedImage, 600, 750, (0, 255, 0), "rotate 90° is clockwise (right edge moves to the bottom)")
 
-        // Marks pixelate or blur the photo under the brush (100 px wide here); they never paint over it.
+        // Marks pixelate the photo under the brush (100 px wide here); they never paint over it.
         let striped = try writeJPEG(stripes(1200, 1000), to: file("stripes.jpg"))
         let plainStripes = try ImageEngine.compose(.landscape(striped, CropSettings()), overlay: overlay)
         var marked = CropSettings()
         marked.strokes = [RedactStroke(points: [CGPoint(x: 0.45, y: 0.45), CGPoint(x: 0.55, y: 0.55)], brushSizeNormalized: 0.1)]
-        for effect in [RedactEffect.pixelate, .blur] {
-            marked.strokes[0].effect = effect
-            let markedStripes = try ImageEngine.compose(.landscape(striped, marked), overlay: overlay)
-            expect(markedStripes, 600, 500, (128, 128, 128), "\(effect) turns fine stripes under the mark gray")
-            check(same(pixel(markedStripes, 600, 380), pixel(plainStripes, 600, 380)),
-                  "\(effect) leaves pixels past the brush edge untouched")
-            if effect == .pixelate {
-                check(same(pixel(markedStripes, 605, 505), pixel(markedStripes, 640, 540)), "pixelate fills each 50 px cell with one color")
-            }
-            let markedFlat = try ImageEngine.compose(.landscape(landscape, marked), overlay: overlay)
-            expect(markedFlat, 600, 500, (0, 0, 255), "\(effect) keeps the photo's colors instead of painting")
-        }
+        let markedStripes = try ImageEngine.compose(.landscape(striped, marked), overlay: overlay)
+        expect(markedStripes, 600, 500, (128, 128, 128), "pixelate turns fine stripes under the mark gray")
+        check(same(pixel(markedStripes, 600, 380), pixel(plainStripes, 600, 380)), "pixelate leaves pixels past the brush edge untouched")
+        check(same(pixel(markedStripes, 605, 505), pixel(markedStripes, 640, 540)), "pixelate fills each 50 px cell with one color")
+        let markedFlat = try ImageEngine.compose(.landscape(landscape, marked), overlay: overlay)
+        expect(markedFlat, 600, 500, (0, 0, 255), "pixelate keeps the photo's colors instead of painting")
 
         checkFramingRoundTrip()
 
@@ -200,7 +194,7 @@ struct EngineCheck {
         return context.makeImage()!
     }
 
-    /// White with 2 px black stripes every 4 px: fine detail that pixelate and blur must remove.
+    /// White with 2 px black stripes every 4 px: fine detail that pixelation must remove.
     static func stripes(_ width: Int, _ height: Int) -> CGImage {
         let context = ImageEngine.makeContext(width: width, height: height, fill: white)
         context.setFillColor(CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 1))

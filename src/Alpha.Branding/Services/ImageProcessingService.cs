@@ -266,9 +266,6 @@ public sealed class ImageProcessingService
     public static int RedactBlockSize(double diameter) =>
         Math.Max(4, (int)Math.Round(diameter / 2, MidpointRounding.AwayFromZero));
 
-    /// <summary>Gaussian blur sigma, in output pixels, for a mark of the given brush diameter.</summary>
-    public static double RedactBlurSigma(double diameter) => Math.Max(2, diameter / 3);
-
     internal static void ApplyRedactStrokes(
         MagickImage canvas,
         IReadOnlyList<RedactStroke>? strokes,
@@ -304,52 +301,30 @@ public sealed class ImageProcessingService
                 points[i] = new PointD(drawOffset.X + rotatedX * scaleX, drawOffset.Y + rotatedY * scaleY);
             }
 
-            ApplyRedactEffect(canvas, stroke.Effect, points, diameter);
+            PixelateMark(canvas, points, diameter);
         }
     }
 
-    /// <summary>Replaces the pixels under one mark with a pixelated or blurred copy of themselves.</summary>
-    private static void ApplyRedactEffect(MagickImage canvas, RedactEffect effect, PointD[] points, double diameter)
+    /// <summary>Replaces the pixels under one mark with a pixelated copy of themselves.</summary>
+    private static void PixelateMark(MagickImage canvas, PointD[] points, double diameter)
     {
         var radius = diameter / 2;
         var block = RedactBlockSize(diameter);
-        var sigma = RedactBlurSigma(diameter);
-        // Blur reads pixels around the mark, so the working area includes the kernel's reach.
-        var reach = radius + (effect == RedactEffect.Blur ? Math.Ceiling(3 * sigma) : 0);
-        var left = (int)Math.Floor(points.Min(p => p.X) - reach);
-        var top = (int)Math.Floor(points.Min(p => p.Y) - reach);
-        var right = (int)Math.Ceiling(points.Max(p => p.X) + reach);
-        var bottom = (int)Math.Ceiling(points.Max(p => p.Y) + reach);
-        if (effect == RedactEffect.Pixelate)
-        {
-            // Cells sit on a grid anchored at the frame's top-left corner.
-            left = (int)Math.Floor((double)left / block) * block;
-            top = (int)Math.Floor((double)top / block) * block;
-            right = (int)Math.Ceiling((double)right / block) * block;
-            bottom = (int)Math.Ceiling((double)bottom / block) * block;
-        }
-
-        left = Math.Max(0, left);
-        top = Math.Max(0, top);
-        right = Math.Min((int)canvas.Width, right);
-        bottom = Math.Min((int)canvas.Height, bottom);
+        // Cells sit on a grid anchored at the frame's top-left corner.
+        var left = Math.Max(0, (int)Math.Floor((points.Min(p => p.X) - radius) / block) * block);
+        var top = Math.Max(0, (int)Math.Floor((points.Min(p => p.Y) - radius) / block) * block);
+        var right = Math.Min((int)canvas.Width, (int)Math.Ceiling((points.Max(p => p.X) + radius) / block) * block);
+        var bottom = Math.Min((int)canvas.Height, (int)Math.Ceiling((points.Max(p => p.Y) + radius) / block) * block);
         if (right <= left || bottom <= top) return;
 
         var width = (uint)(right - left);
         var height = (uint)(bottom - top);
         using var area = canvas.CloneArea(left, top, width, height);
         area.ResetPage();
-        if (effect == RedactEffect.Blur)
-        {
-            area.Blur(0, sigma);
-        }
-        else
-        {
-            var columns = (uint)Math.Ceiling((double)width / block);
-            var rows = (uint)Math.Ceiling((double)height / block);
-            area.Scale(new MagickGeometry(columns, rows) { IgnoreAspectRatio = true });
-            area.Sample(new MagickGeometry(width, height) { IgnoreAspectRatio = true });
-        }
+        var columns = (uint)Math.Ceiling((double)width / block);
+        var rows = (uint)Math.Ceiling((double)height / block);
+        area.Scale(new MagickGeometry(columns, rows) { IgnoreAspectRatio = true });
+        area.Sample(new MagickGeometry(width, height) { IgnoreAspectRatio = true });
 
         // Round dots at each point plus wide segments between them: the shape of a round-capped brush stroke.
         // Two passes, because stroke settings in one Drawables list also widen the dots.

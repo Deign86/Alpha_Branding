@@ -239,7 +239,7 @@ private struct StagedCard: View {
             }
             HStack(spacing: 6) {
                 if !item.crop.isDefault { Badge("CROPPED (\(item.crop.zoomText))") }
-                if item.crop.hasRedactions { Badge("BLUR MARKS") }
+                if item.crop.hasRedactions { Badge("PIXELATED") }
                 if item.isSolo { Badge("SOLO") }
                 if let partner = item.partner { Badge("PAIRED: \(partner.lastPathComponent)") }
             }

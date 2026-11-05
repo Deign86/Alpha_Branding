@@ -2,13 +2,6 @@ using System.Windows;
 
 namespace Alpha.Branding.Models;
 
-/// <summary>How a mark hides what is under it in the exported image.</summary>
-public enum RedactEffect
-{
-    Pixelate,
-    Blur
-}
-
 public sealed class RedactStroke
 {
     private double _brushSizeNormalized = 0.02;
@@ -29,8 +22,6 @@ public sealed class RedactStroke
         }
     }
 
-    public RedactEffect Effect { get; set; }
-
     public void AddPoint(Point point)
     {
         Points.Add(ClampPoint(point));
@@ -40,15 +31,13 @@ public sealed class RedactStroke
     {
         Points.Clear();
         BrushSizeNormalized = 0.02;
-        Effect = RedactEffect.Pixelate;
     }
 
     public RedactStroke Clone()
     {
         var clone = new RedactStroke
         {
-            BrushSizeNormalized = BrushSizeNormalized,
-            Effect = Effect
+            BrushSizeNormalized = BrushSizeNormalized
         };
         clone.CopyPointsFrom(this);
         return clone;
@@ -58,7 +47,6 @@ public sealed class RedactStroke
     {
         ArgumentNullException.ThrowIfNull(source);
         BrushSizeNormalized = source.BrushSizeNormalized;
-        Effect = source.Effect;
         CopyPointsFrom(source);
     }
 

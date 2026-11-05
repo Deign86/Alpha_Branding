@@ -41,7 +41,7 @@ public class UiAutomationTests
 
                 var controlIds = new[]
                 {
-                    "PixelateModeToggle", "BlurModeToggle", "PanModeToggle", "BrushSizeSlider",
+                    "PixelateModeToggle", "PanModeToggle", "BrushSizeSlider",
                     "UndoRedactButton", "ClearRedactButton", "RedactOverlay"
                 };
                 foreach (var id in controlIds)
@@ -61,20 +61,17 @@ public class UiAutomationTests
                 Assert.NotNull(title);
                 Assert.Equal("L1.png", title.Name);
 
-                // PAN, PIXELATE and BLUR are one radio group: checking one unchecks the others.
+                // PAN and PIXELATE are one radio group: checking one unchecks the other.
                 var pan = editor.FindFirstDescendant(cf => cf.ByAutomationId("PanModeToggle"))!.AsRadioButton();
                 var pixelate = editor.FindFirstDescendant(cf => cf.ByAutomationId("PixelateModeToggle"))!.AsRadioButton();
-                var blur = editor.FindFirstDescendant(cf => cf.ByAutomationId("BlurModeToggle"))!.AsRadioButton();
                 Assert.True(pan.IsChecked);
                 // Select through UIA rather than a real mouse click: the modal editor is not guaranteed to be
                 // the foreground window on a shared desktop, so a synthesized click can land on another window.
                 pixelate.IsChecked = true;
                 Assert.True(Retry.WhileFalse(() => pixelate.IsChecked && !pan.IsChecked, TimeSpan.FromSeconds(2)).Result);
-                blur.IsChecked = true;
-                Assert.True(Retry.WhileFalse(() => blur.IsChecked && !pixelate.IsChecked && !pan.IsChecked, TimeSpan.FromSeconds(2)).Result);
-                blur.Focus();
+                pixelate.Focus();
                 Keyboard.Press(VirtualKeyShort.ESC);
-                Assert.True(Retry.WhileFalse(() => pan.IsChecked && !blur.IsChecked, TimeSpan.FromSeconds(2)).Result);
+                Assert.True(Retry.WhileFalse(() => pan.IsChecked && !pixelate.IsChecked, TimeSpan.FromSeconds(2)).Result);
 
                 // Arrow keys on the focused viewport move the photo.
                 var viewport = editor.FindFirstDescendant(cf => cf.ByAutomationId("CropViewport"));
@@ -93,8 +90,6 @@ public class UiAutomationTests
                 pan.Focus();
                 Keyboard.Press(VirtualKeyShort.TAB);
                 Assert.Equal("PixelateModeToggle", automation.FocusedElement()?.AutomationId);
-                Keyboard.Press(VirtualKeyShort.TAB);
-                Assert.Equal("BlurModeToggle", automation.FocusedElement()?.AutomationId);
                 Keyboard.Press(VirtualKeyShort.TAB);
                 Assert.Equal("BrushSizeSlider", automation.FocusedElement()?.AutomationId);
                 Keyboard.Press(VirtualKeyShort.TAB);
@@ -684,7 +679,7 @@ public class UiAutomationTests
                 Assert.Equal("Clear all selected media", clearButton.Name);
                 Assert.True(clearButton.IsEnabled);
 
-                // No crop, blur or pairing edits yet, so clearing does not prompt.
+                // No crop, pixelate or pairing edits yet, so clearing does not prompt.
                 clearButton.Invoke();
 
                 var emptyState = Retry.WhileNull(
