@@ -25,6 +25,7 @@ struct EngineCheck {
         func file(_ name: String) -> URL { output.appendingPathComponent(name) }
 
         checkFileNames()
+        checkUpdateRules()
 
         // Photos. "rotated.jpg" stores landscape pixels with EXIF orientation 6, like a sideways phone shot.
         let landscape = try writeJPEG(solid(4000, 3000, blue), to: file("landscape.jpg"))
@@ -142,6 +143,32 @@ struct EngineCheck {
         check(FileNameGenerator.generate("Lot", index: 0, total: 120, kind: .video) == "Lot_001.mp4", "three digits from 100 items")
         check(FileNameGenerator.generate("CON", index: 0, total: 2) == "AlphaPremier_Photo_01.jpg", "reserved names fall back")
         check(FileNameGenerator.generate("...", index: 0, total: 2) == "AlphaPremier_Photo_01.jpg", "dots-only prefix falls back")
+    }
+
+    static func checkUpdateRules() {
+        check(Release.isNewer("v2.7.0", than: "2.6.0"), "update: a newer release is offered")
+        check(!Release.isNewer("v2.7.0", than: "2.7.0"), "update: the same version is not offered")
+        check(!Release.isNewer("v2.5.9", than: "2.6.0"), "update: an older release is not offered")
+        check(Release.isNewer("v2.10.0", than: "2.9.1"), "update: versions compare as numbers, not text")
+
+        let json = """
+        {"tag_name": "v2.7.0",
+         "body": "## What's Changed\\n* feat(editor): keep PIXELATE by @Deign86 in https://github.com/x/pull/15\\n",
+         "assets": [
+           {"name": "Alpha.Branding.Setup.exe", "browser_download_url": "https://example.com/setup.exe"},
+           {"name": "Alpha.Branding-v2.7.0-macos.zip", "browser_download_url": "https://example.com/mac.zip"},
+           {"name": "Alpha.Branding-v2.7.0-macos.pkg", "browser_download_url": "https://example.com/mac.pkg"},
+           {"name": "SHA256SUMS.txt", "browser_download_url": "https://example.com/sums.txt"}]}
+        """
+        let release = try? JSONDecoder().decode(Release.self, from: Data(json.utf8))
+        check(release?.version == "2.7.0", "update: release version read from the tag")
+        check(release?.installer?.name == "Alpha.Branding-v2.7.0-macos.pkg", "update: the Mac .pkg is the installer")
+        check(release?.checksums?.name == "SHA256SUMS.txt", "update: the checksum file is found")
+        check(release?.summary == "• feat(editor): keep PIXELATE", "update: release notes drop author and link")
+
+        let sums = "\u{FEFF}ABC123  Alpha.Branding.Setup.exe\r\n762B7E  Alpha.Branding-v2.7.0-macos.pkg\r\n"
+        check(Release.checksum(for: "Alpha.Branding-v2.7.0-macos.pkg", in: sums) == "762b7e", "update: reads the installer's checksum")
+        check(Release.checksum(for: "missing.pkg", in: sums) == nil, "update: a missing checksum is reported, not guessed")
     }
 
     static func checkPlanner(landscape: URL, portraitA: URL, portraitB: URL) {

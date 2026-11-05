@@ -12,14 +12,18 @@ struct AlphaBrandingApp: App {
                 .preferredColorScheme(.dark)
         }
         .defaultSize(width: 1260, height: 920)
-        .commands { StudioCommands(model: appDelegate.model) }
+        .commands { StudioCommands(model: appDelegate.model, updater: appDelegate.updater) }
     }
 }
 
 private struct StudioCommands: Commands {
     @ObservedObject var model: StudioModel
+    let updater: Updater
 
     var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") { Task { await updater.check(manual: true) } }
+        }
         CommandGroup(replacing: .newItem) {
             Button("Select Media…") { model.selectMedia() }
                 .keyboardShortcut("o")
@@ -49,6 +53,11 @@ private struct StudioCommands: Commands {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = StudioModel()
+    private(set) lazy var updater = Updater(model: model)
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        updater.start()
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 

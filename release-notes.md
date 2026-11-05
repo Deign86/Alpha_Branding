@@ -1,3 +1,9 @@
+## Alpha Premier Property Branding Studio v2.8.0
+
+### New Features
+- **Mac updates**: the Mac app now checks for a new release 3 seconds after launch and every 8 hours, or on demand from **Alpha Branding Studio › Check for Updates…**. **Update Now** downloads the Mac installer, checks it against the release's published checksum, opens it and quits the app; **Remind Me Later** and **Skip This Version** work as on Windows.
+- **One-time step**: Macs on 2.7.0 or earlier have no updater, so install 2.8.0 once from the releases page.
+
 ## Alpha Premier Property Branding Studio v2.7.0
 
 ### Fixes & Improvements
