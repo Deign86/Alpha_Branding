@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 
 namespace Alpha.Branding;
@@ -59,7 +58,6 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
         DataContext = this;
         PanModeToggle.Checked += ModeToggle_Checked;
         PixelateModeToggle.Checked += ModeToggle_Checked;
-        BlurModeToggle.Checked += ModeToggle_Checked;
         UndoRedactButton.Click += UndoRedact_Click;
         ClearRedactButton.Click += ClearRedact_Click;
         PanModeToggle.IsChecked = true;
@@ -110,8 +108,6 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     public string TargetDimensionsText => $"{TargetWidth} × {TargetHeight} px";
 
     public string PanCoordinatesText => $"X: {(int)Math.Round(ActiveCrop.PanX)} px  Y: {(int)Math.Round(ActiveCrop.PanY)} px";
-
-    private bool IsMarkMode => PixelateModeToggle.IsChecked == true || BlurModeToggle.IsChecked == true;
 
     private void CropEditorWindow_Loaded(object sender, RoutedEventArgs e)
     {
@@ -237,7 +233,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     {
         RedactOverlay.Children.Clear();
         var bmp = GetActiveBitmap();
-        if (bmp == null || PhotoImage.Source is not BitmapSource photo) return;
+        if (bmp == null) return;
 
         var rotation = ActiveCrop.Rotation;
         var (scale, drawX, drawY) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
@@ -256,12 +252,10 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
             return new Point(drawX + rotatedX * scale, drawY + rotatedY * scale);
         }
 
-        // Marks with the same effect and strength share a layer: a pixelated or blurred copy of the photo,
-        // visible only through the brush shapes.
+        // Marks with the same cell size share a layer: a pixelated copy of the photo, visible only through the
+        // brush shapes.
         var strokes = ActiveCrop.RedactStrokes.Concat(_activeStroke is null ? [] : [_activeStroke]).Where(s => s.Points.Count > 0);
-        foreach (var group in strokes.GroupBy(s => (s.Effect, Strength: s.Effect == RedactEffect.Pixelate
-                     ? ImageProcessingService.RedactBlockSize(Diameter(s))
-                     : Math.Round(ImageProcessingService.RedactBlurSigma(Diameter(s)), 1))))
+        foreach (var group in strokes.GroupBy(s => ImageProcessingService.RedactBlockSize(Diameter(s))))
         {
             var shapes = new DrawingGroup();
             foreach (var stroke in group)
@@ -283,23 +277,14 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
                 shapes.Children.Add(new GeometryDrawing(null, pen, path));
             }
 
-            var layer = new Image { Width = PhotoImage.Width, Height = PhotoImage.Height, Stretch = Stretch.Fill };
-            if (group.Key.Effect == RedactEffect.Blur)
+            var layer = new Image
             {
-                layer.Source = photo;
-                // WPF's Gaussian kernel radius spans about three standard deviations.
-                layer.Effect = new BlurEffect
-                {
-                    Radius = 3 * group.Key.Strength,
-                    KernelType = KernelType.Gaussian,
-                    RenderingBias = RenderingBias.Quality
-                };
-            }
-            else
-            {
-                layer.Source = GetPixelatedPreview(bmp, rotation, group.Key.Strength / scale);
-                RenderOptions.SetBitmapScalingMode(layer, BitmapScalingMode.NearestNeighbor);
-            }
+                Source = GetPixelatedPreview(bmp, rotation, group.Key / scale),
+                Width = PhotoImage.Width,
+                Height = PhotoImage.Height,
+                Stretch = Stretch.Fill
+            };
+            RenderOptions.SetBitmapScalingMode(layer, BitmapScalingMode.NearestNeighbor);
 
             Canvas.SetLeft(layer, drawX);
             Canvas.SetTop(layer, drawY);
@@ -407,15 +392,14 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
-            if (IsMarkMode)
+            if (PixelateModeToggle.IsChecked == true)
             {
                 var bmp = GetActiveBitmap();
                 if (bmp == null) return;
                 var (scale, _, _) = GetPreviewGeometry(ActiveCrop, bmp.PixelWidth, bmp.PixelHeight, TargetWidth, TargetHeight);
                 _activeStroke = new RedactStroke
                 {
-                    BrushSizeNormalized = BrushSizeSlider.Value / (Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale),
-                    Effect = BlurModeToggle.IsChecked == true ? RedactEffect.Blur : RedactEffect.Pixelate
+                    BrushSizeNormalized = BrushSizeSlider.Value / (Math.Min(bmp.PixelWidth, bmp.PixelHeight) * scale)
                 };
                 AddRedactPoint(e.GetPosition(TargetCanvas));
                 TargetCanvas.CaptureMouse();
@@ -600,7 +584,7 @@ public partial class CropEditorWindow : Window, INotifyPropertyChanged
             UndoRedact_Click(sender, e);
             e.Handled = true;
         }
-        else if (e.Key == Key.Escape && IsMarkMode)
+        else if (e.Key == Key.Escape && PixelateModeToggle.IsChecked == true)
         {
             PanModeToggle.IsChecked = true;
             e.Handled = true;

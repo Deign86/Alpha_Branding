@@ -163,8 +163,8 @@
 
                             <Canvas x:Name="RedactOverlay" IsHitTestVisible="False"/>
                             <TextBlock AutomationProperties.AutomationId="RedactOverlay"
-                                       AutomationProperties.Name="Pixelate and blur marks"
-                                       Text="Pixelate and blur marks"
+                                       AutomationProperties.Name="Pixelate marks"
+                                       Text="Pixelate marks"
                                        Foreground="Transparent"
                                        IsHitTestVisible="False"
                                        Focusable="False"/>
@@ -205,7 +205,7 @@
                 Margin="0,0,0,12">
             <WrapPanel Orientation="Horizontal">
 
-                <!-- Canvas mode + pixelate/blur options -->
+                <!-- Canvas mode + pixelate options -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,24,4">
                     <RadioButton x:Name="PanModeToggle"
                                  GroupName="CanvasMode"
@@ -222,17 +222,7 @@
                                  AutomationProperties.AutomationId="PixelateModeToggle"
                                  AutomationProperties.Name="Pixelate mode"
                                  Content="PIXELATE"
-                                 ToolTip="Drag over phone numbers, signs or plates to pixelate them"
-                                 Style="{StaticResource SmallActionToggleButton}"
-                                 MinWidth="64"
-                                 Margin="0,0,6,0"/>
-
-                    <RadioButton x:Name="BlurModeToggle"
-                                 GroupName="CanvasMode"
-                                 AutomationProperties.AutomationId="BlurModeToggle"
-                                 AutomationProperties.Name="Blur mode"
-                                 Content="BLUR"
-                                 ToolTip="Drag over faces or details to blur them"
+                                 ToolTip="Drag over phone numbers, signs, plates or faces to pixelate them"
                                  Style="{StaticResource SmallActionToggleButton}"
                                  MinWidth="64"
                                  Margin="0,0,16,0"/>
@@ -252,14 +242,14 @@
                             Width="100"
                             MinHeight="32"
                             VerticalAlignment="Center"
-                            ToolTip="Brush size. A bigger brush also pixelates and blurs more strongly."
+                            ToolTip="Brush size. A bigger brush also makes bigger squares."
                             Margin="0,0,8,0"/>
 
                     <Button x:Name="UndoRedactButton"
                             AutomationProperties.AutomationId="UndoRedactButton"
                             AutomationProperties.Name="Undo last mark"
                             Content="UNDO"
-                            ToolTip="Undo the last pixelate or blur mark (Ctrl+Z)"
+                            ToolTip="Undo the last pixelate mark (Ctrl+Z)"
                             Style="{StaticResource SmallActionButton}"
                             MinWidth="56"
                             Margin="0,0,6,0"/>
@@ -268,7 +258,7 @@
                             AutomationProperties.AutomationId="ClearRedactButton"
                             AutomationProperties.Name="Clear marks"
                             Content="CLEAR MARKS"
-                            ToolTip="Remove all pixelate and blur marks on this photo (UNDO or Ctrl+Z restores them)"
+                            ToolTip="Remove all pixelate marks on this photo (UNDO or Ctrl+Z restores them)"
                             Style="{StaticResource DestructiveActionButton}"
                             MinWidth="56"/>
                 </StackPanel>
@@ -367,7 +357,7 @@
                     <Button x:Name="ResetCropButton"
                             AutomationProperties.AutomationId="ResetCropButton"
                             Content="RESET CROP"
-                            ToolTip="Reset pan, zoom and rotation (blur marks are kept)"
+                            ToolTip="Reset pan, zoom and rotation (pixelate marks are kept)"
                             Click="ResetCrop_Click"
                             Style="{StaticResource SmallActionButton}"/>
                 </StackPanel>
@@ -411,10 +401,7 @@
                                 <Setter Property="Text" Value="Drag or use arrow keys to move the photo • Scroll to zoom • Enter to save • Esc to cancel"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsChecked, ElementName=PixelateModeToggle}" Value="True">
-                                        <Setter Property="Text" Value="Drag over details to hide them • A bigger brush hides more • Ctrl+Z undoes the last mark • Esc returns to PAN"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsChecked, ElementName=BlurModeToggle}" Value="True">
-                                        <Setter Property="Text" Value="Drag over details to hide them • A bigger brush hides more • Ctrl+Z undoes the last mark • Esc returns to PAN"/>
+                                        <Setter Property="Text" Value="Drag over details to pixelate them • A bigger brush makes bigger squares • Ctrl+Z undoes the last mark • Esc returns to PAN"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -426,7 +413,7 @@
                     <Button x:Name="CancelButton"
                             AutomationProperties.AutomationId="CancelCropButton"
                             Content="CANCEL"
-                            ToolTip="Discard changes and close (Esc; in PIXELATE or BLUR mode press Esc twice)"
+                            ToolTip="Discard changes and close (Esc; in PIXELATE mode press Esc twice)"
                             Click="Cancel_Click"
                             Style="{StaticResource SecondaryButton}"
                             Margin="0,0,12,0"/>
@@ -434,7 +421,7 @@
                     <Button x:Name="SaveChangesButton"
                             AutomationProperties.AutomationId="SaveCropButton"
                             Content="SAVE CHANGES"
-                            ToolTip="Save crop and blur changes and close (Enter)"
+                            ToolTip="Save crop and pixelate changes and close (Enter)"
                             Click="SaveChanges_Click"
                             Style="{StaticResource PrimaryButton}"/>
                 </StackPanel>

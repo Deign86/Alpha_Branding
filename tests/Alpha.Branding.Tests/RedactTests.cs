@@ -56,7 +56,7 @@ public class RedactTests
         using var photo = Stripes(600, 1000);
         using var plain = RenderSlot(Stripes(600, 1000));
         // Brush 0.1 x 600 px = 60 px, so cells are 30 px on a grid anchored at the frame corner.
-        using var canvas = RenderSlot(photo, DiagonalMark(RedactEffect.Pixelate, 0.1));
+        using var canvas = RenderSlot(photo, DiagonalMark(0.1));
 
         var center = canvas.PixelAt(300, 500);
         Assert.True(center.R > 90 && center.R < 165 && center.A == 255,
@@ -67,40 +67,14 @@ public class RedactTests
     }
 
     [Fact]
-    public void Redact_Blur_SmoothsDetailInsideTheBrushOnly()
-    {
-        using var plain = RenderSlot(Stripes(600, 1000));
-        using var canvas = RenderSlot(Stripes(600, 1000), DiagonalMark(RedactEffect.Blur, 0.1));
-
-        var center = canvas.PixelAt(300, 500);
-        Assert.True(center.R > 90 && center.R < 165 && center.A == 255,
-            $"Expected the 2 px stripes to blur to opaque gray, found R={center.R} A={center.A}.");
-        // Blur reads past the brush edge but must not write past it.
-        Assert.Equal(plain.PixelAt(300, 430), canvas.PixelAt(300, 430));
-    }
-
-    [Theory]
-    [InlineData(RedactEffect.Pixelate)]
-    [InlineData(RedactEffect.Blur)]
-    public void Redact_Marks_KeepPhotoColorsInsteadOfPainting(RedactEffect effect)
+    public void Redact_Pixelate_KeepsPhotoColorsInsteadOfPainting()
     {
         using var photo = new MagickImage(new MagickColor(200, 30, 30, 255), 600, 1000);
-        using var canvas = RenderSlot(photo, DiagonalMark(effect, 0.1));
+        using var canvas = RenderSlot(photo, DiagonalMark(0.1));
 
         var center = canvas.PixelAt(300, 500);
         Assert.True(Math.Abs(center.R - 200) < 3 && Math.Abs(center.G - 30) < 3 && Math.Abs(center.B - 30) < 3,
-            $"A {effect} mark over a flat color must leave that color, found R={center.R} G={center.G} B={center.B}.");
-    }
-
-    [Fact]
-    public void Redact_Clone_KeepsEffect()
-    {
-        var stroke = new RedactStroke { Effect = RedactEffect.Blur };
-        stroke.AddPoint(new System.Windows.Point(0.2, 0.3));
-
-        Assert.Equal(RedactEffect.Pixelate, new RedactStroke().Effect);
-        Assert.Equal(RedactEffect.Blur, stroke.Clone().Effect);
-        Assert.Equal(RedactEffect.Blur, new ImageCropSettings { RedactStrokes = [stroke] }.Clone().RedactStrokes[0].Effect);
+            $"A pixelate mark over a flat color must leave that color, found R={center.R} G={center.G} B={center.B}.");
     }
 
     [Fact]
@@ -141,7 +115,7 @@ public class RedactTests
             Assert.IsType<ImageBatchItem.SoloImage>(branded.SourceBatchItem);
 
             var settings = new ImageCropSettings();
-            settings.RedactStrokes.Add(DiagonalMark(RedactEffect.Pixelate, 0.1));
+            settings.RedactStrokes.Add(DiagonalMark(0.1));
             await service.RebrandImageAsync(branded, settings, new ImageCropSettings(), overlay);
 
             // Rebrand must keep the mark: the stripes under it become one flat gray cell.
@@ -190,13 +164,13 @@ public class RedactTests
 
         crop.Reset();
 
-        // Reset is framing-only; silently dropping blur marks would un-hide private details.
+        // Reset is framing-only; silently dropping pixelate marks would un-hide private details.
         Assert.True(crop.IsDefault);
         Assert.True(crop.HasRedactions);
         Assert.Single(crop.RedactStrokes);
     }
 
-    /// <summary>White photo with 2 px black stripes every 4 px: detail any pixelate or blur must remove.</summary>
+    /// <summary>White photo with 2 px black stripes every 4 px: detail pixelation must remove.</summary>
     private static MagickImage Stripes(uint width, uint height)
     {
         var image = new MagickImage(MagickColors.White, width, height);
@@ -211,9 +185,9 @@ public class RedactTests
     }
 
     /// <summary>A mark from 45% to 55% of the photo on both axes.</summary>
-    private static RedactStroke DiagonalMark(RedactEffect effect, double brushSize)
+    private static RedactStroke DiagonalMark(double brushSize)
     {
-        var stroke = new RedactStroke { Effect = effect, BrushSizeNormalized = brushSize };
+        var stroke = new RedactStroke { BrushSizeNormalized = brushSize };
         stroke.AddPoint(new System.Windows.Point(0.45, 0.45));
         stroke.AddPoint(new System.Windows.Point(0.55, 0.55));
         return stroke;

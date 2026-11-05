@@ -213,7 +213,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtle}"/>
         </Style>
 
-        <!-- Small Action Toggle Button Style: segmented mode toggles and radios (PAN/PIXELATE/BLUR, LEFT/RIGHT PHOTO,
+        <!-- Small Action Toggle Button Style: segmented mode toggles and radios (PAN/PIXELATE, LEFT/RIGHT PHOTO,
              COMBINE/KEEP SEPARATE). Checked mirrors the DarkComboBoxItem "selected" idiom and adds a bold
              weight so the state never relies on colour alone. -->
         <Style x:Key="SmallActionToggleButton" TargetType="ToggleButton">

@@ -23,7 +23,7 @@ for number in range(1, 17):
 
 toc_page = next(i for i, t in enumerate(pages) if "table of contents" in t.lower())
 for index, text in enumerate(pages):
-    if index > toc_page and "Hiding details with PIXELATE and BLUR" in text:
+    if index > toc_page and "Hiding details with PIXELATE" in text:
         targets["ch7pen"] = index + 1
         break
 

@@ -82,7 +82,7 @@ final class StudioModel: ObservableObject {
         guard !isBusy, let urls = Dialogs.openMedia() else { return }
         if hasStagedEdits && !Dialogs.confirm(
             "Discard edits?",
-            "Replace the \(staged.count) selected items? Their crop, blur and pairing edits will be lost. Use ADD MORE to keep them.",
+            "Replace the \(staged.count) selected items? Their crop, pixelate and pairing edits will be lost. Use ADD MORE to keep them.",
             action: "Replace") { return }
         Task { await loadFiles(urls) }
     }
@@ -139,7 +139,7 @@ final class StudioModel: ObservableObject {
         guard !isBusy, !staged.isEmpty else { return }
         if hasStagedEdits && !Dialogs.confirm(
             "Discard edits?",
-            "Remove all \(staged.count) selected items? Their crop, blur and pairing edits will be lost.",
+            "Remove all \(staged.count) selected items? Their crop, pixelate and pairing edits will be lost.",
             action: "Remove All") { return }
         let count = staged.count
         setStaged([])

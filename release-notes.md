@@ -1,3 +1,9 @@
+## Alpha Premier Property Branding Studio v2.7.0
+
+### Fixes & Improvements
+- **PIXELATE only**: BLUR is removed from the crop editor. PIXELATE is now the one tool for hiding phone numbers, house numbers, plates and faces, on Windows and Mac.
+- **User manual**: the PDF manual and the README screenshot now show the PIXELATE tool.
+
 ## Alpha Premier Property Branding Studio v2.6.0
 
 ### New Features

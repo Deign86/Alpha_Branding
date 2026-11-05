@@ -9,8 +9,7 @@ struct CropEditorView: View {
     @State private var left: CropSettings
     @State private var right: CropSettings
     @State private var isLeftSlot = true
-    /// The active mark tool; nil is PAN.
-    @State private var tool: RedactEffect?
+    @State private var pixelateMode = false
     @State private var brushSize = 40.0
     @State private var leftImage: CGImage?
     @State private var rightImage: CGImage?
@@ -102,18 +101,16 @@ struct CropEditorView: View {
 
             HStack(spacing: 10) {
                 FieldLabel("MODE:")
-                Button("PAN") { finishStroke(); tool = nil }.studioButton(selected: tool == nil)
-                Button("PIXELATE") { finishStroke(); tool = .pixelate }.studioButton(selected: tool == .pixelate)
-                    .help("Drag over phone numbers, signs or plates to pixelate them")
-                Button("BLUR") { finishStroke(); tool = .blur }.studioButton(selected: tool == .blur)
-                    .help("Drag over faces or details to blur them")
+                Button("PAN") { finishStroke(); pixelateMode = false }.studioButton(selected: !pixelateMode)
+                Button("PIXELATE") { pixelateMode = true }.studioButton(selected: pixelateMode)
+                    .help("Drag over phone numbers, signs, plates or faces to pixelate them")
                 FieldLabel("SIZE").padding(.leading, 8)
                 Slider(value: $brushSize, in: 10...120).frame(width: 120).tint(Theme.gold)
-                    .help("Brush size. A bigger brush also pixelates and blurs more strongly.")
+                    .help("Brush size. A bigger brush also makes bigger squares.")
                 Button("UNDO MARK") { undoStroke() }.studioButton().disabled(crop.strokes.isEmpty && clearedStrokes?.isLeft != isLeftSlot)
                 Button("CLEAR MARKS") { clearStrokes() }.studioButton().disabled(crop.strokes.isEmpty)
                 Spacer()
-                Text(tool == nil ? "Arrow keys nudge • Shift for bigger steps" : "Marks are burned into the export")
+                Text(pixelateMode ? "Pixelate marks are burned into the export" : "Arrow keys nudge • Shift for bigger steps")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.textMuted)
             }
@@ -173,7 +170,7 @@ struct CropEditorView: View {
                     photo.draw(Image(decorative: image, scale: 1),
                                in: CGRect(x: -width / 2, y: -height / 2, width: width, height: height))
                 } else {
-                    // Marks preview through the export renderer, so pixelation and blur look exactly as exported.
+                    // Marks preview through the export renderer, so pixelation looks exactly as exported.
                     let rendered = markedPreview.render(image, crop: marked, width: targetWidth, height: targetHeight)
                     context.draw(Image(decorative: rendered, scale: 1),
                                  in: CGRect(x: 0, y: 0, width: targetWidth, height: targetHeight))
@@ -203,7 +200,7 @@ struct CropEditorView: View {
         .onContinuousHover { phase in
             if case .active = phase {
                 isHovering = true
-                (tool == nil ? NSCursor.openHand : NSCursor.crosshair).set()
+                (pixelateMode ? NSCursor.crosshair : NSCursor.openHand).set()
             } else {
                 isHovering = false
                 NSCursor.arrow.set()
@@ -213,8 +210,8 @@ struct CropEditorView: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
                     let start = toTarget(value.startLocation), current = toTarget(value.location)
-                    if let tool {
-                        addMarkPoint(current, startingAt: start, effect: tool)
+                    if pixelateMode {
+                        addMarkPoint(current, startingAt: start)
                     } else {
                         if dragStartPan == nil { dragStartPan = CGPoint(x: crop.panX, y: crop.panY) }
                         let origin = dragStartPan!
@@ -273,11 +270,10 @@ struct CropEditorView: View {
         }
     }
 
-    private func addMarkPoint(_ point: CGPoint, startingAt start: CGPoint, effect: RedactEffect) {
+    private func addMarkPoint(_ point: CGPoint, startingAt start: CGPoint) {
         guard let framing else { return }
         if activeStroke == nil {
-            activeStroke = RedactStroke(brushSizeNormalized: framing.brushSizeNormalized(forTargetWidth: brushSize),
-                                        effect: effect)
+            activeStroke = RedactStroke(brushSizeNormalized: framing.brushSizeNormalized(forTargetWidth: brushSize))
             activeStroke?.add(framing.normalizedPoint(fromTarget: start))
         }
         let normalized = framing.normalizedPoint(fromTarget: point)
@@ -328,8 +324,8 @@ struct CropEditorView: View {
                 undoStroke()
                 return nil
             }
-            if event.keyCode == 53 && tool != nil {
-                tool = nil
+            if event.keyCode == 53 && pixelateMode {
+                pixelateMode = false
                 return nil
             }
             let step = flags.contains(.shift) ? 50.0 : 10.0
