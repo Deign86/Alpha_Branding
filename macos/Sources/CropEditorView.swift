@@ -9,8 +9,9 @@ struct CropEditorView: View {
     @State private var left: CropSettings
     @State private var right: CropSettings
     @State private var isLeftSlot = true
-    @State private var penMode = false
-    @State private var penSize = 12.0
+    /// The active mark tool; nil is PAN.
+    @State private var tool: RedactEffect?
+    @State private var brushSize = 40.0
     @State private var leftImage: CGImage?
     @State private var rightImage: CGImage?
     @State private var overlay: CGImage?
@@ -20,6 +21,7 @@ struct CropEditorView: View {
     @State private var clearedStrokes: (isLeft: Bool, strokes: [RedactStroke])?
     @State private var isHovering = false
     @State private var eventMonitor: Any?
+    @State private var markedPreview = MarkedPreview()
 
     init(request: CropRequest, onSave: @escaping (CropSettings, CropSettings) -> Void) {
         self.request = request
@@ -100,22 +102,25 @@ struct CropEditorView: View {
 
             HStack(spacing: 10) {
                 FieldLabel("MODE:")
-                Button("PAN") { finishStroke(); penMode = false }.studioButton(selected: !penMode)
-                Button("PEN") { penMode = true }.studioButton(selected: penMode)
-                    .help("Paint over private details such as faces, plates or house numbers")
-                FieldLabel("PEN SIZE").padding(.leading, 8)
-                Slider(value: $penSize, in: 2...60).frame(width: 120).tint(Theme.gold)
+                Button("PAN") { finishStroke(); tool = nil }.studioButton(selected: tool == nil)
+                Button("PIXELATE") { finishStroke(); tool = .pixelate }.studioButton(selected: tool == .pixelate)
+                    .help("Drag over phone numbers, signs or plates to pixelate them")
+                Button("BLUR") { finishStroke(); tool = .blur }.studioButton(selected: tool == .blur)
+                    .help("Drag over faces or details to blur them")
+                FieldLabel("SIZE").padding(.leading, 8)
+                Slider(value: $brushSize, in: 10...120).frame(width: 120).tint(Theme.gold)
+                    .help("Brush size. A bigger brush also pixelates and blurs more strongly.")
                 Button("UNDO MARK") { undoStroke() }.studioButton().disabled(crop.strokes.isEmpty && clearedStrokes?.isLeft != isLeftSlot)
                 Button("CLEAR MARKS") { clearStrokes() }.studioButton().disabled(crop.strokes.isEmpty)
                 Spacer()
-                Text(penMode ? "Pen marks are burned into the export" : "Arrow keys nudge • Shift for bigger steps")
+                Text(tool == nil ? "Arrow keys nudge • Shift for bigger steps" : "Marks are burned into the export")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.textMuted)
             }
             .panel(padding: 12)
 
             HStack {
-                Text("Esc cancels • Return saves • ⌘Z undoes the last pen mark")
+                Text("Esc cancels • Return saves • ⌘Z undoes the last mark")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.textMuted)
                 Spacer()
@@ -157,24 +162,21 @@ struct CropEditorView: View {
             context.scaleBy(x: scale, y: scale)
 
             if let image, let framing {
-                var photo = context
-                let rect = framing.photoRect
-                let width = CGFloat(image.width) * framing.scale, height = CGFloat(image.height) * framing.scale
-                photo.translateBy(x: rect.midX, y: rect.midY)
-                photo.rotate(by: .degrees(Double(crop.rotation)))
-                photo.draw(Image(decorative: image, scale: 1),
-                           in: CGRect(x: -width / 2, y: -height / 2, width: width, height: height))
-
-                for stroke in crop.strokes + (activeStroke.map { [$0] } ?? []) where !stroke.points.isEmpty {
-                    let points = stroke.points.map(framing.targetPoint)
-                    var path = Path()
-                    path.move(to: points[0])
-                    for point in points.dropFirst() { path.addLine(to: point) }
-                    if points.count == 1 { path.addLine(to: points[0]) }
-                    context.stroke(path,
-                                   with: .color(Color(.sRGB, red: Double(stroke.red) / 255, green: Double(stroke.green) / 255,
-                                                      blue: Double(stroke.blue) / 255)),
-                                   style: StrokeStyle(lineWidth: framing.strokeWidth(stroke), lineCap: .round, lineJoin: .round))
+                var marked = crop
+                marked.strokes += activeStroke.map { [$0] } ?? []
+                if marked.strokes.isEmpty {
+                    var photo = context
+                    let rect = framing.photoRect
+                    let width = CGFloat(image.width) * framing.scale, height = CGFloat(image.height) * framing.scale
+                    photo.translateBy(x: rect.midX, y: rect.midY)
+                    photo.rotate(by: .degrees(Double(crop.rotation)))
+                    photo.draw(Image(decorative: image, scale: 1),
+                               in: CGRect(x: -width / 2, y: -height / 2, width: width, height: height))
+                } else {
+                    // Marks preview through the export renderer, so pixelation and blur look exactly as exported.
+                    let rendered = markedPreview.render(image, crop: marked, width: targetWidth, height: targetHeight)
+                    context.draw(Image(decorative: rendered, scale: 1),
+                                 in: CGRect(x: 0, y: 0, width: targetWidth, height: targetHeight))
                 }
             }
 
@@ -201,7 +203,7 @@ struct CropEditorView: View {
         .onContinuousHover { phase in
             if case .active = phase {
                 isHovering = true
-                (penMode ? NSCursor.crosshair : NSCursor.openHand).set()
+                (tool == nil ? NSCursor.openHand : NSCursor.crosshair).set()
             } else {
                 isHovering = false
                 NSCursor.arrow.set()
@@ -211,8 +213,8 @@ struct CropEditorView: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
                     let start = toTarget(value.startLocation), current = toTarget(value.location)
-                    if penMode {
-                        addPenPoint(current, startingAt: start)
+                    if let tool {
+                        addMarkPoint(current, startingAt: start, effect: tool)
                     } else {
                         if dragStartPan == nil { dragStartPan = CGPoint(x: crop.panX, y: crop.panY) }
                         let origin = dragStartPan!
@@ -271,10 +273,11 @@ struct CropEditorView: View {
         }
     }
 
-    private func addPenPoint(_ point: CGPoint, startingAt start: CGPoint) {
+    private func addMarkPoint(_ point: CGPoint, startingAt start: CGPoint, effect: RedactEffect) {
         guard let framing else { return }
         if activeStroke == nil {
-            activeStroke = RedactStroke(brushSizeNormalized: framing.brushSizeNormalized(forTargetWidth: penSize))
+            activeStroke = RedactStroke(brushSizeNormalized: framing.brushSizeNormalized(forTargetWidth: brushSize),
+                                        effect: effect)
             activeStroke?.add(framing.normalizedPoint(fromTarget: start))
         }
         let normalized = framing.normalizedPoint(fromTarget: point)
@@ -309,7 +312,7 @@ struct CropEditorView: View {
         mutate { $0.strokes.removeAll() }
     }
 
-    /// Mouse-wheel zoom over the canvas, arrow-key nudging, ⌘Z and Esc-to-leave-pen-mode.
+    /// Mouse-wheel zoom over the canvas, arrow-key nudging, ⌘Z and Esc back to PAN.
     private func installEventMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel, .keyDown]) { event in
             if event.type == .scrollWheel {
@@ -325,8 +328,8 @@ struct CropEditorView: View {
                 undoStroke()
                 return nil
             }
-            if event.keyCode == 53 && penMode {
-                penMode = false
+            if event.keyCode == 53 && tool != nil {
+                tool = nil
                 return nil
             }
             let step = flags.contains(.shift) ? 50.0 : 10.0
@@ -339,5 +342,17 @@ struct CropEditorView: View {
             }
             return nil
         }
+    }
+}
+
+/// Keeps the last marked render, so redraws that change nothing it depends on (hover, slider moves) reuse it.
+private final class MarkedPreview {
+    private var last: (image: CGImage, crop: CropSettings, rendered: CGImage)?
+
+    func render(_ image: CGImage, crop: CropSettings, width: Int, height: Int) -> CGImage {
+        if let last, last.image === image, last.crop == crop { return last.rendered }
+        let rendered = ImageEngine.renderPhoto(image, width: width, height: height, crop: crop)
+        last = (image, crop, rendered)
+        return rendered
     }
 }

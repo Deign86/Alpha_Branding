@@ -326,7 +326,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>Empties the staged selection. Staged items are rebuilt from scratch on the next load,
-    /// so their crops, pen marks and pairs go with them; the caller confirms first when <see cref="HasStagedEdits"/>.</summary>
+    /// so their crops, blur marks and pairs go with them; the caller confirms first when <see cref="HasStagedEdits"/>.</summary>
     public void ClearSelectedPhotos()
     {
         if (IsBusy || SelectedFiles.Count == 0) return;
@@ -737,7 +737,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public async Task ResetBrandedImageCropAsync(BrandedImage image, CancellationToken token = default)
     {
         if (!image.CanEdit) return;
-        // Reset framing only; pen marks stay, matching ImageCropSettings.Reset.
+        // Reset framing only; blur marks stay, matching ImageCropSettings.Reset.
         var defaultCrop = new ImageCropSettings { RedactStrokes = image.CropSettings?.RedactStrokes ?? [] };
         var defaultRight = image.RightCropSettings is { } right ? new ImageCropSettings { RedactStrokes = right.RedactStrokes } : null;
         await UpdateBrandedImageCropAsync(image, defaultCrop, defaultRight, token);

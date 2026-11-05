@@ -164,7 +164,7 @@
     <li><span class="n">5</span>Adding and managing media<span class="dots"></span><span class="pg" data-toc="ch5"></span></li>
     <li><span class="n">6</span>Photo layouts and pairing<span class="dots"></span><span class="pg" data-toc="ch6"></span></li>
     <li><span class="n">7</span>The Crop &amp; Alignment Editor<span class="dots"></span><span class="pg" data-toc="ch7"></span></li>
-    <li class="sub">Hiding details with the PEN tool<span class="dots"></span><span class="pg" data-toc="ch7pen"></span></li>
+    <li class="sub">Hiding details with PIXELATE and BLUR<span class="dots"></span><span class="pg" data-toc="ch7pen"></span></li>
     <li><span class="n">8</span>File names and branding templates<span class="dots"></span><span class="pg" data-toc="ch8"></span></li>
     <li><span class="n">9</span>Applying branding<span class="dots"></span><span class="pg" data-toc="ch9"></span></li>
     <li><span class="n">10</span>Reviewing and fixing results<span class="dots"></span><span class="pg" data-toc="ch10"></span></li>
@@ -189,7 +189,7 @@
     <li><b>Brand photos and videos in batches.</b> Add many files at once and process them with one click.</li>
     <li><b>Combine portrait photos.</b> Two tall photos are placed side by side in one frame, so nothing is stretched or squashed.</li>
     <li><b>Adjust framing before or after branding.</b> Pan, zoom, rotate, fit, or fill each photo behind the frame.</li>
-    <li><b>Hide private details.</b> Draw over house numbers, plates, family photos, or documents with the PEN tool.</li>
+    <li><b>Hide private details.</b> Pixelate or blur phone numbers on tarps and signs, house numbers, plates, family photos, or documents.</li>
     <li><b>Name files consistently.</b> Output files are numbered automatically, for example <code>Maple_Street_128_01.jpg</code>.</li>
     <li><b>Export in one step.</b> Save everything as one ZIP file or as separate files in a folder.</li>
     <li><b>Use other templates.</b> Import extra frame images and switch between them.</li>
@@ -349,7 +349,7 @@
   <h2>Add media</h2>
   <p>Use any of these methods:</p>
   <ul>
-    <li>Select <span class="ui">SELECT MEDIA</span> or press <kbd>Ctrl</kbd> + <kbd>O</kbd>. Hold <kbd>Ctrl</kbd> to choose several files. This starts a new selection; if your staged photos have crops, PEN marks, pairs, or SOLO settings, the app asks before replacing them.</li>
+    <li>Select <span class="ui">SELECT MEDIA</span> or press <kbd>Ctrl</kbd> + <kbd>O</kbd>. Hold <kbd>Ctrl</kbd> to choose several files. This starts a new selection; if your staged photos have crops, blur marks, pairs, or SOLO settings, the app asks before replacing them.</li>
     <li>Drag files from File Explorer and drop them on the window. A message reads <b>DROP VIDEOS &amp; PHOTOS HERE TO IMPORT</b>. Dropping onto photos you have already staged <b>adds</b> the new files; it does not replace them.</li>
     <li>Select <span class="ui">ADD MORE</span> to add files to the photos you already have. Files that are already staged are not added twice.</li>
   </ul>
@@ -380,15 +380,15 @@
     <tr><td><span class="num">1</span></td><td><span class="ui">SELECTED MEDIA</span></td><td>Number of staged items.</td></tr>
     <tr><td><span class="num">2</span></td><td><span class="ui">COMBINE IMAGES</span></td><td>Pairs portrait photos automatically (default). The active layout is shown in gold. Chapter 6.</td></tr>
     <tr><td><span class="num">3</span></td><td><span class="ui">KEEP SEPARATE</span></td><td>Brands every photo on its own. Chapter 6.</td></tr>
-    <tr><td><span class="num">4</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Resets pan, zoom, and rotation on every staged photo. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Resets pan, zoom, and rotation on every staged photo. Blur marks are kept.</td></tr>
     <tr><td><span class="num">5</span></td><td><span class="ui">ADD MORE</span></td><td>Adds files to the current selection.</td></tr>
-    <tr><td><span class="num">6</span></td><td><span class="ui">CLEAR ALL</span></td><td>Removes every staged photo and video. If any have crops, PEN marks, pairs, or SOLO settings, the app asks first because those edits are lost. Your original files are not deleted.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">CLEAR ALL</span></td><td>Removes every staged photo and video. If any have crops, blur marks, pairs, or SOLO settings, the app asks first because those edits are lost. Your original files are not deleted.</td></tr>
     <tr><td><span class="num">7</span></td><td>Crop badge</td><td>Shows that the photo has a custom crop and its zoom level, for example <b>CROPPED (125%)</b>. Videos show a <b>▶ VIDEO</b> badge with their length instead.</td></tr>
     <tr><td><span class="num">8</span></td><td><span class="ui">EDIT CROP</span></td><td>Opens the Crop &amp; Alignment Editor for this photo. Chapter 7.</td></tr>
     <tr><td><span class="num">9</span></td><td><span class="ui">SOLO</span></td><td>Keeps this photo as its own branded image instead of pairing it. Gold means SOLO is on; select again to turn it off.</td></tr>
     <tr><td><span class="num">10</span></td><td><span class="ui">PAIR</span></td><td>Pairs this photo with the next available photo. Faded while SOLO is on.</td></tr>
     <tr><td><span class="num">11</span></td><td><span class="ui">UNPAIR</span> and <b>Paired with</b></td><td>Replaces <span class="ui">PAIR</span> on paired photos. The line below names the partner photo. <span class="ui">UNPAIR</span> returns both photos to automatic layout.</td></tr>
-    <tr><td><span class="num">12</span></td><td><span class="ui">RESET</span></td><td>Appears on cropped photos. Resets pan, zoom, and rotation. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">12</span></td><td><span class="ui">RESET</span></td><td>Appears on cropped photos. Resets pan, zoom, and rotation. Blur marks are kept.</td></tr>
     <tr><td><span class="num">13</span></td><td><span class="ui">REMOVE FROM SELECTION</span></td><td>Takes this item out of the selection. The original file is not deleted.</td></tr>
   </table>
   <div class="box note"><b class="t">Note</b><p>Videos cannot be cropped, paired, or set to SOLO. Their cards show only <span class="ui">REMOVE FROM SELECTION</span>.</p></div>
@@ -467,13 +467,13 @@
     <tr><td><span class="num">1</span></td><td>Output size</td><td>The final size of this image: 1200 × 1000 px, or 600 × 1000 px for each half of a pair.</td></tr>
     <tr><td><span class="num">2</span></td><td>Canvas</td><td>Drag the photo to move it, or click it and use the arrow keys. Scroll the mouse wheel to zoom. Faint guide lines divide the frame into thirds.</td></tr>
     <tr><td><span class="num">3</span></td><td><span class="ui">PAN</span></td><td>Normal mode (gold when active). Dragging moves the photo.</td></tr>
-    <tr><td><span class="num">4</span></td><td><span class="ui">PEN</span></td><td>Drawing mode for hiding details. See the next section.</td></tr>
-    <tr><td><span class="num">5</span></td><td><span class="ui">SIZE</span></td><td>Pen size for PEN mode.</td></tr>
-    <tr><td><span class="num">6</span></td><td><span class="ui">UNDO</span> / <span class="ui">CLEAR MARKS</span></td><td>Remove the last pen mark, or all pen marks on this photo.</td></tr>
+    <tr><td><span class="num">4</span></td><td><span class="ui">PIXELATE</span> / <span class="ui">BLUR</span></td><td>Brush modes for hiding details. See the next section.</td></tr>
+    <tr><td><span class="num">5</span></td><td><span class="ui">SIZE</span></td><td>Brush size for PIXELATE and BLUR. A bigger brush also hides more strongly.</td></tr>
+    <tr><td><span class="num">6</span></td><td><span class="ui">UNDO</span> / <span class="ui">CLEAR MARKS</span></td><td>Remove the last mark, or all marks on this photo.</td></tr>
     <tr><td><span class="num">7</span></td><td><span class="ui">ZOOM</span></td><td><span class="ui">−</span> and <span class="ui">+</span> change zoom by 10%; the slider covers 20% to 400%. The box shows the current level.</td></tr>
     <tr><td><span class="num">8</span></td><td><span class="ui">FIT TO FRAME</span> / <span class="ui">FILL FRAME</span></td><td>Fit shows the whole photo with no cropping. Fill covers the whole frame and crops the edges evenly.</td></tr>
     <tr><td><span class="num">9</span></td><td><span class="ui">ROTATE 90°</span></td><td>Turns the photo a quarter turn clockwise. Use it for sideways photos.</td></tr>
-    <tr><td><span class="num">10</span></td><td><span class="ui">RESET CROP</span></td><td>Returns pan, zoom, and rotation to the default. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">10</span></td><td><span class="ui">RESET CROP</span></td><td>Returns pan, zoom, and rotation to the default. Blur marks are kept.</td></tr>
     <tr><td><span class="num">11</span></td><td><span class="ui">OFFSET</span></td><td>How far the photo has been moved, in pixels, with a hint for the current mode.</td></tr>
     <tr><td><span class="num">12</span></td><td><span class="ui">CANCEL</span> / <span class="ui">SAVE CHANGES</span></td><td>Cancel (<kbd>Esc</kbd>) closes without changes. Save (<kbd>Enter</kbd>) keeps your changes.</td></tr>
   </table>
@@ -489,7 +489,7 @@
   </ol>
 
   <h2>Edit a combined pair</h2>
-  <p>When you edit a combined result, the editor shows <span class="ui">LEFT PHOTO</span> and <span class="ui">RIGHT PHOTO</span> at the top. Select one to adjust it. Each half has its own zoom, position, rotation, and PEN marks.</p>
+  <p>When you edit a combined result, the editor shows <span class="ui">LEFT PHOTO</span> and <span class="ui">RIGHT PHOTO</span> at the top. Select one to adjust it. Each half has its own zoom, position, rotation, and blur marks.</p>
   <figure class="narrow">
     <div class="shotwrap">
       <img src="images/06_crop_editor_pair.png" alt="Editor showing left and right photo selector">
@@ -500,29 +500,29 @@
 </section>
 
 <section class="keep" id="ch7pen" style="break-before: page;">
-  <h2 style="margin-top:0">Hiding details with the PEN tool</h2>
-  <p>Use PEN to paint solid marks over things that should not appear in a public listing, such as house numbers, car plates, family photos, mail, or documents. The marks are permanent in the exported image.</p>
+  <h2 style="margin-top:0">Hiding details with PIXELATE and BLUR</h2>
+  <p>Use PIXELATE or BLUR to hide things that should not appear in a public listing, such as the owner's phone number on a tarp or sign, house numbers, car plates, faces in family photos, mail, or documents. PIXELATE turns the area into large squares and is best for text and numbers. BLUR softens it and suits faces. The marks are permanent in the exported image.</p>
   <figure class="w80" style="width:70%">
     <div class="shotwrap">
-      <img src="images/07_crop_editor_pen.png" alt="PEN mode with a house number covered">
+      <img src="images/07_crop_editor_pixelate.png" alt="PIXELATE mode with a house number hidden">
       <span class="pin" style="left:9.1%;top:77.3%">1</span>
       <span class="pin" style="left:17.3%;top:78%">2</span>
       <span class="pin" style="left:32%;top:77.3%">3</span>
       <span class="pin" style="left:54.6%;top:42.8%">4</span>
     </div>
-    <figcaption><b>Figure 7-3.</b> PEN mode is on <span class="num">1</span>, the pen size is set with <span class="num">2</span>, and the house number has been covered <span class="num">4</span>. <span class="num">3</span> undoes or clears marks.</figcaption>
+    <figcaption><b>Figure 7-3.</b> PIXELATE mode is on <span class="num">1</span>, the brush size is set with <span class="num">2</span>, and the house number has been pixelated <span class="num">4</span>. <span class="num">3</span> undoes or clears marks.</figcaption>
   </figure>
   <ol class="steps">
-    <li>In the editor, select <span class="ui">PEN</span>. The button turns gold.</li>
-    <li>Drag the <span class="ui">SIZE</span> slider. Left is a fine line; right is a thick pen.</li>
-    <li>Click and drag over the area to hide. Draw several strokes until it is fully covered.</li>
+    <li>In the editor, select <span class="ui">PIXELATE</span> or <span class="ui">BLUR</span>. The button turns gold.</li>
+    <li>Drag the <span class="ui">SIZE</span> slider until the brush is about as tall as the text to hide. A bigger brush also pixelates or blurs more strongly.</li>
+    <li>Click and drag over the area to hide. The preview shows it as it will be exported.</li>
     <li>To remove the last stroke, select <span class="ui">UNDO</span> or press <kbd>Ctrl</kbd> + <kbd>Z</kbd>. To remove all marks on this photo, select <span class="ui">CLEAR MARKS</span>; <span class="ui">UNDO</span> brings them back if you change your mind.</li>
     <li>Select <span class="ui">PAN</span> (or press <kbd>Esc</kbd>) to go back to moving the photo.</li>
     <li>Select <span class="ui">SAVE CHANGES</span>.</li>
   </ol>
-  <div class="box note"><b class="t">Note</b><p>PEN marks stay attached to the photo. They move, zoom, and rotate with it, and they are kept when you rebrand a result or reset its crop. In a pair, marks belong to the half that was selected when you drew them.</p></div>
-  <div class="box warn"><b class="t">Caution</b><p>Only <span class="ui">UNDO</span> and <span class="ui">CLEAR MARKS</span> remove PEN marks; <span class="ui">RESET</span> and <span class="ui">RESET ALL CROPS</span> keep them. Removing a photo from the selection, or <span class="ui">CLEAR ALL</span>, discards its marks. Check sensitive photos again before you export.</p></div>
-  <div class="box tip"><b class="t">Tip</b><p>In PEN mode, the first press of <kbd>Esc</kbd> returns to PAN mode. A second press of <kbd>Esc</kbd> closes the editor without saving.</p></div>
+  <div class="box note"><b class="t">Note</b><p>Blur marks stay attached to the photo. They move, zoom, and rotate with it, and they are kept when you rebrand a result or reset its crop. In a pair, marks belong to the half that was selected when you drew them.</p></div>
+  <div class="box warn"><b class="t">Caution</b><p>Only <span class="ui">UNDO</span> and <span class="ui">CLEAR MARKS</span> remove blur marks; <span class="ui">RESET</span> and <span class="ui">RESET ALL CROPS</span> keep them. Removing a photo from the selection, or <span class="ui">CLEAR ALL</span>, discards its marks. Before you export, check that text under each mark can no longer be read; if it can, go over it again with a bigger brush.</p></div>
+  <div class="box tip"><b class="t">Tip</b><p>In PIXELATE or BLUR mode, the first press of <kbd>Esc</kbd> returns to PAN mode. A second press of <kbd>Esc</kbd> closes the editor without saving.</p></div>
 </section>
 
 <!-- ============ 8 NAMES & TEMPLATES ============ -->
@@ -609,7 +609,7 @@
   <table class="legend">
     <tr><th>#</th><th style="width:44mm">Item</th><th>What it does</th></tr>
     <tr><td><span class="num">1</span></td><td><span class="ui">BRANDED ASSETS</span></td><td>Number of finished items.</td></tr>
-    <tr><td><span class="num">2</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Rebrands every result with default pan, zoom, and rotation. PEN marks are kept.</td></tr>
+    <tr><td><span class="num">2</span></td><td><span class="ui">RESET ALL CROPS</span></td><td>Rebrands every result with default pan, zoom, and rotation. Blur marks are kept.</td></tr>
     <tr><td><span class="num">3</span></td><td><span class="ui">CLEAR ALL</span></td><td>Removes every branded result and the selection, and returns to the start screen. The app first offers to save them as a ZIP file (Chapter 12).</td></tr>
     <tr><td><span class="num">4</span></td><td><span class="ui">PREVIEW</span></td><td>Opens the result full size.</td></tr>
     <tr><td><span class="num">5</span></td><td><span class="ui">SAVE</span></td><td>Saves this one result to a location you choose.</td></tr>
@@ -638,7 +638,7 @@
   <h2>Fix a result without starting over</h2>
   <ol class="steps">
     <li>Select <span class="ui">EDIT CROP</span> on the result card or in the Preview window.</li>
-    <li>Adjust the framing or add PEN marks, then select <span class="ui">SAVE CHANGES</span>.</li>
+    <li>Adjust the framing or add PIXELATE or BLUR marks, then select <span class="ui">SAVE CHANGES</span>.</li>
     <li>Only that result is rebranded. Its name and position in the batch do not change.</li>
   </ol>
 </section>
@@ -762,10 +762,10 @@
     <tr><th style="width:55mm">Shortcut</th><th>Action</th></tr>
     <tr><td>Mouse wheel</td><td>Zoom in or out</td></tr>
     <tr><td>Click and drag (PAN mode)</td><td>Move the photo</td></tr>
-    <tr><td>Click and drag (PEN mode)</td><td>Draw a mark</td></tr>
+    <tr><td>Click and drag (PIXELATE or BLUR mode)</td><td>Hide the area under the brush</td></tr>
     <tr><td>Arrow keys (photo selected)</td><td>Move the photo; hold <kbd>Shift</kbd> for bigger steps</td></tr>
-    <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last PEN mark, or undo CLEAR MARKS</td></tr>
-    <tr><td><kbd>Esc</kbd></td><td>Leave PEN mode; press again to cancel and close</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last mark, or undo CLEAR MARKS</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Leave PIXELATE or BLUR mode; press again to cancel and close</td></tr>
     <tr><td><kbd>Enter</kbd></td><td>Save changes</td></tr>
   </table>
   <h2>Preview window</h2>
@@ -808,7 +808,7 @@
   <p>No. Results are not kept after the app closes. Export your results before closing; the app reminds you if you forget.</p>
   <h3>Why did four photos give me three results?</h3>
   <p>Two portrait photos were combined into one frame. Select <span class="ui">KEEP SEPARATE</span> if you want one result per photo.</p>
-  <h3>Can I remove PEN marks after exporting?</h3>
+  <h3>Can I remove blur marks after exporting?</h3>
   <p>Not from the exported file. While the session is still open, select <span class="ui">EDIT CROP</span> on the result, select <span class="ui">CLEAR MARKS</span>, save, and export again.</p>
   <h3>Where do I get help?</h3>
   <p>Contact your office IT administrator. Releases and release notes are listed at <code>github.com/Deign86/Alpha_Branding/releases</code>.</p>
@@ -846,7 +846,7 @@
     <tr><td>Portrait / landscape</td><td>A photo that is taller than it is wide / wider than it is tall.</td></tr>
     <tr><td>Pan</td><td>Moving the photo inside the frame.</td></tr>
     <tr><td>Fit / Fill</td><td>Show the whole photo / cover the whole frame.</td></tr>
-    <tr><td>PEN (redaction)</td><td>Painting solid marks to hide details in a photo.</td></tr>
+    <tr><td>Blur marks</td><td>PIXELATE and BLUR brush marks that hide details in a photo.</td></tr>
     <tr><td>Prefix</td><td>The text at the start of every output file name.</td></tr>
   </table>
 </section>

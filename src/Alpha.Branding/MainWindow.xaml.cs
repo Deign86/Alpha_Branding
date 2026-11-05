@@ -241,7 +241,7 @@ public partial class MainWindow : Window
         _ = LoadFilesAsync(filePaths);
     }
 
-    /// <summary>Yes/No guard for actions that drop staged crops, pen marks or pairs. Defaults to No.</summary>
+    /// <summary>Yes/No guard for actions that drop staged crops, blur marks or pairs. Defaults to No.</summary>
     private bool ConfirmDiscardStagedEdits(string message) =>
         MessageBox.Show(this, message, "Discard edits?", MessageBoxButton.YesNo,
             MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
@@ -253,7 +253,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() == true)
         {
             if (_viewModel.HasStagedEdits && !ConfirmDiscardStagedEdits(
-                    $"Replace the {_viewModel.SelectedPhotos.Count} selected items? Their crop, pen and pairing edits will be lost. Use ADD MORE to keep them."))
+                    $"Replace the {_viewModel.SelectedPhotos.Count} selected items? Their crop, blur and pairing edits will be lost. Use ADD MORE to keep them."))
             {
                 return;
             }
@@ -326,7 +326,7 @@ public partial class MainWindow : Window
     {
         if (!_viewModel.CanClear) return;
         if (_viewModel.HasStagedEdits && !ConfirmDiscardStagedEdits(
-                $"Remove all {_viewModel.SelectedPhotos.Count} selected items? Their crop, pen and pairing edits will be lost."))
+                $"Remove all {_viewModel.SelectedPhotos.Count} selected items? Their crop, blur and pairing edits will be lost."))
         {
             return;
         }

@@ -1,4 +1,5 @@
 import AppKit
+import CoreImage
 import ImageIO
 import UniformTypeIdentifiers
 
@@ -13,6 +14,8 @@ enum ImageEngine {
     static let halfWidth = 600
     static let photoExtensions: Set<String> = ["jpg", "jpeg", "jfif", "png", "bmp", "webp", "heic", "heif"]
     static let canvasColor = CGColor(srgbRed: 18 / 255, green: 18 / 255, blue: 18 / 255, alpha: 1)
+    /// Blurs in sRGB values, like ImageMagick on Windows, rather than in linear light.
+    private static let effectContext = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
 
     /// Placement of a photo inside a target frame, in top-left target pixels. Shared by the
     /// renderer and the crop editor so the editor preview matches the exported image exactly.
@@ -162,19 +165,98 @@ enum ImageEngine {
         context.restoreGState()
 
         for stroke in crop.strokes where !stroke.points.isEmpty {
-            let points = stroke.points.map(framing.targetPoint)
-            context.setStrokeColor(CGColor(srgbRed: CGFloat(stroke.red) / 255, green: CGFloat(stroke.green) / 255,
-                                           blue: CGFloat(stroke.blue) / 255, alpha: 1))
-            context.setLineWidth(framing.strokeWidth(stroke))
-            context.setLineCap(.round)
-            context.setLineJoin(.round)
-            context.beginPath()
-            context.move(to: points[0])
-            for point in points.dropFirst() { context.addLine(to: point) }
-            if points.count == 1 { context.addLine(to: points[0]) }
-            context.strokePath()
+            applyRedaction(stroke, framing: framing, to: context, width: width, height: height)
         }
         return context.makeImage()!
+    }
+
+    /// Pixelate cell size, in output pixels, for a mark of the given brush diameter. Strength follows the
+    /// brush, so a mark sized to cover a line of text leaves at most two cells per letter height. Same as Windows.
+    static func redactBlockSize(_ diameter: Double) -> Int { max(4, Int((diameter / 2).rounded())) }
+
+    /// Gaussian blur sigma, in output pixels, for a mark of the given brush diameter.
+    static func redactBlurSigma(_ diameter: Double) -> Double { max(2, diameter / 3) }
+
+    /// Replaces the pixels under one mark with a pixelated or blurred copy of themselves, using the same
+    /// working area and cell grid as the Windows renderer. `context` is flipped to top-left coordinates.
+    static func applyRedaction(_ stroke: RedactStroke, framing: Framing, to context: CGContext, width: Int, height: Int) {
+        let diameter = framing.strokeWidth(stroke)
+        let points = stroke.points.map(framing.targetPoint)
+        let block = redactBlockSize(diameter), sigma = redactBlurSigma(diameter)
+        // Blur reads pixels around the mark, so the working area includes the kernel's reach.
+        let reach = diameter / 2 + (stroke.effect == .blur ? (3 * sigma).rounded(.up) : 0)
+        let xs = points.map { Double($0.x) }, ys = points.map { Double($0.y) }
+        var left = Int((xs.min()! - reach).rounded(.down)), top = Int((ys.min()! - reach).rounded(.down))
+        var right = Int((xs.max()! + reach).rounded(.up)), bottom = Int((ys.max()! + reach).rounded(.up))
+        if stroke.effect == .pixelate {
+            // Cells sit on a grid anchored at the frame's top-left corner.
+            left = Int((Double(left) / Double(block)).rounded(.down)) * block
+            top = Int((Double(top) / Double(block)).rounded(.down)) * block
+            right = Int((Double(right) / Double(block)).rounded(.up)) * block
+            bottom = Int((Double(bottom) / Double(block)).rounded(.up)) * block
+        }
+        left = max(0, left)
+        top = max(0, top)
+        right = min(width, right)
+        bottom = min(height, bottom)
+        guard right > left, bottom > top,
+              let area = context.makeImage()?.cropping(to: CGRect(x: left, y: top, width: right - left, height: bottom - top))
+        else { return }
+
+        let replacement: CGImage?
+        switch stroke.effect {
+        case .pixelate:
+            replacement = averageCells(of: area, columns: (area.width + block - 1) / block, rows: (area.height + block - 1) / block)
+        case .blur:
+            let input = CIImage(cgImage: area)
+            replacement = effectContext.createCGImage(
+                input.clampedToExtent().applyingGaussianBlur(sigma: sigma).cropped(to: input.extent), from: input.extent)
+        }
+        guard let replacement else { return }
+
+        let path = CGMutablePath()
+        path.addLines(between: points.count == 1 ? [points[0], points[0]] : points)
+        context.saveGState()
+        context.addPath(path.copy(strokingWithWidth: CGFloat(diameter), lineCap: .round, lineJoin: .round, miterLimit: 10))
+        context.clip()
+        context.interpolationQuality = stroke.effect == .pixelate ? .none : .high
+        // Images draw upside down in the flipped context; flip back locally.
+        context.translateBy(x: CGFloat(left), y: CGFloat(bottom))
+        context.scaleBy(x: 1, y: -1)
+        context.draw(replacement, in: CGRect(x: 0, y: 0, width: area.width, height: area.height))
+        context.restoreGState()
+    }
+
+    /// Shrinks `image` to one pixel per cell, each the mean of the pixels it covers (a box filter, like
+    /// ImageMagick's Scale on Windows).
+    static func averageCells(of image: CGImage, columns: Int, rows: Int) -> CGImage? {
+        let pixels = makeContext(width: image.width, height: image.height)
+        pixels.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        let cells = makeContext(width: columns, height: rows)
+        guard let source = pixels.data?.assumingMemoryBound(to: UInt8.self),
+              let target = cells.data?.assumingMemoryBound(to: UInt8.self) else { return nil }
+        for row in 0..<rows {
+            for column in 0..<columns {
+                var red = 0, green = 0, blue = 0, alpha = 0, count = 0
+                for y in row * image.height / rows..<(row + 1) * image.height / rows {
+                    for x in column * image.width / columns..<(column + 1) * image.width / columns {
+                        let offset = y * pixels.bytesPerRow + x * 4
+                        red += Int(source[offset])
+                        green += Int(source[offset + 1])
+                        blue += Int(source[offset + 2])
+                        alpha += Int(source[offset + 3])
+                        count += 1
+                    }
+                }
+                guard count > 0 else { continue }
+                let offset = row * cells.bytesPerRow + column * 4
+                target[offset] = UInt8((red + count / 2) / count)
+                target[offset + 1] = UInt8((green + count / 2) / count)
+                target[offset + 2] = UInt8((blue + count / 2) / count)
+                target[offset + 3] = UInt8((alpha + count / 2) / count)
+            }
+        }
+        return cells.makeImage()
     }
 
     static func compose(_ item: BatchItem, overlay: CGImage) throws -> CGImage {
