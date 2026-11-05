@@ -1,3 +1,15 @@
+## Alpha Premier Property Branding Studio v2.6.0
+
+### New Features
+- **PIXELATE and BLUR replace PEN**: the crop editor hides private details, such as the owner's phone number on a tarp or sign, house numbers, plates or faces, by pixelating or blurring the photo under the brush instead of painting solid ink over it. The preview shows each mark as it will be exported. Windows and Mac.
+- **Strength follows the brush**: a bigger brush makes bigger squares and a stronger blur, so size it to the text you are hiding. Brush range is 10–120 px, default 40.
+- **Automatic releases**: every merged pull request now publishes a Windows and Mac release, numbered from the merged pull request titles.
+
+### Fixes & Improvements
+- **Marks match the editor**: exported marks were drawn wider than the editor showed at each point of a stroke; they now follow the brush exactly.
+- **Brush SIZE slider**: arrow keys move it 2 px at a time, Page Up/Page Down 10 px.
+- **Scope note**: the PDF user manual has not been rebuilt yet and still shows the PEN tool.
+
 ## Alpha Premier Property Branding Studio v2.5.0
 
 ### New Features

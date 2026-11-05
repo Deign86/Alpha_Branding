@@ -1,7 +1,11 @@
 name: Release
 
+# Every pull request merged into main publishes a Windows and Mac release. A v* tag push or a manual
+# run publishes the version it names.
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -14,43 +18,106 @@ on:
 permissions:
   contents: write
 
+# One release at a time, so each run sees the tag the previous one created. A run that GitHub drops
+# while another waits is not lost: the next run releases everything merged since the last tag.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  macos:
-    runs-on: macos-latest
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Extract version
-        id: version
+      # On main: release only when pull requests were merged since the last v* tag. The version bumps
+      # that tag by the merged conventional titles (`!` or BREAKING CHANGE: major, feat: minor, else
+      # patch); a higher <Version> in the .csproj, set by a release PR, wins.
+      - name: Plan release
+        id: plan
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            version="$INPUT_VERSION"
-          else
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            version="${INPUT_VERSION#v}"
+          elif [ "$REF_TYPE" = "tag" ]; then
             version="${GITHUB_REF_NAME#v}"
+          else
+            if [ -n "$(git tag --points-at HEAD --list 'v*')" ]; then
+              echo "HEAD is already released."
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # Captured, not piped into head or grep -q: under pipefail an early exit there fails the step.
+            tags=$(git tag --merged HEAD --list 'v[0-9]*' --sort=-v:refname)
+            last=${tags%%$'\n'*}
+            range="${last:+$last..}HEAD"
+            subjects=$(git log --format=%s "$range")
+            bodies=$(git log --format=%B "$range")
+            if ! grep -qE '\(#[0-9]+\)$|^Merge pull request #' <<<"$subjects"; then
+              echo "No pull requests merged since ${last:-the first commit}."
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            IFS=. read -r major minor patch <<<"${last#v}"
+            major=${major:-0} minor=${minor:-0} patch=${patch:-0}
+            if grep -qE '^[a-z]+(\([^)]*\))?!:|^BREAKING CHANGE:' <<<"$bodies"; then
+              version="$((major + 1)).0.0"
+            elif grep -qE '^feat(\([^)]*\))?:' <<<"$subjects"; then
+              version="$major.$((minor + 1)).0"
+            else
+              version="$major.$minor.$((patch + 1))"
+            fi
+            declared=$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' src/Alpha.Branding/Alpha.Branding.csproj | head -n 1 | tr -d '\r')
+            if [ "$(printf '%s\n%s\n' "$version" "$declared" | sort -V | tail -n 1)" = "$declared" ]; then
+              version="$declared"
+            fi
+            echo "Last release: ${last:-none}"
           fi
-          echo "Version: $version"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$version' is not MAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          echo "Releasing v$version"
+          echo "release=true" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  macos:
+    runs-on: macos-latest
+    needs: version
+    if: needs.version.outputs.release == 'true'
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Run engine checks
         run: macos/test.sh
 
       - name: Build macOS app
-        run: macos/build.sh "${{ steps.version.outputs.version }}"
+        run: macos/build.sh "$VERSION"
 
       - name: Upload macOS packages
         uses: actions/upload-artifact@v4
         with:
           name: macos-app
           path: |
-            macos/build/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.zip
-            macos/build/Alpha.Branding-v${{ steps.version.outputs.version }}-macos.pkg
+            macos/build/Alpha.Branding-v${{ env.VERSION }}-macos.zip
+            macos/build/Alpha.Branding-v${{ env.VERSION }}-macos.pkg
           if-no-files-found: error
 
   release:
     runs-on: windows-latest
-    needs: macos
+    needs: [version, macos]
+    if: needs.version.outputs.release == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,25 +130,33 @@ jobs:
       - name: Extract version
         id: version
         shell: pwsh
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            $version = "${{ inputs.version }}"
-          } else {
-            $tag = "${{ github.ref_name }}"
-            $version = $tag -replace '^v', ''
-          }
-
-          # Ensure 4-part version for installer
-          $parts = $version -split '\.'
-          while ($parts.Count -lt 4) {
-            $parts += '0'
-          }
-          $fullVersion = $parts[0..3] -join '.'
+          $version = $env:VERSION
+          # 4-part version for the assembly and installer
+          $fullVersion = "$version.0"
 
           Write-Host "Version: $version"
           Write-Host "Full version: $fullVersion"
           "version=$version" >> $env:GITHUB_OUTPUT
           "full_version=$fullVersion" >> $env:GITHUB_OUTPUT
+
+      # The app's updater compares its own version with the latest release tag, so every build in this
+      # job must carry the release version, not whatever the .csproj last said.
+      - name: Stamp version
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $fullVersion = "${{ steps.version.outputs.full_version }}"
+          $csproj = 'src\Alpha.Branding\Alpha.Branding.csproj'
+          $text = [System.IO.File]::ReadAllText($csproj)
+          $text = $text -replace '<Version>[^<]*</Version>', "<Version>$version</Version>" `
+            -replace '<AssemblyVersion>[^<]*</AssemblyVersion>', "<AssemblyVersion>$fullVersion</AssemblyVersion>" `
+            -replace '<FileVersion>[^<]*</FileVersion>', "<FileVersion>$fullVersion</FileVersion>" `
+            -replace '<InformationalVersion>[^<]*</InformationalVersion>', "<InformationalVersion>v$version</InformationalVersion>"
+          [System.IO.File]::WriteAllText($csproj, $text)
+          (Select-String -Path $csproj -Pattern 'Version>').Line
 
       - name: Restore dependencies
         run: dotnet restore Alpha_Branding.sln
@@ -177,6 +252,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
           files: |
             artifacts/Alpha.Branding.Setup.exe
             artifacts/Alpha.Branding-v${{ steps.version.outputs.version }}-win-x64.zip
