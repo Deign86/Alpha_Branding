@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 @MainActor
 enum Dialogs {
     enum SessionChoice { case export, discard, cancel }
+    enum UpdateChoice { case install, later, skip }
 
     static func openMedia() -> [URL]? {
         let panel = NSOpenPanel()
@@ -71,6 +72,29 @@ enum Dialogs {
         case .alertSecondButtonReturn: return .discard
         default: return .cancel
         }
+    }
+
+    static func updatePrompt(version: String, current: String, notes: String) -> UpdateChoice {
+        let alert = NSAlert()
+        alert.messageText = "Alpha Branding Studio \(version) is available"
+        alert.informativeText = "You have \(current)." + (notes.isEmpty ? "" : "\n\n\(notes)")
+            + "\n\nUpdate Now downloads the installer, opens it and quits the app."
+        alert.addButton(withTitle: "Update Now")
+        alert.addButton(withTitle: "Remind Me Later")
+        alert.addButton(withTitle: "Skip This Version")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: return .install
+        case .alertThirdButtonReturn: return .skip
+        default: return .later
+        }
+    }
+
+    static func info(_ title: String, _ message: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = title
+        alert.informativeText = message
+        alert.runModal()
     }
 
     static func error(_ title: String, _ message: String) {

@@ -5,6 +5,6 @@ cd "$(dirname "$0")"
 mkdir -p build
 swiftc -swift-version 5 -parse-as-library \
   Tests/EngineCheck.swift Sources/ImageEngine.swift Sources/Models.swift \
-  Sources/FileNameGenerator.swift Sources/VideoEngine.swift \
+  Sources/FileNameGenerator.swift Sources/VideoEngine.swift Sources/Release.swift \
   -o build/engine-check
 build/engine-check build/engine-check-output ../src/Alpha.Branding/Assets/alpha_branding.png

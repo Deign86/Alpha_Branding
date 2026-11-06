@@ -110,7 +110,7 @@ Alpha.Branding.Setup.exe --uninstall
 - Videos: MP4, MOV and M4V (WMV, AVI, MKV and WEBM are Windows-only).
 - The installer and app are not signed with an Apple Developer ID yet, so macOS blocks the first open of a downloaded copy. Open **System Settings → Privacy & Security** and click **Open Anyway** (on macOS 13–14, **right-click → Open** also works).
 - Custom templates are stored in `~/Library/Application Support/Alpha Premier Realty/Branding Studio/Templates`.
-- No in-app updater: download new versions from the releases page.
+- Updates itself: it checks for a new release at launch and every 8 hours, or on demand from **Alpha Branding Studio › Check for Updates…**. Versions before 2.8.0 have no updater, so install 2.8.0 once from the releases page.
 
 ---
 
@@ -183,7 +183,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install.ps1 -Uninstall
 
 ## Auto-Update System
 
-Alpha Premier Realty Branding Studio features a native auto-updater connecting to the GitHub Releases API:
+Alpha Premier Realty Branding Studio features a native auto-updater connecting to the GitHub Releases API, on Windows and Mac:
 
 <p align="center">
   <img src="docs/assets/app-screenshot-update-dialog.png" alt="In-App Auto-Update Dialog" width="600" />
@@ -192,14 +192,16 @@ Alpha Premier Realty Branding Studio features a native auto-updater connecting t
 - **Update Triggers:**
   - Non-blocking automatic check 3 seconds after launch.
   - Background periodic check every 8 hours while running.
-  - On-demand check via the **"CHECK FOR UPDATES"** header button.
+  - On-demand check via the **"CHECK FOR UPDATES"** header button (Windows) or **Alpha Branding Studio › Check for Updates…** (Mac).
+- **Mac Installs:**
+  - **Update Now** downloads the release's `.pkg`, checks it against the release's `SHA256SUMS.txt`, opens it in Installer and quits the app.
 - **Authenticode Signature Verification:**
   - All downloaded update packages are cryptographically validated against official publisher certificates (`Alpha Premier`) prior to execution.
 - **User Preferences:**
   - **UPDATE NOW**: Downloads in-place with real-time byte progress, validates signature, and launches bootstrapper.
   - **REMIND ME LATER**: Snoozes notification for 8 hours.
   - **SKIP THIS VERSION**: Ignores specific release tag until a newer version is published.
-- **Enterprise Policy Lockdown:**
+- **Enterprise Policy Lockdown (Windows):**
   - Disable update checks globally via machine environment variable:
     ```powershell
     [Environment]::SetEnvironmentVariable("ALPHA_BRANDING_DISABLE_AUTO_UPDATE", "1", "Machine")
