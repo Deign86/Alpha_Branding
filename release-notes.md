@@ -1,3 +1,8 @@
+## Alpha Premier Property Branding Studio v2.8.1
+
+### Fixes & Improvements
+- **User manual**: the PDF manual now covers installing the Mac app (Chapter 2) and how it updates itself (Chapter 13), plus a troubleshooting entry for Macs that never offer updates.
+
 ## Alpha Premier Property Branding Studio v2.8.0
 
 ### New Features
