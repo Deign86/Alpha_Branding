@@ -7,7 +7,7 @@
   @page {
     size: A4;
     margin: 18mm 16mm 20mm 16mm;
-    @bottom-left { content: "Alpha Premier Property Branding Studio · User Manual · v2.7.0"; font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
+    @bottom-left { content: "Alpha Premier Property Branding Studio · User Manual · v2.8.1"; font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
     @bottom-right { content: "Page " counter(page); font: 8pt "Segoe UI", sans-serif; color: #8a8270; }
   }
   @page cover { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
@@ -127,7 +127,7 @@
     <div class="sub">Watermark, crop, and export listing photos and videos for Windows</div>
   </div>
   <img class="shot" src="images/04_main_results.png" alt="Branding Studio main window with branded results">
-  <div class="meta"><span>Software version 2.7.0</span><span>Windows 10 / 11 (64-bit)</span><span>Edition: November 2026</span></div>
+  <div class="meta"><span>Software version 2.8.1</span><span>Windows 10 / 11 (64-bit) · macOS 13 or later</span><span>Edition: November 2026</span></div>
 </div>
 
 <!-- ============ ABOUT / TOC ============ -->
@@ -183,6 +183,7 @@
   <h1 class="chapter">Introduction</h1>
   <div class="chapter-rule"></div>
   <p class="lead">Branding Studio applies the official Alpha Premier Realty frame (logo, gold accents, and contact numbers) to property photos and video clips. Every output has the same size and look, ready to post on listing sites and social media.</p>
+  <p>This manual shows the Windows app. A Mac app with the same features is also available; Chapter 2 explains how to install it and Chapter 13 how it updates.</p>
 
   <h2>What you can do</h2>
   <ul>
@@ -244,11 +245,20 @@
 
   <h2>Option B: Run the portable version</h2>
   <ol class="steps">
-    <li>Download the <code>Alpha.Branding-v2.7.0-win-x64.zip</code> file from the same release page.</li>
+    <li>Download the <code>Alpha.Branding-v2.8.1-win-x64.zip</code> file from the same release page.</li>
     <li>Right-click the ZIP file and select <b>Extract All</b>.</li>
     <li>Open the extracted folder and double-click <code>Alpha.Branding.exe</code>.</li>
   </ol>
   <p>Use the portable version if you cannot install software on your PC, or to run the app from a USB drive.</p>
+
+  <h2>Option C: Install on a Mac</h2>
+  <p>The Mac app needs macOS 13 Ventura or later and runs on Apple silicon and Intel Macs.</p>
+  <ol class="steps">
+    <li>From the same release page, download <code>Alpha.Branding-v2.8.1-macos.pkg</code> (the version number in the name changes with each release).</li>
+    <li>Double-click the file in your <b>Downloads</b> folder and follow the installer. It puts <b>Alpha Branding Studio</b> in <b>Applications</b>.</li>
+    <li>The app is not signed with an Apple Developer ID yet, so macOS may block the first open. Open <b>System Settings › Privacy &amp; Security</b> and select <b>Open Anyway</b>. On macOS 13 or 14 you can also right-click the app and select <b>Open</b>.</li>
+  </ol>
+  <div class="box note"><b class="t">Note</b><p>Mac versions before 2.8.0 cannot update themselves. Install the latest version once with these steps; after that the app offers new versions on its own (see Chapter 13). To remove the Mac app, drag it from <b>Applications</b> to the <b>Trash</b>.</p></div>
 
   <h2>Uninstalling</h2>
   <ol class="steps">
@@ -714,9 +724,9 @@
   <ul>
     <li>a few seconds after it opens,</li>
     <li>every 8 hours while it is running, and</li>
-    <li>when you select <span class="ui">CHECK FOR UPDATES</span>.</li>
+    <li>when you select <span class="ui">CHECK FOR UPDATES</span> (on a Mac, choose <b>Alpha Branding Studio › Check for Updates…</b> in the menu bar).</li>
   </ul>
-  <p>When a newer version is available, this window appears:</p>
+  <p>On Windows, when a newer version is available, this window appears:</p>
   <figure class="narrow" style="width:46%">
     <div class="shotwrap">
       <img src="images/10_update_dialog.png" alt="Update available window">
@@ -740,6 +750,17 @@
   </table>
   <div class="box warn"><b class="t">Caution</b><p>Export your results before selecting <span class="ui">UPDATE NOW</span>. The app closes to install the update.</p></div>
   <div class="box note"><b class="t">Note</b><p>If a download fails, the window shows an error and an <span class="ui">OPEN IN BROWSER</span> button so you can download the installer manually. If your IT team has turned off updates, the check reports that updates are disabled by system policy.</p></div>
+
+  <h2>Updates on a Mac</h2>
+  <p>On a Mac (version 2.8.0 or later), a message shows the new version, your current version, and what is new, with three buttons:</p>
+  <table>
+    <tr><th style="width:44mm">Button</th><th>What it does</th></tr>
+    <tr><td><b>Update Now</b></td><td>Downloads the Mac installer, checks it against the checksum published with the release, opens it, and quits the app. Follow the installer to finish.</td></tr>
+    <tr><td><b>Remind Me Later</b></td><td>Closes the message. You are reminded in about 8 hours.</td></tr>
+    <tr><td><b>Skip This Version</b></td><td>Stops reminders for this version. You are told again when a newer one comes out.</td></tr>
+  </table>
+  <div class="box warn"><b class="t">Caution</b><p>Export your results before selecting <b>Update Now</b>. If you have results that are not exported, the app asks before it quits.</p></div>
+  <div class="box note"><b class="t">Note</b><p>Automatic checks wait until branding in progress has finished. If a check cannot reach GitHub, <b>Check for Updates…</b> shows why; automatic checks stay silent. If a downloaded installer does not match its published checksum, it is deleted and nothing is installed.</p></div>
 </section>
 
 <!-- ============ 14 SHORTCUTS ============ -->
@@ -796,6 +817,7 @@
     <tr><td>“Invalid Template” appears when importing.</td><td>Use a PNG, JPG, JFIF, or WEBP image that opens normally. PNG with a transparent center is recommended.</td></tr>
     <tr><td>The update check says the rate limit was exceeded.</td><td>Too many checks were made from your network. Try again later.</td></tr>
     <tr><td>The update check says updates are disabled.</td><td>Your IT team has turned off updates on this PC. Ask them for the latest version.</td></tr>
+    <tr><td>A Mac never offers updates.</td><td>Mac versions before 2.8.0 have no update check. Install the latest Mac installer once (Chapter 2); later versions are offered automatically.</td></tr>
     <tr><td>Buttons look cramped on a laptop.</td><td>Maximize the window. At high display scaling, button rows wrap and the media area scrolls.</td></tr>
   </table>
 
