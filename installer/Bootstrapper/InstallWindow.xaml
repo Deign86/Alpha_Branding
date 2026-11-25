@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Alpha Premier | Branding Studio Setup"
-        Icon="Assets/logo_phoenix.png"
         Width="600" Height="450"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
